@@ -20,8 +20,13 @@ export function runHealth(run: Run): HealthReport {
     subagents: subagentsVerdict(findings),
   }
 
-  // Unknown lines affect structure verdict
-  if (run.unknowns.length > 0) {
+  // Schema verdict: only fire on parse errors or non-object lines — those indicate
+  // actual malformation. App-metadata unknowns (mode, api-request, etc.) are expected
+  // at L1 and do not degrade the verdict.
+  const badUnknowns = run.unknowns.filter(
+    u => u.reason === 'json-parse-error' || u.reason === 'not-an-object'
+  )
+  if (badUnknowns.length > 0) {
     verdicts['schema'] = 'usable-with-caveats'
   }
 

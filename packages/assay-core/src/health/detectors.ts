@@ -61,8 +61,12 @@ export function d3ChainBreak(run: Run): Finding[] {
   // is a real JSONL object that can be a valid parent even though we don't parse it fully.
   const unknownUuids = new Set<string>()
   for (const u of run.unknowns) {
-    const obj = u.raw !== undefined ? (JSON.parse(u.raw) as Record<string, unknown>) : {}
-    if (typeof obj['uuid'] === 'string') unknownUuids.add(obj['uuid'])
+    try {
+      const obj = JSON.parse(u.raw) as Record<string, unknown>
+      if (typeof obj['uuid'] === 'string') unknownUuids.add(obj['uuid'])
+    } catch {
+      // json-parse-error unknowns: no uuid to extract, skip
+    }
   }
   const knownIds = new Set([...run.events.map(e => e.id), ...unknownUuids])
 
@@ -88,21 +92,26 @@ export function d3ChainBreak(run: Run): Finding[] {
 }
 
 // D4 — orphan tool_use / tool_result
-// An unmatched tool_use at end-of-file is in-flight (not a defect).
+// Two legitimate exemptions:
+//   in-flight: unmatched tool_use at end-of-file (session still running)
+//   post-compaction: tool_result whose tool_use was in the compacted portion
 export function d4OrphanTool(run: Run): Finding[] {
   const findings: Finding[] = []
   const resultIds = new Set(run.toolResults.map(r => r.toolUseId))
   const callIds = new Set(run.toolCalls.map(c => c.id))
 
+  // Earliest line after which a compaction has occurred (tool_use may be gone)
+  const postCompactionLine = run.compactions.length > 0
+    ? Math.min(...run.compactions.map(c => c.summaryOffset?.line ?? Infinity))
+    : Infinity
+
   // tool_use with no matching tool_result
   const lastEventOffset = run.events.at(-1)?.offset
   for (const call of run.toolCalls) {
     if (!resultIds.has(call.id)) {
-      // in-flight if this call is at the very end of the file
+      const callLine = call.evidence[0]?.line ?? 0
       const isInFlight =
-        call.evidence[0] !== undefined &&
-        lastEventOffset !== undefined &&
-        call.evidence[0].line >= lastEventOffset.line - 2
+        lastEventOffset !== undefined && callLine >= lastEventOffset.line - 2
       if (!isInFlight) {
         findings.push({
           detectorId: 'D4',
@@ -116,14 +125,17 @@ export function d4OrphanTool(run: Run): Finding[] {
 
   // tool_result with no matching tool_use
   for (const result of run.toolResults) {
-    if (result.toolUseId && !callIds.has(result.toolUseId)) {
-      findings.push({
-        detectorId: 'D4',
-        severity: 'warn',
-        message: `tool_result references tool_use_id ${result.toolUseId} which has no corresponding tool_use`,
-        evidence: result.evidence,
-      })
-    }
+    if (!result.toolUseId || callIds.has(result.toolUseId)) continue
+    const resultLine = result.evidence[0]?.line ?? 0
+    // If a compaction occurred before this result, the tool_use may have been
+    // in the compacted portion — not a defect
+    if (resultLine > postCompactionLine) continue
+    findings.push({
+      detectorId: 'D4',
+      severity: 'warn',
+      message: `tool_result references tool_use_id ${result.toolUseId} which has no corresponding tool_use`,
+      evidence: result.evidence,
+    })
   }
 
   return findings

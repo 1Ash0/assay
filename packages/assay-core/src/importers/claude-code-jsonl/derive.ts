@@ -24,17 +24,19 @@ interface DerivedEntities {
 }
 
 export function deriveEntities(events: Event[]): DerivedEntities {
-  const messages: Message[] = []
   const toolCalls: ToolCall[] = []
   const toolResults: ToolResult[] = []
-  // D2: dedupe LlmRequests by message.id — same id = same usage, keep first
+  // D2: dedupe by message.id — same id = same API call, keep first occurrence only
+  const messagesByMsgId = new Map<string, Message>()
   const llmRequestsByMsgId = new Map<string, LlmRequest>()
   const agents = new Map<string, Agent>()
   const compactions: Compaction[] = []
   const skills: Skill[] = []
   const edges: Edge[] = []
 
+  // turnIndex counts deduplicated assistant messages only
   let turnIndex = 0
+  const seenMsgIds = new Set<string>()
 
   for (const ev of events) {
     const obj = ev.raw
@@ -60,22 +62,26 @@ export function deriveEntities(events: Event[]): DerivedEntities {
 
       const msgId = messageId ?? ev.id
 
-      messages.push({
-        evidence: [evOffset],
-        id: msgId,
-        role: ev.kind,
-        agentId: ev.agentId,
-        sessionId: ev.sessionId,
-        parentId: ev.parentId,
-        ts: ev.ts,
-      })
+      // Dedupe messages by msgId — D2 duplicates have the same message.id
+      if (!messagesByMsgId.has(msgId)) {
+        messagesByMsgId.set(msgId, {
+          evidence: [evOffset],
+          id: msgId,
+          role: ev.kind,
+          agentId: ev.agentId,
+          sessionId: ev.sessionId,
+          parentId: ev.parentId,
+          ts: ev.ts,
+        })
 
-      // parentId edge
-      if (ev.parentId) {
-        edges.push({ kind: 'observed', fromId: msgId, toId: ev.parentId, evidence: [evOffset] })
+        // parentId edge: parent→child (causal direction)
+        if (ev.parentId) {
+          edges.push({ kind: 'observed', fromId: ev.parentId, toId: msgId, evidence: [evOffset] })
+        }
       }
 
-      if (ev.kind === 'assistant') {
+      if (ev.kind === 'assistant' && !seenMsgIds.has(msgId)) {
+        seenMsgIds.add(msgId)
         turnIndex++
 
         const msg = typeof obj['message'] === 'object' && obj['message'] !== null
@@ -94,7 +100,7 @@ export function deriveEntities(events: Event[]): DerivedEntities {
             })
           }
 
-          // ToolCalls from content array
+          // ToolCalls from content array — outer guard already ensures first occurrence only
           const content = msg['content']
           if (Array.isArray(content)) {
             for (const block of content) {
@@ -174,7 +180,7 @@ export function deriveEntities(events: Event[]): DerivedEntities {
   }
 
   return {
-    messages,
+    messages: Array.from(messagesByMsgId.values()),
     toolCalls,
     toolResults,
     llmRequests: Array.from(llmRequestsByMsgId.values()),

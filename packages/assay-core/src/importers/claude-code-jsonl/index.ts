@@ -23,10 +23,25 @@ export function importClaudeCodeDir(sessionPath: string, opts: ImportOptions = {
     ...opts.contentFlags,
   }
 
-  // Resolve to session directory
+  // Resolve main JSONL and session directory
+  // Accepts: a .jsonl file path, or a directory containing a same-named .jsonl
   const isJsonl = sessionPath.endsWith('.jsonl')
-  const dirPath = isJsonl ? sessionPath.replace(/\.jsonl$/, '') : sessionPath
-  const mainJsonl = isJsonl ? sessionPath : `${sessionPath}.jsonl`
+  let mainJsonl: string
+  let dirPath: string
+  if (isJsonl) {
+    mainJsonl = sessionPath
+    dirPath = sessionPath.replace(/\.jsonl$/, '')
+  } else {
+    // directory — find the .jsonl file inside it
+    dirPath = sessionPath
+    const base = sessionPath.replace(/[\\/]$/, '').split(/[\\/]/).pop() ?? ''
+    mainJsonl = join(sessionPath, `${base}.jsonl`)
+    // If not found by name, try any .jsonl in the dir
+    if (!existsSync(mainJsonl)) {
+      const found = readdirSync(sessionPath).find(f => f.endsWith('.jsonl') && !f.includes('subagent'))
+      mainJsonl = found ? join(sessionPath, found) : mainJsonl
+    }
+  }
 
   const allFiles: string[] = []
   if (existsSync(mainJsonl)) allFiles.push(mainJsonl)
@@ -82,7 +97,6 @@ export function importClaudeCodeDir(sessionPath: string, opts: ImportOptions = {
       flags,
       truncated: false,
       version,
-      layout,
     },
     truth: 'real',
     sources,

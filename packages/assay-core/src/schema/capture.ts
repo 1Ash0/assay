@@ -21,8 +21,7 @@ export const CaptureLevelSchema = z.object({
   ]),
   flags: ContentFlagsSchema,
   truncated: z.boolean(),
-  version: z.string().optional(), // harness version if known
-  layout: z.enum(['main-only', 'inline-sidechain', 'subagent-files', 'otlp', 'unknown']),
+  version: z.string().optional(), // harness version if known; canonical source is run.harness.version
 })
 
 export type CaptureLevel = z.infer<typeof CaptureLevelSchema>
