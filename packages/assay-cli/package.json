@@ -1,0 +1,19 @@
+{
+  "name": "@assay/cli",
+  "version": "0.0.1",
+  "private": true,
+  "type": "module",
+  "bin": {
+    "assay": "./dist/cli.js"
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "typecheck": "tsc -p tsconfig.json --noEmit"
+  },
+  "dependencies": {
+    "@assay/core": "workspace:*"
+  },
+  "devDependencies": {
+    "typescript": "*"
+  }
+}

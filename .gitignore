@@ -1,0 +1,13 @@
+# Private data — never commit
+corpus/
+
+# Dependencies
+node_modules/
+
+# Build output
+dist/
+*.tsbuildinfo
+
+# Local env
+.env
+.env.local
