@@ -52,19 +52,37 @@ export function d2UsageDoubleCount(run: Run): Finding[] {
 }
 
 // D3 — chain break
-// parentUuid points to an absent uuid (GC or truncation).
+// parentUuid points to an absent uuid mid-file (GC or truncation).
+// The first event in each source file is exempt: its parent lives in the
+// preceding session and will always be absent when importing a single session.
 export function d3ChainBreak(run: Run): Finding[] {
   const findings: Finding[] = []
-  const knownIds = new Set(run.events.map(e => e.id))
+  // Include UUIDs from unknowns — an unknown-type line (e.g. attachment, api-request)
+  // is a real JSONL object that can be a valid parent even though we don't parse it fully.
+  const unknownUuids = new Set<string>()
+  for (const u of run.unknowns) {
+    const obj = u.raw !== undefined ? (JSON.parse(u.raw) as Record<string, unknown>) : {}
+    if (typeof obj['uuid'] === 'string') unknownUuids.add(obj['uuid'])
+  }
+  const knownIds = new Set([...run.events.map(e => e.id), ...unknownUuids])
+
+  // First event per source file — exempt from D3 (cross-session boundary)
+  const firstEventPerFile = new Map<string, string>()
   for (const ev of run.events) {
-    if (ev.parentId && !knownIds.has(ev.parentId)) {
-      findings.push({
-        detectorId: 'D3',
-        severity: 'warn',
-        message: `Event ${ev.id} has parentId ${ev.parentId} which is not in this run — possible GC truncation`,
-        evidence: [ev.offset],
-      })
+    if (!firstEventPerFile.has(ev.sourceFile)) {
+      firstEventPerFile.set(ev.sourceFile, ev.id)
     }
+  }
+
+  for (const ev of run.events) {
+    if (!ev.parentId || knownIds.has(ev.parentId)) continue
+    if (firstEventPerFile.get(ev.sourceFile) === ev.id) continue // session boundary
+    findings.push({
+      detectorId: 'D3',
+      severity: 'warn',
+      message: `Event ${ev.id} has parentId ${ev.parentId} which is not in this run — possible GC truncation`,
+      evidence: [ev.offset],
+    })
   }
   return findings
 }

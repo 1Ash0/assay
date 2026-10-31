@@ -4,10 +4,22 @@
   "private": true,
   "type": "module",
   "exports": {
-    ".": "./dist/index.js",
-    "./schema": "./dist/schema/index.js",
-    "./importers": "./dist/importers/index.js",
-    "./health": "./dist/health/index.js"
+    ".": {
+      "source": "./src/index.ts",
+      "default": "./dist/index.js"
+    },
+    "./schema": {
+      "source": "./src/schema/index.ts",
+      "default": "./dist/schema/index.js"
+    },
+    "./importers": {
+      "source": "./src/importers/index.ts",
+      "default": "./dist/importers/index.js"
+    },
+    "./health": {
+      "source": "./src/health/index.ts",
+      "default": "./dist/health/index.js"
+    }
   },
   "scripts": {
     "build": "tsc -p tsconfig.json",
