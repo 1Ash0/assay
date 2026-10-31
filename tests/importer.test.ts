@@ -45,12 +45,11 @@ describe('claude-code-jsonl importer', () => {
     expect(run.compactions.length).toBe(1)
   })
 
-  it('round-trip: event count matches source line count (lossless)', () => {
+  it('round-trip: parsed lines <= total source lines across all files (lossless)', () => {
     const run = importClaudeCodeDir(FIXTURE)
-    const source = run.sources[0]
-    expect(source).toBeDefined()
-    // lines in source = events + unknowns (skipping blank lines)
-    expect(run.events.length + run.unknowns.length).toBeLessThanOrEqual(source!.lines)
+    const totalSrcLines = run.sources.reduce((a, s) => a + s.lines, 0)
+    // parsed = events + unknowns (blank lines skipped, so always <= total)
+    expect(run.events.length + run.unknowns.length).toBeLessThanOrEqual(totalSrcLines)
   })
 
   it('all events carry valid offsets', () => {
