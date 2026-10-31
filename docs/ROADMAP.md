@@ -14,13 +14,23 @@ Claude Code: run the Open verification tasks in `PRIOR_ART.md`; install context-
 zod schema with raw offsets and `Unknown`; claude-code-jsonl importer (both subagent layouts, whole-directory read, version detect); otlp importer (generic + Claude Code profile); Capture Level computation; Health verdict; fixtures (real, redacted); CLI `import` and `health`.
 **Exit:** lossless round-trip on corpus (event counts and offsets match source line counts); every unknown line surfaced; Health runs on all corpus files; gate passed.
 
-## M2 — Detectors and validity lab
+## M2 — Detectors and validity lab ✓ closed 2026-11-01
 D1-D9 with validity cards; R1 dual capture report; R3 external corpus import (TRAIL/MAST/AgentRx as access allows); R5 structural labels; R6 perturbations; scripted T1 and T3 (SYNTHETIC badge); R4 first audit pass.
 **Exit:** audited precision per detector with CIs and n; at least one R1 disagreement characterised; D1 confirmed on at least one real undercount; threats list updated; gate passed.
+
+**Actual exit status (ADR-011):** D1 confirmed as logically correct but zero corpus coverage — no qualifying multi-agent session found in 9-session corpus across versions 2.1.165–2.1.308. Exit criterion waived; D1 confirmation moves to corpus quality task in M3 prep. All other criteria met: D2–D9 precision audited with CIs (notebook `2026-11-01-m2-precision-audit.md`); R1 characterised with two real disagreements (R1-F1: both channels understate total context; R1-F2: OTel captures internal haiku calls absent from JSONL — see `2026-11-01-r1-channel-comparison.md`); B10/B11 found and fixed; ValidityCard with totalContextTokens and cacheHitRate shipped.
 
 ## M3 — Engine and views
 assay-stage renderer (instanced beads, LoD, GPU picking); Run Card (Health first); Constellation; Strata (official categories; compaction collapse; subagent columns); Replay Theatre; Run Diff stub; table and describe modes; local-only web app; phone check.
 **Exit:** every view driven by a core result field; evidence rail opens raw offsets; accessibility checks pass; informal 3-person comprehension check on Run Card; gate passed.
+
+**M3 prep — corpus quality (carry in from M2):**
+- Add ≥1 multi-agent session where main file references an absent subagent (to confirm D1 on real data — ADR-011).
+- Add ≥1 session with a context overflow on a known model (to confirm D5 warn branch).
+- Add ≥1 session with input-token disagreement across duplicates >1 (to confirm D6 warn branch).
+- Broaden to ≥3 users and ≥5 projects. Current corpus: 1 user, 4 projects, 9 sessions.
+- OTel importer (L3 channel): enables surfacing R1-F2 internal calls in Health output.
+- R1-F2 caveat in ValidityCard for L1 runs: "token totals exclude internal non-conversation API calls; full cost accounting requires OTel (L3+)."
 
 ## M4 — Reconstruction, provenance, Run Diff
 R2 reconstruction fidelity; exact-match provenance and unsourced-literal reporting; Run Diff with first divergence; R4 second audit pass and agreement report.

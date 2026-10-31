@@ -101,6 +101,8 @@ export function buildValidityCard(run: Run, findings: Finding[], overall: Metric
     caveats.push(`${d7.length} compaction(s) showed unusual token patterns — post-compaction counts may not reflect summarization`)
   if (d8.length > 0)
     caveats.push(`${d8.length} source file(s) contained conflicting sessionIds`)
+  if (run.capture.level < 3)
+    caveats.push(`Capture Level ${run.capture.level}: internal non-conversation API calls (e.g. tool-routing requests) not captured — token totals understate full API spend; OTel (L3+) required for complete cost accounting`)
   if (run.capture.level < 2)
     caveats.push(`Capture Level ${run.capture.level}: tool content and request bodies not captured`)
 

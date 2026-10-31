@@ -33,6 +33,16 @@ Decision: replaces chat learning for all three projects; see `LEARNING.md`. Cons
 ## ADR-010 · 2026-10-30 · accepted · Engine in TypeScript, spec in JSON Schema
 Decision: assay-core in TypeScript so the same code runs in CLI, CI, browser worker; JSON Schema generated from zod enables a later Rust/WASM port. Consequence: surfacelab (Python) stays separate; no shared runtime.
 
+## ADR-011 · 2026-11-01 · accepted · D1 confirmation deferred; M2 closes without it
+Context: M2 exit requires "D1 confirmed on at least one real undercount." After exhaustive corpus search (9 sessions, versions 2.1.165–2.1.308, including two projects with subagent directories), no session was found where the main JSONL file embeds `agentId` references on user events referencing an absent subagent file. In all observed versions the main file uses `isSidechain=true` to mark sidechain events and the subagent content lives entirely in the subagent's own file — D1's trigger condition. D1 logic is correct; the corpus simply lacks a qualifying session.
+Decision: close M2 with D1 at zero-coverage status, documented in `2026-11-01-m2-precision-audit.md`. D1 confirmation moves to a corpus quality task: add ≥1 multi-agent session where the main file references a subagent that was not captured (e.g. by importing only the main file of a session with subagents). Corpus quality and variety improvements are a first-order M3 prep item.
+Consequence: D1 remains logically correct but unvalidated on real data. Any D1 finding on new corpus additions must be spot-checked before reporting.
+
+## ADR-012 · 2026-11-01 · accepted · R1-F2: OTel required for full API cost accounting
+Context: R1 cross-channel comparison (2026-11-01) found that Claude Code makes internal non-conversation API calls (e.g. haiku tool-routing) not written to the JSONL transcript. OTel `claude_code.api_request` records and `claude_code.llm_request` spans capture these; L1 JSONL does not.
+Decision: document in ROADMAP that total API spend (including internal calls) requires L3+ capture. The ValidityCard caveat for L1 is sufficient for M2; an explicit "internal-requests gap" caveat is added to L1 runs. OTel importer remains an M3 target.
+Consequence: token totals on L1 runs carry a documented undercount caveat for cost (not for correctness of conversation-turn analysis).
+
 ## Proposed (not yet accepted)
 - ADR-P1 Interop with context-analyzer (decide after M0 source read).
 - ADR-P2 Upstream OTel proposal for compaction and skill entities (decide after M0 repo check).
