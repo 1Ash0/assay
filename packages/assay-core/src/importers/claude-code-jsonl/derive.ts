@@ -60,87 +60,89 @@ export function deriveEntities(events: Event[]): DerivedEntities {
     if (obj['isSidechain'] === true) continue
 
     const messageId = typeof obj['message'] === 'object' && obj['message'] !== null
-        ? (obj['message'] as Record<string, unknown>)['id'] as string | undefined
-        : undefined
+      ? (obj['message'] as Record<string, unknown>)['id'] as string | undefined
+      : undefined
 
-      const msgId = messageId ?? ev.id
+    const msgId = messageId ?? ev.id
 
-      // Dedupe messages by msgId — D2 duplicates have the same message.id
-      if (!messagesByMsgId.has(msgId)) {
-        messagesByMsgId.set(msgId, {
-          evidence: [evOffset],
-          id: msgId,
-          role: ev.kind,
-          agentId: ev.agentId,
-          sessionId: ev.sessionId,
-          parentId: ev.parentId,
-          ts: ev.ts,
-        })
+    // Dedupe messages by msgId — D2 duplicates have the same message.id
+    if (!messagesByMsgId.has(msgId)) {
+      messagesByMsgId.set(msgId, {
+        evidence: [evOffset],
+        id: msgId,
+        role: ev.kind,
+        agentId: ev.agentId,
+        sessionId: ev.sessionId,
+        parentId: ev.parentId,
+        ts: ev.ts,
+      })
 
-        // parentId edge: parent→child (causal direction)
-        if (ev.parentId) {
-          edges.push({ kind: 'observed', fromId: ev.parentId, toId: msgId, evidence: [evOffset] })
-        }
+      // parentId edge: parent→child (causal direction)
+      if (ev.parentId) {
+        edges.push({ kind: 'observed', fromId: ev.parentId, toId: msgId, evidence: [evOffset] })
       }
+    }
 
-      if (ev.kind === 'assistant' && !seenMsgIds.has(msgId)) {
-        seenMsgIds.add(msgId)
-        turnIndex++
+    if (ev.kind === 'assistant' && !seenMsgIds.has(msgId)) {
+      seenMsgIds.add(msgId)
+      turnIndex++
 
-        const msg = typeof obj['message'] === 'object' && obj['message'] !== null
-          ? (obj['message'] as Record<string, unknown>)
-          : null
+      const msg = typeof obj['message'] === 'object' && obj['message'] !== null
+        ? (obj['message'] as Record<string, unknown>)
+        : null
 
-        if (msg) {
-          // LlmRequest — D2 dedupe by msgId
-          const usage = extractUsage(msg)
-          if (usage && !llmRequestsByMsgId.has(msgId)) {
-            llmRequestsByMsgId.set(msgId, {
-              evidence: [evOffset],
-              messageId: msgId,
-              usage,
-              requestRef: typeof obj['requestId'] === 'string' ? obj['requestId'] : undefined,
-            })
-          }
+      if (msg) {
+        // LlmRequest — D2 dedupe by msgId
+        const usage = extractUsage(msg)
+        if (usage && !llmRequestsByMsgId.has(msgId)) {
+          llmRequestsByMsgId.set(msgId, {
+            evidence: [evOffset],
+            messageId: msgId,
+            usage,
+            requestRef: typeof obj['requestId'] === 'string' ? obj['requestId'] : undefined,
+          })
+        }
 
-          // ToolCalls from content array — outer guard already ensures first occurrence only
-          const content = msg['content']
-          if (Array.isArray(content)) {
-            for (const block of content) {
-              if (
-                typeof block === 'object' &&
-                block !== null &&
-                (block as Record<string, unknown>)['type'] === 'tool_use'
-              ) {
-                const b = block as Record<string, unknown>
-                const toolId = typeof b['id'] === 'string' ? b['id'] : `tool:${ev.id}`
-                toolCalls.push({
+        // ToolCalls from content array — outer guard already ensures first occurrence only
+        const content = msg['content']
+        if (Array.isArray(content)) {
+          for (const block of content) {
+            if (
+              typeof block === 'object' &&
+              block !== null &&
+              (block as Record<string, unknown>)['type'] === 'tool_use'
+            ) {
+              const b = block as Record<string, unknown>
+              const toolId = typeof b['id'] === 'string' ? b['id'] : `tool:${ev.id}`
+              toolCalls.push({
+                evidence: [evOffset],
+                id: toolId,
+                name: typeof b['name'] === 'string' ? b['name'] : 'unknown',
+                messageId: msgId,
+                agentId: ev.agentId,
+              })
+              edges.push({ kind: 'observed', fromId: msgId, toId: toolId, evidence: [evOffset] })
+
+              // Skill detection
+              if (typeof b['name'] === 'string' && b['name'] === 'Skill') {
+                const input = b['input'] as Record<string, unknown> | undefined
+                const skillName = input && typeof input['skill'] === 'string' ? input['skill'] : 'unknown'
+                skills.push({
                   evidence: [evOffset],
-                  id: toolId,
-                  name: typeof b['name'] === 'string' ? b['name'] : 'unknown',
-                  messageId: msgId,
-                  agentId: ev.agentId,
+                  name: skillName,
+                  trigger: msgId,
                 })
-                edges.push({ kind: 'observed', fromId: msgId, toId: toolId, evidence: [evOffset] })
-
-                // Skill detection
-                if (typeof b['name'] === 'string' && b['name'] === 'Skill') {
-                  const input = b['input'] as Record<string, unknown> | undefined
-                  const skillName = input && typeof input['skill'] === 'string' ? input['skill'] : 'unknown'
-                  skills.push({
-                    evidence: [evOffset],
-                    name: skillName,
-                    trigger: msgId,
-                  })
-                }
               }
             }
           }
         }
       }
+    }
 
-      if (ev.kind === 'user') {
-        // ToolResults from content array
+    if (ev.kind === 'user') {
+      // ToolResults from content array — skip if this user msgId was already processed
+      if (!seenMsgIds.has(msgId)) {
+        seenMsgIds.add(msgId)
         const msg = typeof obj['message'] === 'object' && obj['message'] !== null
           ? (obj['message'] as Record<string, unknown>)
           : null
@@ -165,19 +167,18 @@ export function deriveEntities(events: Event[]): DerivedEntities {
             }
           }
         }
-
-        // Agent references from agentId field
-        if (ev.agentId) {
-          if (!agents.has(ev.agentId)) {
-            agents.set(ev.agentId, {
-              evidence: [evOffset],
-              agentId: ev.agentId,
-              parentAgentId: undefined,
-              type: 'subagent',
-            })
-          }
-        }
       }
+
+      // Agent references from agentId field
+      if (ev.agentId && !agents.has(ev.agentId)) {
+        agents.set(ev.agentId, {
+          evidence: [evOffset],
+          agentId: ev.agentId,
+          parentAgentId: undefined,
+          type: 'subagent',
+        })
+      }
+    }
   }
 
   return {

@@ -15,7 +15,6 @@ Commands:
 
 Options:
   --out <file>         Write JSON output to file (default: stdout)
-  --profile <name>     Importer profile (default: claude-code)
 `.trim())
   process.exit(1)
 }
@@ -23,7 +22,12 @@ Options:
 if (!command) usage()
 
 const outIdx = args.indexOf('--out')
-const outFile = outIdx !== -1 ? args[outIdx + 1] : null
+const outArg = outIdx !== -1 ? args[outIdx + 1] : undefined
+if (outIdx !== -1 && (!outArg || outArg.startsWith('--'))) {
+  console.error('--out requires a file path argument')
+  process.exit(1)
+}
+const outFile = outArg ?? null
 
 function writeOutput(data: unknown): void {
   const json = JSON.stringify(data, null, 2)

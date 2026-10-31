@@ -28,17 +28,21 @@ export function parseJsonlFile(filePath: string): ParsedFile {
 
   for (const lineText of text.split('\n')) {
     const lineStart = bytePos
-    bytePos += Buffer.byteLength(lineText, 'utf-8') + 1 // +1 for \n
+    bytePos += Buffer.byteLength(lineText, 'utf-8') + 1 // +1 for \n (clamped to bytes at offset use)
 
     const trimmed = lineText.trim()
     if (!trimmed) { lineNum++; continue }
+
+    // bytePos-1 points to the \n we just counted, but on the last line without a
+    // trailing newline that overshoots the file by 1. Clamp to actual file size.
+    const lineEnd = Math.min(bytePos - 1, bytes)
 
     let parsed: unknown
     try {
       parsed = JSON.parse(trimmed)
     } catch {
       unknowns.push({
-        offset: makeOffset(filePath, lineNum, lineStart, bytePos - 1),
+        offset: makeOffset(filePath, lineNum, lineStart, lineEnd),
         reason: 'json-parse-error',
         raw: lineText,
       })
@@ -48,7 +52,7 @@ export function parseJsonlFile(filePath: string): ParsedFile {
 
     if (typeof parsed !== 'object' || parsed === null) {
       unknowns.push({
-        offset: makeOffset(filePath, lineNum, lineStart, bytePos - 1),
+        offset: makeOffset(filePath, lineNum, lineStart, lineEnd),
         reason: 'not-an-object',
         raw: lineText,
       })
@@ -61,7 +65,7 @@ export function parseJsonlFile(filePath: string): ParsedFile {
 
     if (typeof type !== 'string' || !KNOWN_TYPES.has(type)) {
       unknowns.push({
-        offset: makeOffset(filePath, lineNum, lineStart, bytePos - 1),
+        offset: makeOffset(filePath, lineNum, lineStart, lineEnd),
         reason: `unknown-type:${String(type ?? 'missing')}`,
         raw: lineText,
       })
@@ -83,7 +87,7 @@ export function parseJsonlFile(filePath: string): ParsedFile {
     events.push({
       id,
       sourceFile: filePath,
-      offset: makeOffset(filePath, lineNum, lineStart, bytePos - 1),
+      offset: makeOffset(filePath, lineNum, lineStart, lineEnd),
       ts: typeof obj['timestamp'] === 'string'
         ? Date.parse(obj['timestamp'])
         : undefined,
