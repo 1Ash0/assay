@@ -83,6 +83,36 @@ export function deriveEntities(events: Event[]): DerivedEntities {
       }
     }
 
+    if (ev.kind === 'assistant') {
+      const msg = typeof obj['message'] === 'object' && obj['message'] !== null
+        ? (obj['message'] as Record<string, unknown>)
+        : null
+
+      if (msg) {
+        // LlmRequest — canonicalize to max-usage occurrence across ALL duplicates.
+        // Streaming duplicates write partial outputTokens first, then a final line with
+        // complete counts. Cross-session copies sometimes have zeroed usage.
+        // Taking the maximum picks the most complete record in both cases.
+        // Ties go to first occurrence (stable for identical duplicates).
+        const usage = extractUsage(msg)
+        if (usage) {
+          const existing = llmRequestsByMsgId.get(msgId)
+          const existingTotal = existing
+            ? existing.usage.inputTokens + existing.usage.outputTokens
+            : -1
+          const newTotal = usage.inputTokens + usage.outputTokens
+          if (newTotal > existingTotal) {
+            llmRequestsByMsgId.set(msgId, {
+              evidence: [evOffset],
+              messageId: msgId,
+              usage,
+              requestRef: typeof obj['requestId'] === 'string' ? obj['requestId'] : undefined,
+            })
+          }
+        }
+      }
+    }
+
     if (ev.kind === 'assistant' && !seenMsgIds.has(msgId)) {
       seenMsgIds.add(msgId)
       turnIndex++
@@ -92,18 +122,7 @@ export function deriveEntities(events: Event[]): DerivedEntities {
         : null
 
       if (msg) {
-        // LlmRequest — D2 dedupe by msgId
-        const usage = extractUsage(msg)
-        if (usage && !llmRequestsByMsgId.has(msgId)) {
-          llmRequestsByMsgId.set(msgId, {
-            evidence: [evOffset],
-            messageId: msgId,
-            usage,
-            requestRef: typeof obj['requestId'] === 'string' ? obj['requestId'] : undefined,
-          })
-        }
-
-        // ToolCalls from content array — outer guard already ensures first occurrence only
+        // ToolCalls from content array — first occurrence only (deduped by seenMsgIds)
         const content = msg['content']
         if (Array.isArray(content)) {
           for (const block of content) {
