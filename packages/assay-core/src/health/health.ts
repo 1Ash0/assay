@@ -67,6 +67,7 @@ function deriveOverall(
       .join(',')
     return `do-not-trust-for:${affected}`
   }
+  if (errors.length > 0) return 'do-not-trust-for:data-integrity'
   if (values.some(v => v === 'usable-with-caveats') || warns.length > 0) {
     return 'usable-with-caveats'
   }

@@ -52,11 +52,14 @@ export function deriveEntities(events: Event[]): DerivedEntities {
       continue
     }
 
-    if (ev.kind === 'user' || ev.kind === 'assistant') {
-      // Skip sidechain events — they belong to subagent files
-      if (obj['isSidechain'] === true) continue
+    // system/hook/otel-span events are kept in run.events for losslessness
+    // but produce no derived entity — they're not conversation turns.
+    if (ev.kind !== 'user' && ev.kind !== 'assistant') continue
 
-      const messageId = typeof obj['message'] === 'object' && obj['message'] !== null
+    // Skip sidechain events — they belong to subagent files
+    if (obj['isSidechain'] === true) continue
+
+    const messageId = typeof obj['message'] === 'object' && obj['message'] !== null
         ? (obj['message'] as Record<string, unknown>)['id'] as string | undefined
         : undefined
 
@@ -151,15 +154,14 @@ export function deriveEntities(events: Event[]): DerivedEntities {
             ) {
               const b = block as Record<string, unknown>
               const toolUseId = typeof b['tool_use_id'] === 'string' ? b['tool_use_id'] : ''
+              if (!toolUseId) continue
               toolResults.push({
                 evidence: [evOffset],
                 toolUseId,
                 messageId: msgId,
                 isError: b['is_error'] === true,
               })
-              if (toolUseId) {
-                edges.push({ kind: 'observed', fromId: msgId, toId: toolUseId, evidence: [evOffset] })
-              }
+              edges.push({ kind: 'observed', fromId: msgId, toId: toolUseId, evidence: [evOffset] })
             }
           }
         }
@@ -176,7 +178,6 @@ export function deriveEntities(events: Event[]): DerivedEntities {
           }
         }
       }
-    }
   }
 
   return {

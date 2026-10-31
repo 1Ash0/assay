@@ -1,5 +1,4 @@
-import { createHash } from 'crypto'
-import { existsSync, readdirSync, readFileSync } from 'fs'
+import { existsSync, readdirSync } from 'fs'
 import { join } from 'path'
 import { ContentFlags, Run, Source } from '../../schema/index.js'
 import { deriveEntities } from './derive.js'
@@ -72,6 +71,15 @@ export function importClaudeCodeDir(sessionPath: string, opts: ImportOptions = {
 
   // Derive entities
   const entities = deriveEntities(allEvents)
+
+  // D1 fix: stamp transcriptFile onto agents that have a matching subagent JSONL.
+  // derive.ts creates Agent entries from agentId fields but can't know file paths.
+  // The subagent filenames are UUIDs matching the agentId they contain.
+  const subagentFiles = allFiles.slice(1) // everything after the main file
+  for (const agent of entities.agents) {
+    const match = subagentFiles.find(f => f.includes(agent.agentId))
+    if (match) agent.transcriptFile = match
+  }
 
   // Determine Capture Level: L1 baseline, L2 if hooks events found
   // (hooks-log import would upgrade; JSONL-only = L1)

@@ -7,8 +7,8 @@ const FIXTURE = resolve('fixtures/real/session-minimal.jsonl')
 describe('claude-code-jsonl importer', () => {
   it('parses events without dropping lines', () => {
     const run = importClaudeCodeDir(FIXTURE)
-    // 8 known-type lines + 2 unknown (mode, queue-operation) = 10 total non-empty lines
-    expect(run.events.length + run.unknowns.length).toBe(10)
+    // 9 known-type lines (incl. system) + 2 unknown (mode, queue-operation) = 11 total non-empty lines
+    expect(run.events.length + run.unknowns.length).toBe(11)
   })
 
   it('surfaces unknown types', () => {
@@ -17,6 +17,16 @@ describe('claude-code-jsonl importer', () => {
     const reasons = run.unknowns.map(u => u.reason)
     expect(reasons).toContain('unknown-type:mode')
     expect(reasons).toContain('unknown-type:queue-operation')
+  })
+
+  it('parses system events as events (not unknowns)', () => {
+    const run = importClaudeCodeDir(FIXTURE)
+    const sysEvents = run.events.filter(e => e.kind === 'system')
+    expect(sysEvents.length).toBe(1)
+    expect(sysEvents[0]?.id).toBe('sys1')
+    // system events produce no Message entity
+    const sysMsgs = run.messages.filter(m => m.id === 'msg_sys1')
+    expect(sysMsgs.length).toBe(0)
   })
 
   it('detects version from assistant line', () => {
@@ -29,6 +39,13 @@ describe('claude-code-jsonl importer', () => {
     // msg_a2 appears twice in events; should yield only one LlmRequest
     const a2Requests = run.llmRequests.filter(r => r.messageId === 'msg_a2')
     expect(a2Requests.length).toBe(1)
+  })
+
+  it('deduplicates Messages by message.id (D2)', () => {
+    const run = importClaudeCodeDir(FIXTURE)
+    // msg_a2 appears twice in events; should yield only one Message
+    const a2Messages = run.messages.filter(m => m.id === 'msg_a2')
+    expect(a2Messages.length).toBe(1)
   })
 
   it('links tool_use to tool_result via edge', () => {

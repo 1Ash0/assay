@@ -1,5 +1,5 @@
 import { createHash } from 'crypto'
-import { readFileSync, statSync } from 'fs'
+import { readFileSync } from 'fs'
 import { Event, UnknownLine } from '../../schema/index.js'
 import { Offset } from '../../schema/offset.js'
 
