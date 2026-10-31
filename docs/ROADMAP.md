@@ -1,0 +1,37 @@
+# ROADMAP — assay
+
+Nothing from the converged design is dropped; items are sequenced. Each "Later" item needs an evidence trigger and an ADR before it moves up.
+
+## Parity floor (crowded lanes: reach this, then differentiate)
+Search/filter within a run; readable subagent tree; per-call token and cache numbers; compaction markers; export to a shareable static HTML; local-only parsing. These are table stakes (context-analyzer, lm-assist, trajectory viewer, session viewers). They come bundled with M3 views, not as separate bets.
+
+## M0 — Verify and start the corpus (before any build)
+Human actions (Asmit): request TRAIL access on Hugging Face; turn on capture for ctxcheck/surfacelab sessions (OTel logs + hooks log; choose content flags deliberately and log them in `notebook/`); answer whether Jev/System One is accessible.
+Claude Code: run the Open verification tasks in `PRIOR_ART.md`; install context-analyzer and run it on one session; write `learn/M0/`; confirm the truth ladder and capture levels as written; look-test (prototype one Strata still from real data to check the idea is worth 3D).
+**Exit:** verification report in notebook; PRIOR_ART levels upgraded with dates; at least 5 real sessions in corpus with Capture Level recorded; Claude Code JSONL tool_use/tool_result field linking verified on our own files; ADR for any gap that turned out already shipped; M0 gate passed.
+
+## M1 — Canonical schema, importers, Health skeleton
+zod schema with raw offsets and `Unknown`; claude-code-jsonl importer (both subagent layouts, whole-directory read, version detect); otlp importer (generic + Claude Code profile); Capture Level computation; Health verdict; fixtures (real, redacted); CLI `import` and `health`.
+**Exit:** lossless round-trip on corpus (event counts and offsets match source line counts); every unknown line surfaced; Health runs on all corpus files; gate passed.
+
+## M2 — Detectors and validity lab
+D1-D9 with validity cards; R1 dual capture report; R3 external corpus import (TRAIL/MAST/AgentRx as access allows); R5 structural labels; R6 perturbations; scripted T1 and T3 (SYNTHETIC badge); R4 first audit pass.
+**Exit:** audited precision per detector with CIs and n; at least one R1 disagreement characterised; D1 confirmed on at least one real undercount; threats list updated; gate passed.
+
+## M3 — Engine and views
+assay-stage renderer (instanced beads, LoD, GPU picking); Run Card (Health first); Constellation; Strata (official categories; compaction collapse; subagent columns); Replay Theatre; Run Diff stub; table and describe modes; local-only web app; phone check.
+**Exit:** every view driven by a core result field; evidence rail opens raw offsets; accessibility checks pass; informal 3-person comprehension check on Run Card; gate passed.
+
+## M4 — Reconstruction, provenance, Run Diff
+R2 reconstruction fidelity; exact-match provenance and unsourced-literal reporting; Run Diff with first divergence; R4 second audit pass and agreement report.
+**Exit:** R2 number with threats; provenance validated against R5; Run Diff alignment stability from T3; gate passed.
+
+## M5 — Ship
+CLI polish; trace assertions + CI Action; judge-plane interface and Jev calibration study if access verified; docs; write-up of R1/R2 findings; upstream issue drafts (OTel GenAI: compaction/skill entities) if gaps confirmed.
+**Exit:** reproducible `results/`; README claims all at [read]/own-artifact level; cumulative gate passed.
+
+## Later (each needs evidence trigger + ADR)
+Atlas (cross-run corpus graph; the only force layout, with a "proximity is not meaning" notice) · MCP server · OpenInference/Langfuse importers · WASM/Rust parser · T5 comprehension study · interop with context-analyzer · other harnesses (Codex) · hosted backend (cut unless a trigger appears).
+
+## Scope fence
+Anything not on this page goes to Later. A feature that needs a judge model for a primary outcome is out of scope for core.

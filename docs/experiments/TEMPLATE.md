@@ -1,0 +1,13 @@
+# EXP-XXX <title> (preregistration; fill before any live capture)
+- Question:
+- Truth badge of data used:
+- Sessions / n (and how selected):
+- Claude Code versions covered:
+- Capture Level mix and content flags:
+- Primary metric (fixed now):
+- Secondary metrics:
+- Analysis (clustered by session; CI method):
+- Stopping rule:
+- Threats specific to this experiment:
+- What would change my mind:
+- Result artifact path:

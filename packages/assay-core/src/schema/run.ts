@@ -30,7 +30,7 @@ export const RunSchema = z.object({
   harness: z.object({
     tool: z.string(),
     version: z.string().optional(),
-    layout: z.string(),
+    layout: z.enum(['main-only', 'inline-sidechain', 'subagent-files', 'otlp', 'unknown']),
   }),
   capture: CaptureLevelSchema,
   truth: TruthSchema,

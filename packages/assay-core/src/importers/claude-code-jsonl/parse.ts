@@ -74,8 +74,9 @@ export function parseJsonlFile(filePath: string): ParsedFile {
         ? obj['uuid']
         : `${filePath}:${lineNum}`
 
+    // Compaction summary is a `type: user` line with `isCompactSummary: true`
     const kind =
-      type === 'summary'
+      type === 'summary' || (type === 'user' && obj['isCompactSummary'] === true)
         ? 'summary'
         : (type as 'user' | 'assistant' | 'system')
 

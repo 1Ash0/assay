@@ -20,7 +20,7 @@ export function detectVersion(lines: unknown[]): string | undefined {
 export function detectLayout(
   hasSubagentDir: boolean,
   lines: unknown[],
-): 'subagent-files' | 'inline-sidechain' | 'unknown' {
+): 'subagent-files' | 'inline-sidechain' | 'main-only' | 'unknown' {
   if (hasSubagentDir) return 'subagent-files'
   for (const line of lines) {
     if (
@@ -32,5 +32,14 @@ export function detectLayout(
       return 'inline-sidechain'
     }
   }
-  return 'unknown'
+  // Has user/assistant events but no subagent markers — standard single-agent layout
+  const hasMainEvents = lines.some(
+    l =>
+      typeof l === 'object' &&
+      l !== null &&
+      ('type' in l) &&
+      ((l as Record<string, unknown>)['type'] === 'user' ||
+        (l as Record<string, unknown>)['type'] === 'assistant'),
+  )
+  return hasMainEvents ? 'main-only' : 'unknown'
 }
