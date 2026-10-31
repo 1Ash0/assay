@@ -37,6 +37,7 @@ export function deriveEntities(events: Event[]): DerivedEntities {
   // turnIndex counts deduplicated assistant messages only
   let turnIndex = 0
   const seenMsgIds = new Set<string>()
+  const seenToolIds = new Set<string>() // dedup tool_use across thinking-first duplicates
 
   for (const ev of events) {
     const obj = ev.raw
@@ -116,13 +117,21 @@ export function deriveEntities(events: Event[]): DerivedEntities {
     if (ev.kind === 'assistant' && !seenMsgIds.has(msgId)) {
       seenMsgIds.add(msgId)
       turnIndex++
+    }
 
+    // ToolCalls: collect from ALL occurrences of a message.id.
+    // Rationale: v2.1.299+ emits two lines per turn with the same message.id —
+    // first has thinking content only, second has tool_use blocks. Restricting to
+    // first-occurrence would silently drop all tool_uses for those sessions (B10).
+    // tool_use ids are globally unique (toolu_...) so collecting across occurrences
+    // is safe — seenToolIds guards against re-adding a tool_use already seen.
+    if (ev.kind === 'assistant') {
       const msg = typeof obj['message'] === 'object' && obj['message'] !== null
         ? (obj['message'] as Record<string, unknown>)
         : null
 
       if (msg) {
-        // ToolCalls from content array — first occurrence only (deduped by seenMsgIds)
+        // ToolCalls from content array — all occurrences, deduped by tool id
         const content = msg['content']
         if (Array.isArray(content)) {
           for (const block of content) {
@@ -133,6 +142,8 @@ export function deriveEntities(events: Event[]): DerivedEntities {
             ) {
               const b = block as Record<string, unknown>
               const toolId = typeof b['id'] === 'string' ? b['id'] : `tool:${ev.id}`
+              if (seenToolIds.has(toolId)) continue
+              seenToolIds.add(toolId)
               toolCalls.push({
                 evidence: [evOffset],
                 id: toolId,

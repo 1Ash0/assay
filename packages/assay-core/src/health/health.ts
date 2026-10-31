@@ -70,8 +70,11 @@ export function buildValidityCard(run: Run, findings: Finding[], overall: Metric
     totalCacheRead += req.usage.cacheReadTokens
   }
 
+  // totalContextTokens = input + cacheRead (actual context window usage per request, summed)
+  const totalContextTokens = totalInputTokens + totalCacheRead
+
   // cacheHitRate = cacheRead / (input + cacheRead); null when denominator is zero
-  const denom = totalInputTokens + totalCacheRead
+  const denom = totalContextTokens
   const cacheHitRate = denom > 0 ? totalCacheRead / denom : null
 
   // Build caveats from findings
@@ -105,6 +108,7 @@ export function buildValidityCard(run: Run, findings: Finding[], overall: Metric
     claimedTurns,
     verifiedUsageTurns,
     totalInputTokens,
+    totalContextTokens,
     totalOutputTokens,
     cacheHitRate,
     captureLevel: run.capture.level,

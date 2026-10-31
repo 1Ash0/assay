@@ -35,8 +35,12 @@ export interface ValidityCard {
   // Structural completeness (tool round-trips) is NOT implied; this is usage coverage only.
   verifiedUsageTurns: number
 
-  // Total deduplicated input tokens (from max-usage canonicalized LlmRequests).
+  // Non-cached input tokens (input_tokens field only; does NOT include cache_read).
+  // WARNING: this understates total context. Use totalContextTokens for context size.
   totalInputTokens: number
+
+  // Total context tokens = input + cacheRead. This is the actual context window usage.
+  totalContextTokens: number
 
   // Total deduplicated output tokens.
   totalOutputTokens: number
