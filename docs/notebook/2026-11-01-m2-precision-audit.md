@@ -130,13 +130,18 @@ These are **true positives**: a real timestamp reversal did occur in the file as
 
 ---
 
-## R1 — cross-channel characterisation (smoke test, 2026-10-31)
+## R1 — cross-channel comparison (completed 2026-11-01)
 
-Refer to `2026-10-31-r1-smoke-test.md` for the infrastructure result (L4 capture confirmed: JSONL + OTel + raw bodies).
+Refer to `2026-10-31-r1-smoke-test.md` for infrastructure (L4 capture confirmed) and `2026-11-01-r1-channel-comparison.md` for the full token comparison.
 
-**Disagreement status**: The smoke-test session was not imported into assay and no token comparison was performed. The OTel output file is local and outside the repo (Rule 8). A full R1 dual-capture import requires the OTel importer (not yet built).
+**Summary**: OTel output found at `C:\Users\<user>\otel-r1\otel-output.jsonl` (26 JSONL lines, 192 log records, 21 spans). Two sessions compared:
 
-**Deferred finding (characterised manually)**: The R1 setup doc notes that `message.usage.input_tokens` in the JSONL = non-cached tokens only, while OTel's `claude_code.token.usage` metric reports the same value. Neither source reports total context size as a single field — it must be computed as `input_tokens + cache_read_input_tokens`. This is a **channel agreement finding (R1-F1)**: JSONL and OTel agree on `input_tokens` but both understate total context size in their headline field. The `cacheHitRate ≈ 100%` seen in the real corpus confirms this — virtually all context is cache-served, making the raw `input_tokens` an unreliable proxy for session complexity.
+- **2b152411**: exact agreement on all fields (input, output, cache_read, cache_create). R1-H1 confirmed.
+- **93de073c**: 2/3 requests agree exactly. One haiku request (1342 input, 248 output) present in OTel but absent from JSONL.
+
+**R1-F1**: `input_tokens` in JSONL = non-cached only. Both JSONL and OTel agree on this value. Total context = `input + cache_read` (must be computed; neither channel provides it as a single field).
+
+**R1-F2 (new)**: Claude Code makes internal non-conversation API requests not captured in JSONL. OTel sees them. L1 JSONL therefore understates total API spend. Total cost accounting requires OTel (L3+).
 
 ---
 
