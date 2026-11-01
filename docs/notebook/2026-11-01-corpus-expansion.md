@@ -27,6 +27,7 @@ Note: `453b573b` was imported as main JSONL only (no subagents dir) to test D1 t
 | `scripted/pure-chat.jsonl` | Zero-tool path; test no-tool_use importer path | 9 | 1 (cost-state) | trustworthy, unknownRatio=0.09 |
 | `scripted/high-unknown-ratio.jsonl` | importerCoverage.unknownRatio warn path | 5 | 8 | 53% unknown → caveat fires |
 | `scripted/multi-compaction-precise.jsonl` | D4 precision path, 3 compactions | 24 | 1 | D4 fires on genuine orphan; NOT on UUID-exempted result |
+| `scripted/d1-subagent-absent.jsonl` | D1 trigger: agentId in main JSONL, no subagent file | 6 | 1 (cost-state) | D1 fires ✓, subagent=capture-incomplete, captureIntegrity=true |
 
 ---
 
@@ -45,7 +46,7 @@ Note: `453b573b` was imported as main JSONL only (no subagents dir) to test D1 t
 
 | Detector | Status | Session that triggered |
 |---|---|---|
-| D1 | **zero coverage** (see below) | — |
+| D1 | ✓ **scripted coverage** | sc-d1-subagent-absent |
 | D2 | ✓ real coverage | 2b152411, 93de073c, 37216832, d1-trigger (×many) |
 | D3 | not triggered (no chain breaks in new sessions) | — |
 | D4 | ✓ scripted coverage (genuine orphan) | sc-multi-comp |
@@ -61,19 +62,18 @@ Note: `453b573b` was imported as main JSONL only (no subagents dir) to test D1 t
 
 ---
 
-## D1 outcome — cannot trigger with v2.1.165
+## D1 outcome — scripted mock confirmed ✓
 
-**Expected:** import main JSONL of a multi-agent session without its subagents directory → D1 fires because main JSONL references absent subagents.
+**Trigger mechanism** (clarified after audit): D1 fires when a non-sidechain user/assistant event has an `agentId` field pointing to an absent subagent file. `isSidechain=true` lines are NOT needed — those are sidechain events that `derive.ts` skips entirely. The relevant events are main-conversation events that carry `agentId`, which is how Claude Code tags the tool_result wrapper when returning a subagent's output to the main context.
 
-**Actual:** D1 did not fire. `run.subagentIds.length = 0` and `run.subagents.length = 0`.
+**v2.1.165 attempt (d1-trigger):** failed because that version does not embed `agentId` on main-conversation events. The subagent transcript format at v2.1.165 places sidechain events (with `isSidechain=true`) directly into the main file, but the main-conversation events carry no `agentId` reference back. Importer correctly detects this as `main-only` layout with no agent entries.
 
-**Root cause:** `453b573b` is at version 2.1.165. At this version, the main JSONL does not embed `isSidechain=true` markers or `agentId` fields on user events. The subagent content format at v2.1.165 appears to be entirely self-contained in each session file — the main session file has no cross-references to subagent files. D1's trigger condition (`isSidechain=true` user events in main file referencing absent subagent files) requires v2.1.303+ format where the main transcript explicitly marks sidechain events.
+**Scripted mock `d1-subagent-absent.jsonl`:** adds a user event (non-sidechain, `isSidechain` absent) with `agentId: "d1mock-agent-aaaa-bbbb-cccc-000000000001"`. No subagent file provided. Result:
+- D1 fires: `warn`, `captureIntegrity: true`
+- `observability.subagent = capture-incomplete` (promoted from not-observed by captureIntegrity)
+- Overall verdict: `do-not-trust-for:subagent-token-totals` ✓
 
-**Resolution:** D1 trigger needs a v2.1.303+ multi-agent session imported as main-only. No qualifying session is available in the current real corpus. Options for M3:
-1. Capture a fresh multi-agent session at current version (v2.1.308+) and import main-only.
-2. Create a scripted mock with `isSidechain=true` markers to confirm the detector logic fires.
-
-The D1 scripted mock path is preferred to confirm detector logic before depending on a new capture session.
+**D1 detector logic confirmed correct.** Real-data trigger still needs a v2.1.303+ multi-agent session imported without its subagent file; that remains a corpus quality goal for M3 capture.
 
 ---
 

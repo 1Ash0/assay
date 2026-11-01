@@ -186,9 +186,17 @@ After corpus expansion (7 real + 3 scripted sessions added; see `2026-11-01-corp
 
 **sc-high-unknown (53% unknown):** `importerCoverage.unknownRatio` caveat fires correctly; no new Finding — high unknown ratio surfaces as a caveat, not a structural failure Finding. This is correct behavior at the current threshold.
 
-### Updated D1 status
+### Updated D1 status — scripted coverage confirmed ✓
 
-Second attempt to trigger D1 (different version: 2.1.165 vs first attempt 2.1.308). Same result. Confirmed: D1 trigger requires a v2.1.303+ session that contains `isSidechain=true` user events in the main transcript. Creating a scripted mock with this format is the next step for D1 coverage.
+D1 trigger mechanism clarified: the relevant field is `agentId` on **non-sidechain** main-conversation events, not `isSidechain=true` markers. `isSidechain=true` events are skipped by `derive.ts` entirely; they never create Agent entries. A user event in the main conversation with `agentId` set (the tool_result wrapper returning a subagent's output) is the trigger.
+
+Scripted mock `d1-subagent-absent.jsonl` (6 lines, v2.1.308):
+- User event with `agentId: "d1mock-agent-aaaa-bbbb-cccc-000000000001"`, no subagent file
+- D1 fires: severity=warn, `captureIntegrity=true`
+- `observability.subagent = capture-incomplete`
+- Overall: `do-not-trust-for:subagent-token-totals`
+
+D1 detector logic is **confirmed correct**. Real-data coverage still requires a v2.1.303+ multi-agent session imported without its subagent file.
 
 ### Updated version spread
 
