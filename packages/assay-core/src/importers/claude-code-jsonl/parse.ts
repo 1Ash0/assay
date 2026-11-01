@@ -17,6 +17,8 @@ export interface RawCostState {
   }>
   sourceLine: number
   sourceFile: string
+  byteStart: number
+  byteEnd: number
 }
 
 export interface ParsedFile {
@@ -93,7 +95,6 @@ export function parseJsonlFile(filePath: string): ParsedFile {
     if (typeof type !== 'string' || !KNOWN_TYPES.has(type)) {
       // Extract metadata from specific non-event types before filing as unknown
       if (type === 'cost-state') {
-        apiRequestCount  // satisfy linter; cost-state is not api-request
         const mu = obj['modelUsage']
         if (typeof mu === 'object' && mu !== null) {
           const modelUsage: RawCostState['modelUsage'] = {}
@@ -117,16 +118,20 @@ export function parseJsonlFile(filePath: string): ParsedFile {
             modelUsage,
             sourceLine: lineNum,
             sourceFile: filePath,
+            byteStart: lineStart,
+            byteEnd: lineEnd,
           })
         }
       } else if (type === 'api-request') {
         apiRequestCount++
       }
-      unknowns.push({
-        offset: makeOffset(filePath, lineNum, lineStart, lineEnd),
-        reason: `unknown-type:${String(type ?? 'missing')}`,
-        raw: lineText,
-      })
+      if (typeof type !== 'string' || !PARSED_METADATA_TYPES.has(type)) {
+        unknowns.push({
+          offset: makeOffset(filePath, lineNum, lineStart, lineEnd),
+          reason: `unknown-type:${String(type ?? 'missing')}`,
+          raw: lineText,
+        })
+      }
       lineNum++
       continue
     }

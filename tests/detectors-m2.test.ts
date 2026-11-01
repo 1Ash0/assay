@@ -2,8 +2,44 @@ import { resolve } from 'path'
 import { describe, expect, it } from 'vitest'
 import { importClaudeCodeDir, runHealth, buildValidityCard } from '../packages/assay-core/src/index.js'
 
+const COST_STATE = resolve('fixtures/scripted/cost-state.jsonl')
+
 const MINIMAL = resolve('fixtures/real/session-minimal.jsonl')
 const DETECTORS = resolve('fixtures/real/session-detectors.jsonl')
+
+// ── importerCoverage — double-count fix ──────────────────────────────────────
+
+describe('importerCoverage — cost-state double-count fix', () => {
+  it('cost-state lines are not counted in unknowns', () => {
+    const run = importClaudeCodeDir(COST_STATE)
+    expect(run.unknowns.length).toBe(0)
+    expect(run.costStates.length).toBe(1)
+  })
+
+  it('unknownRatio is 0 when only cost-state is the non-event line', () => {
+    const run = importClaudeCodeDir(COST_STATE)
+    const report = runHealth(run)
+    expect(report.validity.importerCoverage.unknownLines).toBe(0)
+    expect(report.validity.importerCoverage.unknownRatio).toBe(0)
+  })
+
+  it('cost-state evidence has real byte offsets (not 0/0)', () => {
+    const run = importClaudeCodeDir(COST_STATE)
+    const cs = run.costStates[0]!
+    expect(cs.evidence[0]!.byteStart).toBeGreaterThan(0)
+    expect(cs.evidence[0]!.byteEnd).toBeGreaterThan(cs.evidence[0]!.byteStart)
+  })
+
+  it('configurable truth label: scripted', () => {
+    const run = importClaudeCodeDir(COST_STATE, { truth: 'scripted' })
+    expect(run.truth).toBe('scripted')
+  })
+
+  it('truth defaults to real', () => {
+    const run = importClaudeCodeDir(COST_STATE)
+    expect(run.truth).toBe('real')
+  })
+})
 
 // ── D5 — context overflow ────────────────────────────────────────────────────
 

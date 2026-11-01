@@ -1,6 +1,6 @@
 import { existsSync, readdirSync } from 'fs'
 import { join } from 'path'
-import { ContentFlags, CostState, Run, Source } from '../../schema/index.js'
+import { ContentFlags, CostState, Run, Source, Truth } from '../../schema/index.js'
 import { deriveEntities } from './derive.js'
 import { ParsedFile, parseJsonlFile } from './parse.js'
 import { detectLayout, detectVersion } from './version.js'
@@ -8,6 +8,8 @@ import { detectLayout, detectVersion } from './version.js'
 export interface ImportOptions {
   // Which content was captured (caller must declare; default all false)
   contentFlags?: Partial<ContentFlags>
+  // Truth label for this run. Default 'real'. Use 'scripted' for synthetic fixtures.
+  truth?: Truth
 }
 
 // Import a Claude Code session directory or a single JSONL file.
@@ -68,7 +70,7 @@ export function importClaudeCodeDir(sessionPath: string, opts: ImportOptions = {
   // Multiple cost-state records may appear (incremental snapshots); keep all.
   const allCostStates: CostState[] = parsed.flatMap(p =>
     p.costStates.map(cs => ({
-      evidence: [{ file: cs.sourceFile, line: cs.sourceLine, byteStart: 0, byteEnd: 0 }],
+      evidence: [{ file: cs.sourceFile, line: cs.sourceLine, byteStart: cs.byteStart, byteEnd: cs.byteEnd }],
       totalCostUSD: cs.totalCostUSD,
       totalAPIDurationMs: cs.totalAPIDurationMs,
       hasUnknownModelCost: cs.hasUnknownModelCost,
@@ -119,7 +121,7 @@ export function importClaudeCodeDir(sessionPath: string, opts: ImportOptions = {
       truncated: false,
       version,
     },
-    truth: 'real',
+    truth: opts.truth ?? 'real',
     sources,
     events: allEvents,
     ...entities,
