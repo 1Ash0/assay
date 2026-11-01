@@ -58,6 +58,11 @@ Context: a count of 0 for compactions, subagents, or skills is ambiguous: it cou
 Decision: introduce `ObservabilityState = 'observed' | 'not-observed' | 'verified-absent'`. `not-observed` means the category was not seen but the capture level cannot rule it out. `verified-absent` requires independent evidence (e.g. a separate record type confirming no compaction happened). At L1, compaction/subagent/skill are `not-observed` when count=0, never `verified-absent`. The ValidityCard carries a per-category `observability` map with state, count, and a human-readable reason.
 Consequence: no false confidence for consumers. `verified-absent` is reserved for future L2/L3 signals.
 
+## ADR-016 · 2026-11-01 · accepted · capture-incomplete is a distinct observability state; captureIntegrity flag on findings
+Context: with `not-observed` and `verified-absent` we could express "we didn't see it" and "we confirmed it didn't happen." But there is a third situation: affirmative evidence that a capture failure occurred (chain break, source disagreement, missing transcript). That is stronger than `not-observed` but not as strong as `verified-absent`. Conflating these hides real problems.
+Decision: add `capture-incomplete` as a fourth `ObservabilityState`. Add `captureIntegrity?: boolean` to `Finding`. Detectors that are evidence of capture failure (D1, D3, D10, D-cost warn) set `captureIntegrity: true`. `buildValidityCard` promotes affected observability categories from `not-observed` to `capture-incomplete` when any `captureIntegrity` finding exists for that category. Add a `transcript` observability category driven by D3.
+Consequence: ValidityCard can now distinguish "we didn't see any compaction events" from "we have evidence that events are missing." The CAPTURE_MATRIX doc formalises what each source can theoretically expose, separate from what was actually captured.
+
 ## Proposed (not yet accepted)
 - ADR-P1 Interop with context-analyzer (decide after M0 source read).
 - ADR-P2 Upstream OTel proposal for compaction and skill entities (decide after M0 repo check).

@@ -7,6 +7,10 @@ export interface Finding {
   severity: Severity
   message: string
   evidence: Offset[]
+  // True when this finding is evidence of a capture failure rather than a
+  // structural or usage anomaly inside the transcript. Used to promote the
+  // relevant observability category from 'not-observed' to 'capture-incomplete'.
+  captureIntegrity?: boolean
 }
 
 // Verdict per metric family
@@ -24,12 +28,14 @@ export interface HealthReport {
   validity: ValidityCard
 }
 
-// Three-way observability state for an event category.
-// Distinguishes what we know from what we can only estimate from what is genuinely unknowable.
-//   verified-absent: independent evidence confirms no such event occurred
-//   not-observed:    no events found, but the capture level cannot confirm absence
-//   observed:        at least one event of this category was captured
-export type ObservabilityState = 'observed' | 'not-observed' | 'verified-absent'
+// Four-way observability state for an event category.
+//   observed:          at least one event of this category was captured
+//   not-observed:      no events found, but the capture level cannot confirm absence
+//   verified-absent:   independent evidence confirms no such event occurred
+//   capture-incomplete: affirmative evidence of capture failure for this category
+//                       (sequence gap, source disagreement, truncation, missing transcript)
+//                       — stronger than not-observed; weaker than verified-absent
+export type ObservabilityState = 'observed' | 'not-observed' | 'verified-absent' | 'capture-incomplete'
 
 // Per-category observability report.
 export interface CategoryObservability {

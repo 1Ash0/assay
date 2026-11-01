@@ -108,15 +108,46 @@ export function buildValidityCard(run: Run, findings: Finding[], overall: Metric
   const unknownRatio = totalLines > 0 ? unknownLines / totalLines : 0
   const importerCoverage = { totalLines, eventLines, unknownLines, unknownRatio }
 
-  // Per-category observability
+  // Build a set of detector IDs that fired with captureIntegrity=true, for category promotion
+  const captureIntegrityDetectors = new Set(
+    findings.filter(f => f.captureIntegrity).map(f => f.detectorId)
+  )
+
+  // Per-category observability — four states:
+  //   observed           = events found
+  //   not-observed       = none found; L1 cannot confirm absence
+  //   verified-absent    = independent evidence confirms absence (reserved for L2/L3)
+  //   capture-incomplete = affirmative evidence of capture failure (promoted from not-observed)
   const observability: Record<string, CategoryObservability> = {}
 
-  // Compaction: observed if we have any, not-observed otherwise (L1 cannot confirm absence)
+  // transcript: was the chain complete? D3 (chain break) = capture-incomplete
+  const d3Findings = findings.filter(f => f.detectorId === 'D3')
+  if (d3Findings.length > 0) {
+    observability['transcript'] = {
+      state: 'capture-incomplete',
+      count: d3Findings.length,
+      reason: `${d3Findings.length} chain break(s) found — parentUuid references absent events; possible GC truncation or capture loss`,
+    }
+  } else {
+    observability['transcript'] = {
+      state: 'observed',
+      count: run.events.length,
+      reason: `${run.events.length} event(s), chain intact (no D3 gaps found)`,
+    }
+  }
+
+  // Compaction: observed if we have any; capture-incomplete if D10 suggests api-request gaps
   if (run.compactions.length > 0) {
     observability['compaction'] = {
       state: 'observed',
       count: run.compactions.length,
       reason: `${run.compactions.length} compaction event(s) found in JSONL`,
+    }
+  } else if (captureIntegrityDetectors.has('D10')) {
+    observability['compaction'] = {
+      state: 'capture-incomplete',
+      count: 0,
+      reason: 'No compaction events observed; api-request count mismatch (D10) suggests capture gaps — cannot rule out missed compaction events',
     }
   } else {
     observability['compaction'] = {
@@ -126,8 +157,14 @@ export function buildValidityCard(run: Run, findings: Finding[], overall: Metric
     }
   }
 
-  // Subagent: observed if agents list has entries
-  if (run.agents.length > 0) {
+  // Subagent: observed if agents list has entries; capture-incomplete if D1 fired
+  if (run.agents.length > 0 && captureIntegrityDetectors.has('D1')) {
+    observability['subagent'] = {
+      state: 'capture-incomplete',
+      count: run.agents.length,
+      reason: `${run.agents.length} agent reference(s) found but ≥1 transcript file missing (D1) — subagent token data is incomplete`,
+    }
+  } else if (run.agents.length > 0) {
     observability['subagent'] = {
       state: 'observed',
       count: run.agents.length,
@@ -156,8 +193,14 @@ export function buildValidityCard(run: Run, findings: Finding[], overall: Metric
     }
   }
 
-  // costState: observed if cost-state records were captured
-  if (run.costStates.length > 0) {
+  // costState: capture-incomplete if D-cost warn fired (sources disagree), otherwise observed/not-observed
+  if (run.costStates.length > 0 && captureIntegrityDetectors.has('D-cost')) {
+    observability['costState'] = {
+      state: 'capture-incomplete',
+      count: run.costStates.length,
+      reason: `${run.costStates.length} cost-state record(s) found but token totals disagree with JSONL usage (D-cost) — one source is incomplete`,
+    }
+  } else if (run.costStates.length > 0) {
     observability['costState'] = {
       state: 'observed',
       count: run.costStates.length,
@@ -202,6 +245,13 @@ export function buildValidityCard(run: Run, findings: Finding[], overall: Metric
     caveats.push(`${d7.length} compaction(s) showed unusual token patterns — post-compaction counts may not reflect summarization`)
   if (d8.length > 0)
     caveats.push(`${d8.length} source file(s) contained conflicting sessionIds`)
+  // capture-integrity caveats: elevate from findings to ValidityCard text
+  const captureIncompleteCategories = Object.entries(observability)
+    .filter(([, v]) => v.state === 'capture-incomplete')
+    .map(([k]) => k)
+  if (captureIncompleteCategories.length > 0)
+    caveats.push(`Capture incomplete for: ${captureIncompleteCategories.join(', ')} — affirmative evidence of capture failure; these categories are not merely unobserved`)
+
   if (d10.length > 0)
     caveats.push(`api-request count mismatch: JSONL has ${run.rawApiRequestCount} api-request records vs ${run.llmRequests.length} LlmRequests — may indicate capture gaps or internal routing calls not reflected in conversation transcript`)
   if (dCost.length > 0)

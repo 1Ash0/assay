@@ -22,6 +22,8 @@ D1-D9 with validity cards; R1 dual capture report; R3 external corpus import (TR
 
 **M2 hardening (2026-11-01, post-close):** ADR-013/014/015. Added: `CostState` entity (cost-state records parsed from JSONL; D-cost cross-check detector); `summarizedTurnUuids` on Compaction for precise D4 exemption; D10 count-based api-request check; `ObservabilityState` three-way classification on ValidityCard; `usageCoverageRate`, `modelIdentificationRate`, `importerCoverage`, `observability`, `runtimeCostUSD` on ValidityCard. All 35 tests pass.
 
+**Capture-pipeline hardening (2026-11-01, post-close):** ADR-016. `ObservabilityState` extended to four states: added `capture-incomplete` for affirmative capture failure evidence. `captureIntegrity: boolean` flag on `Finding` — D1/D3/D10/D-cost warn set it. `buildValidityCard` promotes affected observability categories when `captureIntegrity` findings exist. Added `transcript` observability category (D3-driven). Created `docs/CAPTURE_MATRIX.md`: per-category × per-source capability matrix, verified gaps, open capture tests.
+
 ## M3 — Engine and views
 assay-stage renderer (instanced beads, LoD, GPU picking); Run Card (Health first); Constellation; Strata (official categories; compaction collapse; subagent columns); Replay Theatre; Run Diff stub; table and describe modes; local-only web app; phone check.
 **Exit:** every view driven by a core result field; evidence rail opens raw offsets; accessibility checks pass; informal 3-person comprehension check on Run Card; gate passed.

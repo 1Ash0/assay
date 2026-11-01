@@ -36,6 +36,7 @@ export function d1SubagentBlindSpot(run: Run): Finding[] {
         severity: 'warn',
         message: `Subagent ${agent.agentId} referenced but no transcript file found — token usage undercounted`,
         evidence: agent.evidence,
+        captureIntegrity: true,
       })
     }
   }
@@ -106,6 +107,7 @@ export function d3ChainBreak(run: Run): Finding[] {
       severity: 'warn',
       message: `Event ${ev.id} has parentId ${ev.parentId} which is not in this run — possible GC truncation`,
       evidence: [ev.offset],
+      captureIntegrity: true,
     })
   }
   return findings
@@ -457,6 +459,7 @@ export function d10ApiRequestCount(run: Run): Finding[] {
       severity: 'info',
       message: `api-request record count (${run.rawApiRequestCount}) differs from LlmRequest count (${run.llmRequests.length}) by ${diff} — possible capture gap or internal routing calls not reflected in conversation turns`,
       evidence: [],
+      captureIntegrity: true,
     })
   }
 
@@ -509,6 +512,7 @@ export function dCostStateCheck(run: Run): Finding[] {
       severity: 'warn',
       message: `Cost-state input token total (${csInputTokens}) vs JSONL input total (${jsonlInputTokens}) differ by ${inputDiff} (${Math.round(inputRelDiff * 100)}%) — cost-state may include internal routing calls not in the conversation transcript`,
       evidence: lastCs.evidence,
+      captureIntegrity: true,
     })
   }
 

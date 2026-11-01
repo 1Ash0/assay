@@ -11,6 +11,7 @@ Working name. A trace-trust toolkit for coding-agent runs: it answers **"can you
 - `docs/EVAL_DESIGN.md` the validity lab (R1-R5, scripted T1/T3), truth ladder, statistics, threats
 - `docs/LEARNING.md` the `learn/` gate protocol (replaces chat learning)
 - `docs/ROADMAP.md` milestones M0-M5 with exit criteria, scope fence
+- `docs/CAPTURE_MATRIX.md` per-category × per-source capability matrix; verified gaps; open capture tests
 - `docs/DESIGN.md` views, truth-ladder badges, 3D rules, accessibility
 - `docs/DECISIONS.md` ADRs (append-only)
 - `docs/CHANGES.md` what changed versus the earlier design, and why
