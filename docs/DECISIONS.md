@@ -43,6 +43,21 @@ Context: R1 cross-channel comparison (2026-11-01) found that Claude Code makes i
 Decision: document in ROADMAP that total API spend (including internal calls) requires L3+ capture. The ValidityCard caveat for L1 is sufficient for M2; an explicit "internal-requests gap" caveat is added to L1 runs. OTel importer remains an M3 target.
 Consequence: token totals on L1 runs carry a documented undercount caveat for cost (not for correctness of conversation-turn analysis).
 
+## ADR-013 · 2026-11-01 · accepted · cost-state records are extracted, not filed as unknowns
+Context: `cost-state` JSONL lines (v2.1.308+) contain the runtime's own accounting — `totalCostUSD`, `totalAPIDurationMs`, per-model breakdown with `inputTokens`, `outputTokens`, `thinkingTokens`, `cacheReadInputTokens`, `cacheCreationInputTokens`, `costUSD`. Previously filed as unknowns (raising the unknown ratio without benefit). The per-model breakdowns are the best independent cross-check available at L1.
+Decision: parse `cost-state` records into a typed `CostState` entity (stored in `run.costStates`). Keep the last record as the final cumulative accounting. Use it as input to the D-cost detector and expose `runtimeCostUSD` on the ValidityCard.
+Consequence: importer coverage ratio improves; D-cost cross-check is available on all v2.1.308+ sessions; `hasUnknownModelCost` flag surfaced.
+
+## ADR-014 · 2026-11-01 · accepted · D10 is count-based, not link-based
+Context: `api-request` records use a UUID namespace; `assistant.requestId` uses a `req_…` namespace. They never overlap. The originally proposed D10 (link `requestId` → `api-request.id`) cannot be implemented without a lookup table that doesn't exist in the JSONL.
+Decision: respecify D10 as a count-based check — compare `rawApiRequestCount` (api-request lines in source) against `llmRequests.length`. A diff >2 is reported as info. Small diffs (≤2) are noise tolerance for session-start/end bookkeeping records.
+Consequence: D10 gives a coverage signal without per-record linkage. Exact linkage is deferred until the UUID→requestId mapping is understood (Later).
+
+## ADR-015 · 2026-11-01 · accepted · Three-way observability state for event categories
+Context: a count of 0 for compactions, subagents, or skills is ambiguous: it could mean "none occurred" or "the capture level cannot tell." Reporting 0 as a fact misleads consumers into trusting a metric that may be undercount.
+Decision: introduce `ObservabilityState = 'observed' | 'not-observed' | 'verified-absent'`. `not-observed` means the category was not seen but the capture level cannot rule it out. `verified-absent` requires independent evidence (e.g. a separate record type confirming no compaction happened). At L1, compaction/subagent/skill are `not-observed` when count=0, never `verified-absent`. The ValidityCard carries a per-category `observability` map with state, count, and a human-readable reason.
+Consequence: no false confidence for consumers. `verified-absent` is reserved for future L2/L3 signals.
+
 ## Proposed (not yet accepted)
 - ADR-P1 Interop with context-analyzer (decide after M0 source read).
 - ADR-P2 Upstream OTel proposal for compaction and skill entities (decide after M0 repo check).

@@ -20,6 +20,8 @@ D1-D9 with validity cards; R1 dual capture report; R3 external corpus import (TR
 
 **Actual exit status (ADR-011):** D1 confirmed as logically correct but zero corpus coverage — no qualifying multi-agent session found in 9-session corpus across versions 2.1.165–2.1.308. Exit criterion waived; D1 confirmation moves to corpus quality task in M3 prep. All other criteria met: D2–D9 precision audited with CIs (notebook `2026-11-01-m2-precision-audit.md`); R1 characterised with two real disagreements (R1-F1: both channels understate total context; R1-F2: OTel captures internal haiku calls absent from JSONL — see `2026-11-01-r1-channel-comparison.md`); B10/B11 found and fixed; ValidityCard with totalContextTokens and cacheHitRate shipped.
 
+**M2 hardening (2026-11-01, post-close):** ADR-013/014/015. Added: `CostState` entity (cost-state records parsed from JSONL; D-cost cross-check detector); `summarizedTurnUuids` on Compaction for precise D4 exemption; D10 count-based api-request check; `ObservabilityState` three-way classification on ValidityCard; `usageCoverageRate`, `modelIdentificationRate`, `importerCoverage`, `observability`, `runtimeCostUSD` on ValidityCard. All 35 tests pass.
+
 ## M3 — Engine and views
 assay-stage renderer (instanced beads, LoD, GPU picking); Run Card (Health first); Constellation; Strata (official categories; compaction collapse; subagent columns); Replay Theatre; Run Diff stub; table and describe modes; local-only web app; phone check.
 **Exit:** every view driven by a core result field; evidence rail opens raw offsets; accessibility checks pass; informal 3-person comprehension check on Run Card; gate passed.

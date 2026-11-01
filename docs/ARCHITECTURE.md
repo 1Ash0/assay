@@ -24,11 +24,12 @@ Computed by the importer from what was actually present, never assumed.
 A run also records **content flags** (which of prompts/responses/tool details/tool content/raw bodies were on) and **truncation** (`CLAUDE_CODE_OTEL_CONTENT_MAX_LENGTH` and any transcript GC). Capture Level is a vector `{level, flags, truncated, version, layout}`, shown as a one-line badge plus detail.
 
 ## Canonical schema (zod, versioned; raw-offset-preserving)
-- `Run` {id, harness{tool,version,layout}, capture{...}, truth: real|real-perturbed|scripted|inferred, sources[]}
+- `Run` {id, harness{tool,version,layout}, capture{...}, truth: real|real-perturbed|scripted|inferred, sources[], costStates[], rawApiRequestCount}
 - `Source` {kind, path/uri, sha256, bytes, lines} — all derived data points back here
 - `Event` {id, source, offset{file,line,byteStart,byteEnd}, ts, kind, parentId?, agentId?, raw}
 - Entities derived from events, each with `evidence: Offset[]`:
-  `Message`, `ToolCall`/`ToolResult` (linked by id), `LlmRequest` (usage incl. cache read/create), `Agent`/`Subagent` (agentId, parentAgentId, type, file), `Skill` (activation, trigger, source), `Compaction` (trigger, pre/post tokens, summary offset), `McpCall` (server, tool), `Hook`, `Artifact` (path, first write, sha if available)
+  `Message`, `ToolCall`/`ToolResult` (linked by id), `LlmRequest` (usage incl. cache read/create), `Agent`/`Subagent` (agentId, parentAgentId, type, file), `Skill` (activation, trigger, source), `Compaction` (trigger, summaryOffset, summarizedTurnUuids? [v2.1.308+]), `McpCall` (server, tool), `Hook`, `Artifact` (path, first write, sha if available)
+- `CostState` {evidence, totalCostUSD, totalAPIDurationMs, hasUnknownModelCost, modelUsage{model→{inputTokens,outputTokens,thinkingTokens,cacheReadInputTokens,cacheCreationInputTokens,costUSD}}}: runtime cost-state records (v2.1.308+, parsed from JSONL; see ADR-013). Multiple may appear; last record is the final cumulative accounting.
 - `Unknown` {offset, reason}: any line/field the importer did not understand. Never dropped.
 Edges: `observed` (explicit id link) or `matched` (exact string equality of a literal from a prior result). No other edge kinds exist in the type system.
 
@@ -40,19 +41,24 @@ Edges: `observed` (explicit id link) or `matched` (exact string equality of a li
 - **openinference**, **langfuse export**: Later.
 
 ## Health (Trace Health report)
-Verdict `trustworthy | usable-with-caveats | do-not-trust-for:<metric list>` per metric family (tokens, structure, subagents, compaction, content). Each finding has a detector id, severity, evidence offsets, and a **validity card** (audited precision on real traces; scripted precision/recall reported separately and badged SYNTHETIC).
+Verdict `trustworthy | usable-with-caveats | do-not-trust-for:<metric list>` per metric family (tokens, structure, subagents). Each finding has a detector id, severity, evidence offsets, and a **validity card** (audited precision on real traces; scripted precision/recall reported separately and badged SYNTHETIC).
 
-### Detectors v0.1 (deterministic)
-- D1 **subagent blind spot**: subagent referenced (agentId/tool result) but file/events missing, or token totals only reachable via separate files.
-- D2 **usage double-count**: same `message.id` with usage on multiple assistant lines. Measured 2026-10-30: usage is identical across the lines of one id (one exception in 1 id), so dedupe by `message.id`; line choice does not matter. Summing every line inflates totals about 2.4-3.5x.
-- D3 **chain break**: `parentUuid` pointing to absent uuid (GC or truncation).
-- D4 **orphan tool_use / tool_result**. An unmatched `tool_use` at the very end of a file is `in-flight` (live session), not a defect. Observed: it resolved on re-read.
-- D5 **compaction anomaly**: boundary without summary, or `pre_tokens` inconsistent with preceding usage.
-- D6 **time anomaly**: implausible gaps and large reversals. Plain non-monotonic order is NOT a defect on its own: in real files 5-10% of parent-chain edges have the child earlier than the parent. Define against a per-version baseline, after the cause is found (M0).
-- D10 **dangling reference** (new, proposed): `requestRef` not resolving to an `api-request` id in the session directory (measured within-file: 100%, 94.6%, 100%, 30%, 5% resolve across sessions). Report as request-capture coverage; check cross-file resolution first.
-- D7 **unknown schema**: unknown line types/fields for the detected version.
-- D8 **cross-channel disagreement** (needs two channels): counts of tool calls, tokens, subagents, compactions differ beyond tolerance. First real case without OTel: transcript usage vs `cost-state` (see notebook 2026-10-30). `cost-state` is not ground truth.
-- D9 **content blindness**: content flags off or content truncated, so provenance and reconstruction are limited (reported as capability loss, not an error).
+**ValidityCard** (shown before any metric): claimedTurns, verifiedUsageTurns, usageCoverageRate, modelIdentificationRate, totalInputTokens, totalContextTokens, totalOutputTokens, cacheHitRate, importerCoverage{totalLines,eventLines,unknownLines,unknownRatio}, observability{compaction,subagent,skill,costState → state/count/reason}, runtimeCostUSD (from last cost-state), runtimeCostHasUnknownModel, captureLevel, overallHealth, caveats[].
+
+**ObservabilityState** (ADR-015): `observed` (events found) | `not-observed` (none found; L1 cannot confirm absence) | `verified-absent` (independent evidence). Reserved for future L2/L3 signals. At L1 all categories except those with events are `not-observed`.
+
+### Detectors (deterministic; each carries evidence offsets)
+- **D1** subagent blind spot: subagent referenced (agentId/tool result) but transcript file missing → token totals undercounted. Zero corpus hits yet (ADR-011); logic is correct.
+- **D2** usage double-count: same `message.id` on multiple raw assistant lines. Canonicalized to max-usage occurrence; summing all lines inflates ~2.4-3.5×.
+- **D3** chain break: `parentUuid` pointing to absent uuid (GC or truncation).
+- **D4** orphan tool_use/tool_result: two exemptions — in-flight (unmatched tool_use at end-of-file) and post-compaction (tool_result whose tool_use was summarized). Uses `summarizedTurnUuids` for precise exemption when available (v2.1.308+, ADR-015); falls back to line-number comparison otherwise.
+- **D5** context overflow: `inputTokens` exceeds the known model context limit. Unknown or synthetic model produces info-only; context limit table in detectors.ts.
+- **D6** usage disagreement: `inputTokens` disagree across raw duplicates (warn); `outputTokens` differ (info — streaming-partial expected). Max-usage record selected in both cases.
+- **D7** compaction token pattern: post-compaction `inputTokens` > pre-compaction (info; may indicate a large tool result rather than a failed compaction).
+- **D8** session ID conflict: one source file contains >1 distinct non-empty `sessionId`.
+- **D9** timestamp reversal: first backward timestamp transition per source file (info; equal timestamps allowed for streaming duplicates).
+- **D10** api-request count mismatch: `rawApiRequestCount` vs `llmRequests.length` diff >2 (info). Count-based only; ID namespaces differ (ADR-014). Zero on pre-v2.1.308 sessions.
+- **D-cost** cost-state cross-check: last cost-state `inputTokens` total vs JSONL usage total disagree >5% and >500 tokens (warn). Fires on v2.1.308+ sessions with cost-state records (ADR-013). Delta expected when runtime made internal routing calls not in the conversation transcript.
 
 ## Reconstruction (M4)
 Rebuild "what the model saw at request N" from L1/L2 data; score against L4 bodies where available (R2). Output a fidelity score per layer category (System, CLAUDE.md, Memory, Skills, MCP, Rules, You, Files, Output, Claude, Hooks) with explicit unknowns.

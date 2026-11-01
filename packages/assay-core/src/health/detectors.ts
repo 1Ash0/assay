@@ -115,12 +115,27 @@ export function d3ChainBreak(run: Run): Finding[] {
 // Two legitimate exemptions:
 //   in-flight: unmatched tool_use at end-of-file (session still running)
 //   post-compaction: tool_result whose tool_use was in the compacted portion
+//
+// When summarizedTurnUuids is present (v2.1.308+), we use the exact list of
+// compacted turn UUIDs to decide whether a tool_result's message is post-compaction.
+// Without it, we fall back to comparing line numbers against the compaction boundary.
 export function d4OrphanTool(run: Run): Finding[] {
   const findings: Finding[] = []
   const resultIds = new Set(run.toolResults.map(r => r.toolUseId))
   const callIds = new Set(run.toolCalls.map(c => c.id))
 
-  // Earliest line after which a compaction has occurred (tool_use may be gone)
+  // Build a set of message IDs that were explicitly compacted (v2.1.308+).
+  // If any compaction has summarizedTurnUuids, use it for precise matching.
+  const compactedMessageIds = new Set<string>()
+  let hasPreciseCompactionData = false
+  for (const comp of run.compactions) {
+    if (comp.summarizedTurnUuids && comp.summarizedTurnUuids.length > 0) {
+      for (const u of comp.summarizedTurnUuids) compactedMessageIds.add(u)
+      hasPreciseCompactionData = true
+    }
+  }
+
+  // Fallback: earliest compaction line (imprecise — used when UUID list unavailable)
   const postCompactionLine = run.compactions.length > 0
     ? Math.min(...run.compactions.map(c => c.summaryOffset?.line ?? Infinity))
     : Infinity
@@ -146,14 +161,20 @@ export function d4OrphanTool(run: Run): Finding[] {
   // tool_result with no matching tool_use
   for (const result of run.toolResults) {
     if (!result.toolUseId || callIds.has(result.toolUseId)) continue
-    const resultLine = result.evidence[0]?.line ?? 0
-    // If a compaction occurred before this result, the tool_use may have been
-    // in the compacted portion — not a defect
-    if (resultLine > postCompactionLine) continue
+
+    // Precise exemption: message was explicitly listed in summarizedTurnUuids
+    if (hasPreciseCompactionData && compactedMessageIds.has(result.messageId)) continue
+
+    // Fallback exemption: result is after the compaction line
+    if (!hasPreciseCompactionData) {
+      const resultLine = result.evidence[0]?.line ?? 0
+      if (resultLine > postCompactionLine) continue
+    }
+
     findings.push({
       detectorId: 'D4',
       severity: 'warn',
-      message: `tool_result references tool_use_id ${result.toolUseId} which has no corresponding tool_use`,
+      message: `tool_result references tool_use_id ${result.toolUseId} which has no corresponding tool_use${hasPreciseCompactionData ? ' (compacted turns excluded by UUID)' : ''}`,
       evidence: result.evidence,
     })
   }
@@ -412,6 +433,92 @@ export function d9TimestampReversal(run: Run): Finding[] {
       prevTs = ev.ts
       prevId = ev.id
     }
+  }
+
+  return findings
+}
+
+// D10 — api-request count vs LlmRequest count
+// The api-request ID namespace (UUID) is disjoint from assistant.requestId (req_…),
+// so D10 cannot link individual records. Instead it compares counts.
+// A large mismatch suggests either capture gaps or internal routing calls (e.g. for
+// OTel spans, tool-routing, or background requests) that never appear as conversation
+// turns. A small discrepancy (≤2) is noise tolerance for session-start/end bookkeeping.
+//
+// Why count-based and not link-based: see ADR-014.
+export function d10ApiRequestCount(run: Run): Finding[] {
+  const findings: Finding[] = []
+  if (run.rawApiRequestCount === 0) return findings // pre-v2.1.308 or no api-request records
+
+  const diff = Math.abs(run.rawApiRequestCount - run.llmRequests.length)
+  if (diff > 2) {
+    findings.push({
+      detectorId: 'D10',
+      severity: 'info',
+      message: `api-request record count (${run.rawApiRequestCount}) differs from LlmRequest count (${run.llmRequests.length}) by ${diff} — possible capture gap or internal routing calls not reflected in conversation turns`,
+      evidence: [],
+    })
+  }
+
+  return findings
+}
+
+// D-cost — runtime cost-state cross-check
+// Compares the runtime's own token accounting (cost-state totalCostUSD and per-model
+// token sums) against JSONL usage field totals. Meaningful disagreement indicates
+// one source is incomplete or covers a different scope.
+//
+// Scope limitation: cost-state covers ALL API calls the runtime made, including internal
+// ones. JSONL usage covers only conversation turns. At L1 with internal routing calls,
+// some delta is expected. Only report when the per-source token totals meaningfully diverge.
+//
+// Threshold: >5% relative difference in total input tokens (across all models in cost-state)
+// vs JSONL total input tokens, with a minimum 500-token absolute floor.
+export function dCostStateCheck(run: Run): Finding[] {
+  const findings: Finding[] = []
+  if (run.costStates.length === 0) return findings
+
+  // Use the last cost-state record — it's the cumulative final accounting.
+  const lastCs = run.costStates.at(-1)!
+
+  // Sum cost-state per-model totals
+  let csInputTokens = 0
+  let csOutputTokens = 0
+  for (const entry of Object.values(lastCs.modelUsage)) {
+    csInputTokens += entry.inputTokens + entry.cacheReadInputTokens + entry.cacheCreationInputTokens
+    csOutputTokens += entry.outputTokens
+  }
+
+  // JSONL totals (context tokens = input + cacheRead + cacheWrite)
+  let jsonlInputTokens = 0
+  let jsonlOutputTokens = 0
+  for (const req of run.llmRequests) {
+    jsonlInputTokens += req.usage.inputTokens + req.usage.cacheReadTokens + req.usage.cacheWriteTokens
+    jsonlOutputTokens += req.usage.outputTokens
+  }
+
+  if (csInputTokens === 0 && jsonlInputTokens === 0) return findings
+
+  const inputDiff = Math.abs(csInputTokens - jsonlInputTokens)
+  const inputDenom = Math.max(csInputTokens, jsonlInputTokens)
+  const inputRelDiff = inputDenom > 0 ? inputDiff / inputDenom : 0
+
+  if (inputDiff > 500 && inputRelDiff > 0.05) {
+    findings.push({
+      detectorId: 'D-cost',
+      severity: 'warn',
+      message: `Cost-state input token total (${csInputTokens}) vs JSONL input total (${jsonlInputTokens}) differ by ${inputDiff} (${Math.round(inputRelDiff * 100)}%) — cost-state may include internal routing calls not in the conversation transcript`,
+      evidence: lastCs.evidence,
+    })
+  }
+
+  if (lastCs.hasUnknownModelCost) {
+    findings.push({
+      detectorId: 'D-cost',
+      severity: 'info',
+      message: `Cost-state has hasUnknownModelCost=true — total cost includes at least one model that was not individually accounted`,
+      evidence: lastCs.evidence,
+    })
   }
 
   return findings

@@ -44,11 +44,15 @@ export function deriveEntities(events: Event[]): DerivedEntities {
     const evOffset = ev.offset
 
     if (ev.kind === 'summary') {
-      // Compaction boundary
+      // Compaction boundary — extract summarizedTurnPromptUuids if present (v2.1.308+)
+      const summarizedUuids = obj['summarizedTurnPromptUuids']
       compactions.push({
         evidence: [evOffset],
         turnIndex,
         summaryOffset: evOffset,
+        summarizedTurnUuids: Array.isArray(summarizedUuids)
+          ? summarizedUuids.filter((u): u is string => typeof u === 'string')
+          : undefined,
       })
       continue
     }

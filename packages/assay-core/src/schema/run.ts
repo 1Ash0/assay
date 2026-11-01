@@ -4,6 +4,7 @@ import { EventSchema, UnknownLineSchema } from './event.js'
 import {
   AgentSchema,
   CompactionSchema,
+  CostStateSchema,
   EdgeSchema,
   LlmRequestSchema,
   MessageSchema,
@@ -51,6 +52,15 @@ export const RunSchema = z.object({
 
   // Lines the importer did not understand — never dropped
   unknowns: z.array(UnknownLineSchema),
+
+  // Cost-state records from the runtime's own accounting (v2.1.308+, L1).
+  // Independent cross-check against LlmRequest token sums. May be empty.
+  costStates: z.array(CostStateSchema),
+
+  // Count of api-request type lines found in source files.
+  // Used by D10 to check whether captured API-request records roughly match LlmRequests.
+  // api-request IDs use a different namespace from assistant.requestId; linkage is not possible.
+  rawApiRequestCount: z.number().int().nonnegative(),
 })
 
 export type Run = z.infer<typeof RunSchema>

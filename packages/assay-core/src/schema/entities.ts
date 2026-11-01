@@ -69,9 +69,11 @@ export const CompactionSchema = z.object({
   ...WithEvidence,
   // turn index where the compaction summary appeared
   turnIndex: z.number().int().nonnegative(),
-  preTokens: z.number().int().nonnegative().optional(),
-  postTokens: z.number().int().nonnegative().optional(),
   summaryOffset: OffsetSchema.optional(),
+  // uuids of the turns that were compacted, when the format exposes them (v2.1.308+)
+  summarizedTurnUuids: z.array(z.string()).optional(),
+  // preTokens/postTokens: the JSONL format does not emit these fields; they are always
+  // undefined at L1. D7 infers compaction impact from surrounding LlmRequests instead.
 })
 
 export type Compaction = z.infer<typeof CompactionSchema>
@@ -84,6 +86,28 @@ export const SkillSchema = z.object({
 })
 
 export type Skill = z.infer<typeof SkillSchema>
+
+// Per-model usage breakdown from cost-state records (v2.1.308+).
+// This is the runtime's own accounting — an independent check against LlmRequest sums.
+export const ModelUsageEntrySchema = z.object({
+  inputTokens: z.number().int().nonnegative(),
+  outputTokens: z.number().int().nonnegative(),
+  thinkingTokens: z.number().int().nonnegative(),
+  cacheReadInputTokens: z.number().int().nonnegative(),
+  cacheCreationInputTokens: z.number().int().nonnegative(),
+  costUSD: z.number().nonnegative(),
+})
+export type ModelUsageEntry = z.infer<typeof ModelUsageEntrySchema>
+
+export const CostStateSchema = z.object({
+  ...WithEvidence,
+  totalCostUSD: z.number().nonnegative(),
+  totalAPIDurationMs: z.number().int().nonnegative(),
+  hasUnknownModelCost: z.boolean(),
+  // model → usage breakdown; keys are model id strings
+  modelUsage: z.record(z.string(), ModelUsageEntrySchema),
+})
+export type CostState = z.infer<typeof CostStateSchema>
 
 // Edge kinds: only these two exist
 export const EdgeKindSchema = z.enum(['observed', 'matched'])

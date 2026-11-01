@@ -1,6 +1,6 @@
 import { existsSync, readdirSync } from 'fs'
 import { join } from 'path'
-import { ContentFlags, Run, Source } from '../../schema/index.js'
+import { ContentFlags, CostState, Run, Source } from '../../schema/index.js'
 import { deriveEntities } from './derive.js'
 import { ParsedFile, parseJsonlFile } from './parse.js'
 import { detectLayout, detectVersion } from './version.js'
@@ -62,6 +62,19 @@ export function importClaudeCodeDir(sessionPath: string, opts: ImportOptions = {
   const parsed: ParsedFile[] = allFiles.map(parseJsonlFile)
   const allEvents = parsed.flatMap(p => p.events)
   const allUnknowns = parsed.flatMap(p => p.unknowns)
+  const rawApiRequestCount = parsed.reduce((s, p) => s + p.apiRequestCount, 0)
+
+  // Collect cost-state records — convert from raw to schema type.
+  // Multiple cost-state records may appear (incremental snapshots); keep all.
+  const allCostStates: CostState[] = parsed.flatMap(p =>
+    p.costStates.map(cs => ({
+      evidence: [{ file: cs.sourceFile, line: cs.sourceLine, byteStart: 0, byteEnd: 0 }],
+      totalCostUSD: cs.totalCostUSD,
+      totalAPIDurationMs: cs.totalAPIDurationMs,
+      hasUnknownModelCost: cs.hasUnknownModelCost,
+      modelUsage: cs.modelUsage,
+    }))
+  )
 
   // Detect version and layout from main file lines
   const mainParsed = parsed[0]
@@ -111,5 +124,7 @@ export function importClaudeCodeDir(sessionPath: string, opts: ImportOptions = {
     events: allEvents,
     ...entities,
     unknowns: allUnknowns,
+    costStates: allCostStates,
+    rawApiRequestCount,
   }
 }
