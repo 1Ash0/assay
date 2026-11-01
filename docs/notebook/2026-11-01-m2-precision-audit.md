@@ -161,3 +161,35 @@ Refer to `2026-10-31-r1-smoke-test.md` for infrastructure (L4 capture confirmed)
 - Versions 2.1.165 and 2.1.299–2.1.308 only. D5 and D1 untested on newer versions.
 - D4 precision is 0% due to B10, not because the detector logic is wrong.
 - D7 useful branch (post > pre) is unvalidated — no real post > pre compaction seen.
+
+---
+
+## R4 follow-up — corpus expansion pass (2026-11-01)
+
+After corpus expansion (7 real + 3 scripted sessions added; see `2026-11-01-corpus-expansion.md`), updated tally:
+
+| Detector | Real corpus firings (new) | Scripted corpus firings | Notes |
+|---|---|---|---|
+| D1 | 0 | 0 | v2.1.165 session lacks isSidechain markers; trigger still fails |
+| D2 | +548 (d1-trigger ×many) | 0 | Real coverage confirmed across 6/7 new real sessions |
+| D4 | 0 | 1 (sc-multi-comp) | Genuine orphan (toolu_mc_pre) fires; UUID-exempted orphan silent ✓ |
+| D5 | +3 (6973b17c ×1, d1-trigger ×2) | 0 | Real overflow info in 2 more sessions |
+| D7 | +9 (d1-trigger) | 0 | All "no preceding LlmRequest" branch as before |
+| D9 | +1 (d1-trigger) | 0 | Real timestamp reversal confirmed |
+| D-cost | +1 (d1-trigger, captureIntegrity=true) | +1 (sc-multi-comp) | First real D-cost firing: 37% token divergence on v2.1.165 session |
+
+### New findings
+
+**D-cost real coverage (d1-trigger):** cost-state input total = 124,800; JSONL input sum = 196,800; divergence = 37%. This is larger than the 5% threshold and >500 token absolute gap, so D-cost fires at warn with `captureIntegrity=true`. Likely cause: v2.1.165 has 53% unknown-ratio lines — many actual usage events are in unrecognized line types, so the JSONL sum understates real usage. The cost-state record (which is the runtime's own accounting) sees the true total. This is an accurate detection.
+
+**D4 precision (scripted):** sc-multi-comp has 3 compactions. Compaction 3 has explicit `summarizedTurnPromptUuids`. A tool_result that references `toolu_mc_000` (a tool_use defined before compaction 3 and explicitly in the UUID list) is correctly NOT flagged. A tool_result that references `toolu_mc_pre` (which was never defined anywhere) IS correctly flagged. D4 precision path verified.
+
+**sc-high-unknown (53% unknown):** `importerCoverage.unknownRatio` caveat fires correctly; no new Finding — high unknown ratio surfaces as a caveat, not a structural failure Finding. This is correct behavior at the current threshold.
+
+### Updated D1 status
+
+Second attempt to trigger D1 (different version: 2.1.165 vs first attempt 2.1.308). Same result. Confirmed: D1 trigger requires a v2.1.303+ session that contains `isSidechain=true` user events in the main transcript. Creating a scripted mock with this format is the next step for D1 coverage.
+
+### Updated version spread
+
+Now covers 2.1.165, 2.1.177, 2.1.308, 2.1.309. D2 fires correctly on all new versions. D-cost only available on 2.1.308+ (cost-state records).
