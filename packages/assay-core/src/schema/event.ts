@@ -32,6 +32,8 @@ export const UnknownLineSchema = z.object({
   offset: OffsetSchema,
   reason: z.string(),
   raw: z.string(),                    // original text line
+  // Known record type with no usage telemetry (importer catalogue, ADR-022).
+  catalogued: z.boolean().optional(),
 })
 
 export type UnknownLine = z.infer<typeof UnknownLineSchema>

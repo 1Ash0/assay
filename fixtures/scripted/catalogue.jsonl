@@ -1,0 +1,5 @@
+{"type":"user","version":"2.1.308","sessionId":"sc-catalogue-0001","uuid":"ct-u1","parentUuid":null,"timestamp":"2026-10-15T12:00:00.000Z","message":{"role":"user","content":[{"type":"text","text":"Hi."}]}}
+{"type":"attachment","sessionId":"sc-catalogue-0001","uuid":"ct-at1","attachment":{"type":"file"}}
+{"type":"queue-operation","sessionId":"sc-catalogue-0001","operation":"enqueue"}
+{"type":"assistant","version":"2.1.308","sessionId":"sc-catalogue-0001","uuid":"ct-a1","parentUuid":"ct-u1","timestamp":"2026-10-15T12:00:02.000Z","message":{"role":"assistant","id":"msg_ct_a1","model":"claude-sonnet-4-6","content":[{"type":"text","text":"Hello."}],"usage":{"input_tokens":40,"output_tokens":2,"cache_read_input_tokens":0,"cache_creation_input_tokens":0}}}
+{"type":"atis-latch","sessionId":"sc-catalogue-0001","state":"on"}

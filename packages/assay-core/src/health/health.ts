@@ -12,7 +12,7 @@ import {
   d10ApiRequestCount,
   dCostStateCheck,
 } from './detectors.js'
-import { CategoryObservability, Finding, HealthReport, MetricVerdict, ValidityCard } from './types.js'
+import { CategoryObservability, Finding, FinenessRate, HealthReport, MetricVerdict, ValidityCard } from './types.js'
 
 export function runHealth(run: Run): HealthReport {
   const findings: Finding[] = [
@@ -106,7 +106,16 @@ export function buildValidityCard(run: Run, findings: Finding[], overall: Metric
   const unknownLines = run.unknowns.length
   const totalLines = eventLines + unknownLines
   const unknownRatio = totalLines > 0 ? unknownLines / totalLines : 0
-  const importerCoverage = { totalLines, eventLines, unknownLines, unknownRatio }
+  const cataloguedLines = run.unknowns.filter(u => u.catalogued).length
+  const unparsedTelemetryRatio = totalLines > 0 ? (unknownLines - cataloguedLines) / totalLines : 0
+  const importerCoverage = { totalLines, eventLines, unknownLines, unknownRatio, cataloguedLines, unparsedTelemetryRatio }
+
+  const inputTokenRange = inputTokenRangeOf(run, totalInputTokens)
+  const fineness = finenessOf({
+    'usage coverage': usageCoverageRate,
+    'parsed telemetry': totalLines > 0 ? 1 - unparsedTelemetryRatio : null,
+    'model identification': modelIdentificationRate,
+  })
 
   // Build a set of detector IDs that fired with captureIntegrity=true, for category promotion
   const captureIntegrityDetectors = new Set(
@@ -275,6 +284,8 @@ export function buildValidityCard(run: Run, findings: Finding[], overall: Metric
     totalOutputTokens,
     cacheHitRate,
     importerCoverage,
+    inputTokenRange,
+    fineness,
     observability,
     runtimeCostUSD,
     runtimeCostHasUnknownModel,
@@ -287,6 +298,8 @@ export function buildValidityCard(run: Run, findings: Finding[], overall: Metric
 function tokensVerdict(findings: Finding[]): MetricVerdict {
   const d2 = findings.filter(f => f.detectorId === 'D2')
   if (d2.length > 0) return 'usable-with-caveats'
+  // ADR-021: copies that disagree mean the kept total may be forged or stale.
+  if (findings.some(f => f.detectorId === 'D6' && f.severity === 'warn')) return 'usable-with-caveats'
   return 'trustworthy'
 }
 
@@ -321,4 +334,37 @@ function deriveOverall(
     return 'usable-with-caveats'
   }
   return 'trustworthy'
+}
+
+// ADR-021. The importer keeps the largest copy of each message (max-usage), so
+// the reported total is the top of the range; the bottom swaps in the smallest
+// copy wherever copies disagree.
+function inputTokenRangeOf(run: Run, reported: number): { min: number; max: number } {
+  const copies = new Map<string, number[]>()
+  for (const ev of run.events) {
+    if (ev.kind !== 'assistant') continue
+    const msg = (ev.raw as Record<string, unknown>)['message'] as Record<string, unknown> | undefined
+    const usage = msg?.['usage'] as Record<string, unknown> | undefined
+    if (!msg || !usage || typeof usage['input_tokens'] !== 'number') continue
+    const id = typeof msg['id'] === 'string' ? msg['id'] : ev.id
+    const arr = copies.get(id) ?? []
+    arr.push(usage['input_tokens'])
+    copies.set(id, arr)
+  }
+  let gap = 0
+  for (const req of run.llmRequests) {
+    const arr = copies.get(req.messageId)
+    if (arr && arr.length > 1) gap += req.usage.inputTokens - Math.min(...arr)
+  }
+  return { min: reported - gap, max: reported }
+}
+
+function finenessOf(rates: Record<FinenessRate, number | null>): ValidityCard['fineness'] {
+  let bound: FinenessRate | null = null
+  for (const k of Object.keys(rates) as FinenessRate[]) {
+    const r = rates[k]
+    if (r !== null && (bound === null || r < (rates[bound] as number))) bound = k
+  }
+  const value = bound === null ? null : Math.floor(1000 * (rates[bound] as number))
+  return { value, bound, rates }
 }

@@ -2,6 +2,7 @@ import { createHash } from 'crypto'
 import { readFileSync } from 'fs'
 import { Event, UnknownLine } from '../../schema/index.js'
 import { Offset } from '../../schema/offset.js'
+import { SET_ASIDE_TYPES } from './catalogue.js'
 
 export interface RawCostState {
   totalCostUSD: number
@@ -130,6 +131,7 @@ export function parseJsonlFile(filePath: string): ParsedFile {
           offset: makeOffset(filePath, lineNum, lineStart, lineEnd),
           reason: `unknown-type:${String(type ?? 'missing')}`,
           raw: lineText,
+          ...(typeof type === 'string' && SET_ASIDE_TYPES.has(type) ? { catalogued: true } : {}),
         })
       }
       lineNum++

@@ -1,5 +1,7 @@
 import { Offset } from '../schema/offset.js'
 
+export type FinenessRate = 'usage coverage' | 'parsed telemetry' | 'model identification'
+
 export type Severity = 'info' | 'warn' | 'error'
 
 export interface Finding {
@@ -84,6 +86,23 @@ export interface ValidityCard {
     eventLines: number
     unknownLines: number
     unknownRatio: number
+    // Unknown lines whose type is in the importer catalogue (no usage telemetry).
+    cataloguedLines: number
+    // (unknown - catalogued) / totalLines: telemetry-bearing lines we could not parse.
+    unparsedTelemetryRatio: number
+  }
+
+  // Total non-cached input tokens as a range (ADR-021). When D6 finds copies of
+  // a message that disagree on inputTokens, min uses the smallest copy and max
+  // the largest (the importer's choice). A point total only when min === max.
+  inputTokenRange: { min: number; max: number }
+
+  // Hallmark fineness (ADR-022): floor(1000 x the lowest of three rates),
+  // marked to the lowest standard. `bound` names the rate that set it.
+  fineness: {
+    value: number | null
+    bound: FinenessRate | null
+    rates: Record<FinenessRate, number | null>
   }
 
   // Per-category observability — distinguishes "not seen" from "confirmed absent".
