@@ -42,6 +42,10 @@ for (const f of files) {
     for (const [re, what] of CONTENT) for (const m of line.matchAll(re)) hits.push(`${f}:${i + 1}: ${what}: ${m[0].slice(0, 24)}${m[0].length > 24 ? '…' : ''}`)
   })
 }
+// Commit metadata is public too: every author and committer email must be a
+// no-reply address (set `git config user.email <id>@users.noreply.github.com`).
+const emails = new Set(execSync('git log --format=%ae%n%ce', { encoding: 'utf8' }).split('\n').filter(Boolean))
+for (const e of emails) if (!/@users\.noreply\.github\.com$|^noreply@anthropic\.com$/.test(e)) hits.push(`commit metadata: email ${e.replace(/^(.{2}).*(@.*)$/, '$1…$2')} is not a no-reply address`)
 for (const h of hits.slice(0, 40)) console.log(h)
 console.log(hits.length ? `public-check: ${hits.length} problem(s) in ${files.length} tracked files` : `public-check: ${files.length} tracked files clean`)
 process.exit(hits.length ? 1 : 0)
