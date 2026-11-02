@@ -18,6 +18,12 @@ export const RequestTailSchema = z.object({
   from: z.array(OffsetSchema).optional(),
 })
 
+export const PartSchema = z.object({
+  category: z.string(),
+  chars: z.number().int().nonnegative(),
+  blocks: z.number().int().nonnegative(),
+})
+
 // sealed: the rebuilt body hashes to requestDigest (exact, byte for byte).
 // broken: every part is present but the digest does not match; something in
 //   the record or our rebuild is wrong, and that is a finding, not noise.
@@ -47,6 +53,11 @@ export const RequestRecordSchema = z.object({
   // without request records could reach. R2's primary metric (ADR-031).
   sealFromLines: z.enum(['sealed', 'broken', 'unresolved', 'no-shape']),
   seal: SealSchema,
+  // Context composition by category (ADR-032), only when sealed: characters and
+  // blocks per category for the whole body, and for the messages this request
+  // added. Tokens are attributed later, from usage deltas.
+  composition: z.array(PartSchema).nullable(),
+  tailComposition: z.array(PartSchema).nullable(),
 })
 
 export const RequestRecordsSchema = z.object({

@@ -1,3 +1,4 @@
+import { compose, messageParts, Part } from '../../reconstruct/categories.js'
 import { Candidate, candidates, Line } from '../../reconstruct/rebuild.js'
 import { Event, Offset, RequestRecord, RequestRecords, Seal, UnknownLine } from '../../schema/index.js'
 import { sha256Hex } from './sha256.js'
@@ -126,6 +127,11 @@ export function readRequestRecords(unknowns: UnknownLine[], events: Event[] = []
     const seal = sealOf(chain)
     const sealFromBlobs = sealOf(chain.map(m => (m && m.source === 'blob' ? m : null)))
     const sealFromLines = sealOf(lineChain)
+    // Categories only for a request proven exact (ADR-032): the whole body, and
+    // the part this request added (its tail), for delta token attribution.
+    const msgs = chain.map(m => m?.message as Record<string, Json>)
+    const composition = seal === 'sealed' && shape ? compose(shape['system'], shape['tools'], msgs) : null
+    const tailComposition = seal === 'sealed' ? sumParts(messageParts(msgs.slice(keep), toolNamesOfAll(msgs))) : null
 
     const ts = typeof obj['timestamp'] === 'string' ? Date.parse(obj['timestamp']) : NaN
     records.push({
@@ -149,7 +155,27 @@ export function readRequestRecords(unknowns: UnknownLine[], events: Event[] = []
       seal,
       sealFromBlobs,
       sealFromLines,
+      composition,
+      tailComposition,
     })
   }
   return { records, blobs: blobCount, blobsFailed, shapes: shapeCount, shapesFailed }
+}
+
+function sumParts(parts: Part[]): Part[] {
+  const acc = new Map<string, Part>()
+  for (const p of parts) {
+    const q = acc.get(p.category) ?? { category: p.category, chars: 0, blocks: 0 }
+    q.chars += p.chars; q.blocks += p.blocks; acc.set(p.category, q)
+  }
+  return [...acc.values()]
+}
+
+function toolNamesOfAll(messages: Record<string, Json>[]): Map<string, string> {
+  const names = new Map<string, string>()
+  for (const m of messages) {
+    if (m['role'] !== 'assistant' || !Array.isArray(m['content'])) continue
+    for (const b of m['content'] as Record<string, Json>[]) if (b['type'] === 'tool_use') names.set(String(b['id']), String(b['name']))
+  }
+  return names
 }

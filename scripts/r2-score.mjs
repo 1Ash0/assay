@@ -7,6 +7,7 @@ import { execSync } from 'node:child_process'
 import { readdirSync, writeFileSync } from 'node:fs'
 import { join } from 'node:path'
 import { importClaudeCodeDir } from '../packages/assay-core/dist/index.js'
+import { attributeTokens } from '../packages/assay-core/dist/reconstruct/tokens.js'
 
 const DEV = '2b152411 3620a96a c99e5c98 ef76e3fc 2825791a f6c8e47e'.split(' ')
 const HELD = '3ff3c7b6 48ad08c2 435395c9 4a153124 ef28c299 93de073c 2f1182fe c3170ecf 2ac7ce78 334cd181 17f6f5b7 6973b17c d013da8e c438a9b3'.split(' ')
@@ -26,7 +27,8 @@ walk('corpus/frozen')
 function score(id) {
   const path = files.get(id)
   if (!path) throw new Error(`session ${id} not in corpus`)
-  const q = importClaudeCodeDir(path).requests
+  const run = importClaudeCodeDir(path)
+  const q = run.requests
   const recs = q?.records ?? []
   const n = recs.length
   const count = k => recs.filter(r => r[k] === 'sealed').length
@@ -41,6 +43,23 @@ function score(id) {
     rateBlobs: n ? count('sealFromBlobs') / n : null,
     rateCombined: n ? count('seal') / n : null,
     exploratory: { distinctMessages: named.size },
+    // Secondary (preregistered), added after the primary was scored; same frozen rebuild.
+    secondary: secondaryOf(recs, attributeTokens(run)),
+  }
+}
+
+function secondaryOf(recs, tokens) {
+  // Uncategorised share of characters, over every sealed request's body.
+  let chars = 0, un = 0
+  const per = {}
+  for (const r of recs) for (const p of r.composition ?? []) { chars += p.chars; per[p.category] = (per[p.category] ?? 0) + p.chars; if (p.category === 'uncategorised') un += p.chars }
+  // Share of input tokens whose amount is measured by a usage delta.
+  const tot = tokens.reduce((s, t) => s + t.total, 0), meas = tokens.reduce((s, t) => s + t.deltaMeasured, 0)
+  return {
+    uncategorisedShare: chars ? un / chars : null,
+    categoryCharShare: chars ? Object.fromEntries(Object.entries(per).map(([k, v]) => [k, v / chars])) : null,
+    deltaMeasuredTokenShare: tot ? meas / tot : null,
+    requestsWithTokens: tokens.length,
   }
 }
 
@@ -66,6 +85,8 @@ function summarise(rows) {
     pooled_combined: pooled('combinedSealed'),
     blobsOnly: meanCI(scored.map(r => r.rateBlobs)),
     broken: scored.reduce((s, r) => s + r.broken, 0),
+    secondary_uncategorisedShare: meanCI(scored.filter(r => r.secondary.uncategorisedShare !== null).map(r => r.secondary.uncategorisedShare)),
+    secondary_deltaMeasuredTokenShare: meanCI(scored.filter(r => r.secondary.deltaMeasuredTokenShare !== null).map(r => r.secondary.deltaMeasuredTokenShare)),
   }
 }
 

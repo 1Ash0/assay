@@ -1,15 +1,17 @@
 import { HealthReport } from '../health/types.js'
 import { Run } from '../schema/index.js'
 import { basename } from './redact.js'
+import { NOT_SEPARABLE } from '../reconstruct/categories.js'
+import { attributeTokens, CategoryTokens } from '../reconstruct/tokens.js'
 
 // The spine (M3_PLAN §5): one step per LlmRequest in transcript order. Traverse,
 // Replay and Run Diff are all readings of it, so a selected step carries
 // across views. Times are joined from the event at each evidence line; tool
 // latency is observed (result ts − call ts), never estimated.
 //
-// `context` and `provenance` are the M4 slots: reconstruction (what the model
-// had in context at this step, R2) and exact-match provenance. They are null
-// until M4 fills them, and the site draws them as "not reconstructed".
+// `context` and `provenance` are the M4 slots. `context` is filled for steps
+// whose request record is sealed (ADR-032) and null otherwise, which the site
+// draws as "not reconstructed". `provenance` is filled by P4.
 
 export interface SpineTool {
   name: string
@@ -36,11 +38,24 @@ export interface SpineStep {
   usage: [number, number, number, number] // input, cache read, cache write, output
   tools: SpineTool[]
   findings: string[] // detector ids anchored on this step's line
-  context: null
+  // What the model had at this step (ADR-032): only when the step's request
+  // record is sealed. Tokens per category; `deltaMeasured` of `total` are
+  // measured by usage deltas, the rest split by characters (inferred).
+  context: StepContext | null
   provenance: null
 }
 
+export interface StepContext {
+  recordLine: number
+  total: number
+  deltaMeasured: number
+  parts: CategoryTokens[]
+  notSeparable: Record<string, string>
+}
+
 export function buildSpine(run: Run, report: HealthReport) {
+  const tokensByMessage = new Map(attributeTokens(run).filter(t => t.messageId).map(t => [t.messageId!, t]))
+  const recordLine = new Map((run.requests?.records ?? []).map(r => [r.id, r.offset.line]))
   const tsByLine = new Map<string, number>()
   const agentByLine = new Map<string, string>()
   const key = (file: string, line: number) => `${file}\u0000${line}`
@@ -98,7 +113,14 @@ export function buildSpine(run: Run, report: HealthReport) {
       usage: [q.usage.inputTokens, q.usage.cacheReadTokens, q.usage.cacheWriteTokens, q.usage.outputTokens],
       tools: (toolsByMsg.get(q.messageId) ?? []).sort((a, b) => a.line - b.line),
       findings: [...(findingLines.get(k) ?? [])].sort(),
-      context: null,
+      context: (() => {
+        const t = tokensByMessage.get(q.messageId)
+        if (!t) return null
+        return {
+          recordLine: recordLine.get(t.recordId) ?? 0, total: t.total, deltaMeasured: t.deltaMeasured,
+          parts: t.parts, notSeparable: NOT_SEPARABLE as Record<string, string>,
+        }
+      })(),
       provenance: null,
     }
   })

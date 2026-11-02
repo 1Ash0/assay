@@ -1071,6 +1071,70 @@
                       "unresolved",
                       "no-shape"
                     ]
+                  },
+                  "composition": {
+                    "anyOf": [
+                      {
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "properties": {
+                            "category": {
+                              "type": "string"
+                            },
+                            "chars": {
+                              "type": "integer",
+                              "minimum": 0
+                            },
+                            "blocks": {
+                              "type": "integer",
+                              "minimum": 0
+                            }
+                          },
+                          "required": [
+                            "category",
+                            "chars",
+                            "blocks"
+                          ],
+                          "additionalProperties": false
+                        }
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  },
+                  "tailComposition": {
+                    "anyOf": [
+                      {
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "properties": {
+                            "category": {
+                              "type": "string"
+                            },
+                            "chars": {
+                              "type": "integer",
+                              "minimum": 0
+                            },
+                            "blocks": {
+                              "type": "integer",
+                              "minimum": 0
+                            }
+                          },
+                          "required": [
+                            "category",
+                            "chars",
+                            "blocks"
+                          ],
+                          "additionalProperties": false
+                        }
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
                   }
                 },
                 "required": [
@@ -1085,7 +1149,9 @@
                   "rebuiltMessages",
                   "sealFromBlobs",
                   "sealFromLines",
-                  "seal"
+                  "seal",
+                  "composition",
+                  "tailComposition"
                 ],
                 "additionalProperties": false
               }

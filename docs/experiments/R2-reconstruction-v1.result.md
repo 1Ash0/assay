@@ -40,3 +40,16 @@ Two disclosures:
 - **The R2 question as preregistered has a clear negative answer:** L1 lines alone cannot reproduce the request.
 - **The useful answer is the combined one.** It holds only where request records exist (2.1.299+), and it is exact where it holds.
 - **For older sessions, the context view must say "not reconstructable from the transcript".** It must not show a partial rebuild as if it were the context.
+
+## Secondary metrics (preregistered), added after the primary
+Computed by the same scorer run from the same frozen rebuild, with category markers and delta attribution (ADR-032) written after the primary was scored. The primary is unchanged on rerun (0.000).
+
+| | held-out | dev |
+|---|---|---|
+| Uncategorised share of sealed-request characters | **0.09%** [0.01%, 0.23%] | 0.00% |
+| Share of input tokens measured by a usage delta | **7.7%** [3.4%, 13.1%] | 29.7% [17.8%, 44.3%] |
+
+- **Uncategorised is small on held-out data**, so the markers, taken from dev attachments, carry over. 'You' is assigned by exclusion and is an upper bound on the user's own text (one skill body without a standard opening is known to land there).
+- **Measured tokens are a small share, and the dev/held-out gap is large.** A delta is measured only along an unbroken append chain. Held-out sessions break the chain more often (requests that drop earlier messages), so most of their category tokens are a characters split, drawn as inferred.
+- **Within a measured delta, the split across categories is still by characters**, because nearly every addition mixes an assistant message with tool results. No category total is "measured" except where an addition was one category.
+- **The preregistered "block-exact rate per category" is reported at message level** (the rebuild is hash-gated per message; 1,897 of 2,104 distinct dev messages), because a block cannot be checked on its own: only a whole message has a hash.

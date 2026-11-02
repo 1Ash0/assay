@@ -156,6 +156,16 @@ Consequence, dev set only:
 - Lines alone seal 0. A session's opening request carries an environment system message and `tool_addition` tool definitions that no ordinary line contains, and every later request keeps them.
 - So exact whole-request reconstruction from L1 lines is not possible on these versions, whatever the rules. The preregistered primary metric is expected near 0, and will be reported as measured.
 
+## ADR-032 · 2026-11-02 · accepted · Context categories by literal markers; tokens by usage deltas; spine.context filled
+Context: ADR-018 deferred the 11 categories (System, CLAUDE.md, Memory, Skills, MCP, Rules, You, Files, Output, Claude, Hooks) to M4, because L1 measures only four token layers.
+Decision:
+- **Categories only for sealed requests.** For a sealed request, every block of the body gets a category by position: system, tools (MCP by the `mcp__` name), assistant (Claude), or tool result (Files for Read, by the tool_use id; otherwise Output). Injected text blocks get one by literal openings collected from real attachments on the dev sessions. Anything else is `uncategorised`.
+- **Memory and Rules are reported as not separable,** never as zero: MEMORY.md travels inside the CLAUDE.md block, and no rules block was seen.
+- **Tokens are measured only by usage deltas.** Along an unbroken append chain (same shape, every base message kept), total input minus the base's total is the exact cost of what was added. Its split across categories is by characters unless the addition is one category. Everything else is a characters split, labelled inferred.
+- **`spine.context` carries** the total, the delta-measured amount and per-category measured and inferred tokens.
+
+Consequence: R2 secondary results, held-out: uncategorised 0.09%, delta-measured token share 7.7% (dev 29.7%). The Core can show categories for 2.1.299+ sessions; most of the split is drawn stippled, as inferred.
+
 ## Proposed (not yet accepted)
 - ADR-P1 Interop with context-analyzer (decide after M0 source read).
 - ADR-P2 Upstream OTel proposal for compaction and skill entities (decide after M0 repo check).
