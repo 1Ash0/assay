@@ -28,6 +28,10 @@ D1-D9 with validity cards; R1 dual capture report; R3 external corpus import (TR
 assay-stage renderer (instanced beads, LoD, GPU picking); Run Card (Health first); Constellation; Strata (official categories; compaction collapse; subagent columns); Replay Theatre; Run Diff stub; table and describe modes; local-only web app; phone check.
 **Exit:** every view driven by a core result field; evidence rail opens raw offsets; accessibility checks pass; informal 3-person comprehension check on Run Card; gate passed.
 
+**M3 status (2026-11-02, ADR-017..023):** core and site landed; views partly built.
+- Done: fs-free importer (ADR-019); `RunView` in core with redaction and tests (ADR-020); `assay export-view` / `export-site`; fineness via record-type catalogue (ADR-022); input-token range on D6 disagreement (ADR-021, shown on real-perturbed `d6-forged-copy`: 106–195,104); `results/` regenerated with correct truth labels and gitignored; the bench site (hallmark, certificate, detector figures, Core at L1, shelf, play layer, landing) reads only core output; DESIGN.md rewritten; gate recorded (ADR-023).
+- Open for exit: Traverse, Replay and Run Diff stub on the site; in-browser folder drop running the fs-free importer in a worker; axe + keyboard pass and `make web-check`; informal 3-person 30-second hallmark test (human); phone check of the regenerated data.
+
 **M3 prep — corpus quality (carry in from M2):**
 - Add ≥1 multi-agent session where main file references an absent subagent (to confirm D1 on real data — ADR-011).
 - Add ≥1 session with a context overflow on a known model (to confirm D5 warn branch).
