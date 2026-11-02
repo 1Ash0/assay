@@ -1,0 +1,33 @@
+# EXP-J1 Judge calibration on TRAIL v1 (preregistration, 2026-11-03, before any judge call)
+- **Question:** When an LLM judge (Groq-hosted) says a span contains an agent error with probability p, how often is it right? Is it better than a trivial deterministic rule? (`docs/LEARNING.md` unit 9; ARCHITECTURE "Judge plane").
+- **Data:** TRAIL (PatronusAI; MIT, gated: not reshared). 148 traces (117 GAIA, 31 SWE-bench), 4,626 spans, with 841 human-annotated errors located on 577 spans. Local only in `TRAIL/` (gitignored). Results hold aggregates only, never trace text.
+- **Truth badge:** this is third-party `real` data with human labels. It is not our corpus, so it never appears as an assay production example.
+- **Truth:** a span is positive if at least one TRAIL error's `location` equals its `span_id`.
+  - One annotation file had trailing commas, which are removed before parsing.
+  - 2 label locations match no span and are reported, not used.
+  - Category spellings are merged ("Language-only"/"Language-Only"; "Context Handling Failure(s)").
+- **Sample (fixed now):** 600 spans, the first 600 by SHA-256 of `assay-J1-v1:<trace_id>:<span_id>`. That is a uniform sample, so prevalence stays natural.
+- **Split (declared now, by trace):** a trace whose SHA-256 of `assay-J1-split:<trace_id>` starts with 0–4 (5/16 of traces) is **calibration**; all others are **held-out**. The threshold is chosen on calibration and reported once on held-out.
+- **Judge input:**
+  - Each span's own record without `child_spans`.
+  - `resource_attributes` and every `*.account.*` and `*.project.id` field are removed, and emails and key-like strings are masked (`judge/redact`).
+  - The text is cut to the first 6,000 characters.
+  - Plus the trace's first user task, cut to 1,000 characters.
+- **Judge question (fixed):** "Does this span show an error made by the agent (wrong reasoning, wrong or failed tool use, instruction or format non-compliance, hallucination, goal deviation)? Answer JSON {"p": probability 0 to 1}." Temperature 0.
+  - Model: Groq's `llama-3.3-70b-versatile`; if it is unavailable, the first listed `*70b*` model, with the model id recorded.
+- **Output label:** every judge answer is stored as `model-judged`, with its probability, apart from deterministic results (Rule 6).
+- **Primary metric (fixed now):** ECE on the held-out spans, 10 equal-width bins, with a 95% bootstrap CI over traces (10,000, seed 26).
+- **Secondary:**
+  - reliability curve (bin counts shown);
+  - AUROC on held-out;
+  - precision and recall on held-out at the threshold that maximises F1 on calibration;
+  - the same for the deterministic baseline, which predicts 1 if `status_code` is not `Unset`/`Ok` or the span text contains `Error`, `Exception` or `Traceback`.
+- **Stopping rule:** one pass over the 600 spans. A failed call is retried up to 3 times with backoff; a span still failing is reported as unanswered, never imputed.
+- **Threats:**
+  - Truncation to 6,000 characters hides errors that sit later in a span.
+  - TRAIL's labels are one annotation pass; an unlabelled span is not proof of no error.
+  - Elicited probabilities are not likelihoods.
+  - The model may have seen TRAIL or GAIA.
+  - One judge model.
+- **What would change my mind:** an ECE under 0.05 together with AUROC above 0.8. That would make the judge usable as a probability, not just a ranking.
+- **Result artifact path:** `results/J1-judge-calibration-v1.json` (aggregates and per-span p and labels by hashed id), summarised in `J1-judge-calibration-v1.result.md`.
