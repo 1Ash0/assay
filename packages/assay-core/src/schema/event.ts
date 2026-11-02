@@ -34,6 +34,9 @@ export const UnknownLineSchema = z.object({
   raw: z.string(),                    // original text line
   // Known record type with no usage telemetry (importer catalogue, ADR-022).
   catalogued: z.boolean().optional(),
+  // Read by a later reader from its raw text (request records, ADR-026). Still
+  // kept here, so offsets stay lossless; no longer counted as unparsed.
+  parsedAs: z.literal('request-record').optional(),
 })
 
 export type UnknownLine = z.infer<typeof UnknownLineSchema>

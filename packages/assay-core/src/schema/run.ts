@@ -1,4 +1,5 @@
 import { z } from 'zod'
+import { RequestRecordsSchema } from './request.js'
 import { CaptureLevelSchema } from './capture.js'
 import { EventSchema, UnknownLineSchema } from './event.js'
 import { OffsetSchema } from './offset.js'
@@ -79,6 +80,9 @@ export const RunSchema = z.object({
   // Used by D10 to check whether captured API-request records roughly match LlmRequests.
   // api-request IDs use a different namespace from assistant.requestId; linkage is not possible.
   rawApiRequestCount: z.number().int().nonnegative(),
+
+  // Request records from the transcript itself (2.1.299+, ADR-026); absent when none.
+  requests: RequestRecordsSchema.optional(),
 
   // Present only when an OTLP capture was attached (L3).
   otel: z.object({

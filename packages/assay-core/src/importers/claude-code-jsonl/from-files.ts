@@ -1,6 +1,7 @@
 import { ContentFlags, CostState, Run, Source, Truth } from '../../schema/index.js'
 import { deriveEntities } from './derive.js'
 import { ParsedFile, parseJsonlBytes } from './parse.js'
+import { readRequestRecords, REQUEST_RECORD_TYPES } from './requests.js'
 import { detectLayout, detectVersion } from './version.js'
 
 export interface ImportOptions {
@@ -33,6 +34,8 @@ export function importFromFiles(files: SourceFile[], opts: ImportOptions = {}, h
   const parsed: ParsedFile[] = files.map(f => parseJsonlBytes(f.path, f.bytes))
   const allEvents = parsed.flatMap(p => p.events)
   const allUnknowns = parsed.flatMap(p => p.unknowns)
+  const requests = readRequestRecords(allUnknowns)
+  for (const u of allUnknowns) if (REQUEST_RECORD_TYPES.has(u.reason.slice('unknown-type:'.length))) u.parsedAs = 'request-record'
   const rawApiRequestCount = parsed.reduce((s, p) => s + p.apiRequestCount, 0)
 
   // Collect cost-state records — convert from raw to schema type.
@@ -97,5 +100,6 @@ export function importFromFiles(files: SourceFile[], opts: ImportOptions = {}, h
     unknowns: allUnknowns,
     costStates: allCostStates,
     rawApiRequestCount,
+    ...(requests ? { requests } : {}),
   }
 }

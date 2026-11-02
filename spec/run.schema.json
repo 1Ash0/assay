@@ -759,6 +759,10 @@
               },
               "catalogued": {
                 "type": "boolean"
+              },
+              "parsedAs": {
+                "type": "string",
+                "const": "request-record"
               }
             },
             "required": [
@@ -870,6 +874,226 @@
         "rawApiRequestCount": {
           "type": "integer",
           "minimum": 0
+        },
+        "requests": {
+          "type": "object",
+          "properties": {
+            "records": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "id": {
+                    "type": "string"
+                  },
+                  "offset": {
+                    "type": "object",
+                    "properties": {
+                      "file": {
+                        "type": "string"
+                      },
+                      "line": {
+                        "type": "integer",
+                        "minimum": 0
+                      },
+                      "byteStart": {
+                        "type": "integer",
+                        "minimum": 0
+                      },
+                      "byteEnd": {
+                        "type": "integer",
+                        "minimum": 0
+                      }
+                    },
+                    "required": [
+                      "file",
+                      "line",
+                      "byteStart",
+                      "byteEnd"
+                    ],
+                    "additionalProperties": false
+                  },
+                  "ts": {
+                    "type": "number"
+                  },
+                  "version": {
+                    "type": "string"
+                  },
+                  "querySource": {
+                    "type": "string"
+                  },
+                  "shapeHash": {
+                    "type": "string"
+                  },
+                  "base": {
+                    "type": [
+                      "string",
+                      "null"
+                    ]
+                  },
+                  "keep": {
+                    "type": "integer",
+                    "minimum": 0
+                  },
+                  "tail": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "hash": {
+                          "type": "string"
+                        },
+                        "blob": {
+                          "anyOf": [
+                            {
+                              "type": "object",
+                              "properties": {
+                                "file": {
+                                  "type": "string"
+                                },
+                                "line": {
+                                  "type": "integer",
+                                  "minimum": 0
+                                },
+                                "byteStart": {
+                                  "type": "integer",
+                                  "minimum": 0
+                                },
+                                "byteEnd": {
+                                  "type": "integer",
+                                  "minimum": 0
+                                }
+                              },
+                              "required": [
+                                "file",
+                                "line",
+                                "byteStart",
+                                "byteEnd"
+                              ],
+                              "additionalProperties": false
+                            },
+                            {
+                              "type": "null"
+                            }
+                          ]
+                        }
+                      },
+                      "required": [
+                        "hash",
+                        "blob"
+                      ],
+                      "additionalProperties": false
+                    }
+                  },
+                  "messageCount": {
+                    "type": "integer",
+                    "minimum": 0
+                  },
+                  "missingMessages": {
+                    "type": "integer",
+                    "minimum": 0
+                  },
+                  "seal": {
+                    "type": "string",
+                    "enum": [
+                      "sealed",
+                      "broken",
+                      "unresolved",
+                      "no-shape"
+                    ]
+                  }
+                },
+                "required": [
+                  "id",
+                  "offset",
+                  "shapeHash",
+                  "base",
+                  "keep",
+                  "tail",
+                  "messageCount",
+                  "missingMessages",
+                  "seal"
+                ],
+                "additionalProperties": false
+              }
+            },
+            "blobs": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "blobsFailed": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "file": {
+                    "type": "string"
+                  },
+                  "line": {
+                    "type": "integer",
+                    "minimum": 0
+                  },
+                  "byteStart": {
+                    "type": "integer",
+                    "minimum": 0
+                  },
+                  "byteEnd": {
+                    "type": "integer",
+                    "minimum": 0
+                  }
+                },
+                "required": [
+                  "file",
+                  "line",
+                  "byteStart",
+                  "byteEnd"
+                ],
+                "additionalProperties": false
+              }
+            },
+            "shapes": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "shapesFailed": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "file": {
+                    "type": "string"
+                  },
+                  "line": {
+                    "type": "integer",
+                    "minimum": 0
+                  },
+                  "byteStart": {
+                    "type": "integer",
+                    "minimum": 0
+                  },
+                  "byteEnd": {
+                    "type": "integer",
+                    "minimum": 0
+                  }
+                },
+                "required": [
+                  "file",
+                  "line",
+                  "byteStart",
+                  "byteEnd"
+                ],
+                "additionalProperties": false
+              }
+            }
+          },
+          "required": [
+            "records",
+            "blobs",
+            "blobsFailed",
+            "shapes",
+            "shapesFailed"
+          ],
+          "additionalProperties": false
         },
         "otel": {
           "type": "object",

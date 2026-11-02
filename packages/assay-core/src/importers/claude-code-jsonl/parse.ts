@@ -39,8 +39,9 @@ const KNOWN_TYPES = new Set(['user', 'assistant', 'system', 'summary'])
 // These are extracted during parseJsonlFile and returned separately.
 export const PARSED_METADATA_TYPES = new Set([
   'cost-state',        // runtime cost/usage accounting (v2.1.308+)
-  'api-request',       // raw API call record (UUID-keyed, not linked to requestId)
 ])
+// `api-request` lines are counted here (D10) and kept as unknown lines, so the
+// request-record reader (ADR-026) has their raw bytes.
 
 // fs-free (ADR-019): takes the file's bytes so the same parser runs in Node
 // and in the browser. Lines are split on raw 0x0A bytes, so byte offsets are

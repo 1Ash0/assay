@@ -102,11 +102,13 @@ export function buildValidityCard(run: Run, findings: Finding[], overall: Metric
   const cacheHitRate = denom > 0 ? totalCacheRead / denom : null
 
   // Importer coverage
-  const eventLines = run.events.length + run.costStates.length + run.rawApiRequestCount
-  const unknownLines = run.unknowns.length
+  // Request-record lines stay in unknowns for their bytes but are parsed (ADR-026).
+  const requestLines = run.unknowns.filter(u => u.parsedAs).length
+  const eventLines = run.events.length + run.costStates.length + requestLines
+  const unknownLines = run.unknowns.length - requestLines
   const totalLines = eventLines + unknownLines
   const unknownRatio = totalLines > 0 ? unknownLines / totalLines : 0
-  const cataloguedLines = run.unknowns.filter(u => u.catalogued).length
+  const cataloguedLines = run.unknowns.filter(u => u.catalogued && !u.parsedAs).length
   const unparsedTelemetryRatio = totalLines > 0 ? (unknownLines - cataloguedLines) / totalLines : 0
   const importerCoverage = { totalLines, eventLines, unknownLines, unknownRatio, cataloguedLines, unparsedTelemetryRatio }
 
