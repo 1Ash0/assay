@@ -1,8 +1,7 @@
-import { createHash } from 'crypto'
-import { readFileSync } from 'fs'
 import { Event, UnknownLine } from '../../schema/index.js'
 import { Offset } from '../../schema/offset.js'
 import { SET_ASIDE_TYPES } from './catalogue.js'
+import { sha256Hex } from './sha256.js'
 
 export interface RawCostState {
   totalCostUSD: number
@@ -43,29 +42,32 @@ export const PARSED_METADATA_TYPES = new Set([
   'api-request',       // raw API call record (UUID-keyed, not linked to requestId)
 ])
 
-export function parseJsonlFile(filePath: string): ParsedFile {
-  const raw = readFileSync(filePath)
-  const sha256 = createHash('sha256').update(raw).digest('hex')
+// fs-free (ADR-019): takes the file's bytes so the same parser runs in Node
+// and in the browser. Lines are split on raw 0x0A bytes, so byte offsets are
+// exact however the text decodes.
+const decoder = new TextDecoder('utf-8')
+
+export function parseJsonlBytes(filePath: string, raw: Uint8Array): ParsedFile {
+  const sha256 = sha256Hex(raw)
   const bytes = raw.length
-  const text = raw.toString('utf-8')
 
   const events: Event[] = []
   const unknowns: UnknownLine[] = []
   const costStates: RawCostState[] = []
   let apiRequestCount = 0
   let lineNum = 0
-  let bytePos = 0
+  let lineStart = 0
 
-  for (const lineText of text.split('\n')) {
-    const lineStart = bytePos
-    bytePos += Buffer.byteLength(lineText, 'utf-8') + 1 // +1 for \n (clamped to bytes at offset use)
+  while (lineStart <= bytes) {
+    let nl = raw.indexOf(0x0a, lineStart)
+    if (nl === -1) nl = bytes
+    const lineEnd = nl
+    const lineText = decoder.decode(raw.subarray(lineStart, lineEnd))
+    const next = nl + 1
+    const advance = () => { lineNum++; lineStart = next }
 
     const trimmed = lineText.trim()
-    if (!trimmed) { lineNum++; continue }
-
-    // bytePos-1 points to the \n we just counted, but on the last line without a
-    // trailing newline that overshoots the file by 1. Clamp to actual file size.
-    const lineEnd = Math.min(bytePos - 1, bytes)
+    if (!trimmed) { advance(); continue }
 
     let parsed: unknown
     try {
@@ -76,7 +78,7 @@ export function parseJsonlFile(filePath: string): ParsedFile {
         reason: 'json-parse-error',
         raw: lineText,
       })
-      lineNum++
+      advance()
       continue
     }
 
@@ -86,7 +88,7 @@ export function parseJsonlFile(filePath: string): ParsedFile {
         reason: 'not-an-object',
         raw: lineText,
       })
-      lineNum++
+      advance()
       continue
     }
 
@@ -134,7 +136,7 @@ export function parseJsonlFile(filePath: string): ParsedFile {
           ...(typeof type === 'string' && SET_ASIDE_TYPES.has(type) ? { catalogued: true } : {}),
         })
       }
-      lineNum++
+      advance()
       continue
     }
 
@@ -163,7 +165,7 @@ export function parseJsonlFile(filePath: string): ParsedFile {
       raw: obj,
     })
 
-    lineNum++
+    advance()
   }
 
   return { path: filePath, sha256, bytes, lines: lineNum, events, unknowns, costStates, apiRequestCount }

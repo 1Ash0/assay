@@ -1,29 +1,14 @@
-import { existsSync, readdirSync } from 'fs'
 import { join } from 'path'
-import { ContentFlags, CostState, Run, Source, Truth } from '../../schema/index.js'
-import { deriveEntities } from './derive.js'
-import { ParsedFile, parseJsonlFile } from './parse.js'
-import { detectLayout, detectVersion } from './version.js'
+import { existsSync, readdirSync, readFileSync } from 'fs'
+import { Run } from '../../schema/index.js'
+import { ImportOptions, importFromFiles } from './from-files.js'
 
-export interface ImportOptions {
-  // Which content was captured (caller must declare; default all false)
-  contentFlags?: Partial<ContentFlags>
-  // Truth label for this run. Default 'real'. Use 'scripted' for synthetic fixtures.
-  truth?: Truth
-}
+export { importFromFiles } from './from-files.js'
+export type { ImportOptions, SourceFile } from './from-files.js'
 
 // Import a Claude Code session directory or a single JSONL file.
 // Always reads the whole directory to avoid subagent undercount (D1).
 export function importClaudeCodeDir(sessionPath: string, opts: ImportOptions = {}): Run {
-  const flags: ContentFlags = {
-    prompts: false,
-    responses: false,
-    toolDetails: false,
-    toolContent: false,
-    rawBodies: false,
-    ...opts.contentFlags,
-  }
-
   // Resolve main JSONL and session directory
   // Accepts: a .jsonl file path, or a directory containing a same-named .jsonl
   const isJsonl = sessionPath.endsWith('.jsonl')
@@ -60,73 +45,6 @@ export function importClaudeCodeDir(sessionPath: string, opts: ImportOptions = {
     throw new Error(`No JSONL files found at: ${sessionPath}`)
   }
 
-  // Parse all files
-  const parsed: ParsedFile[] = allFiles.map(parseJsonlFile)
-  const allEvents = parsed.flatMap(p => p.events)
-  const allUnknowns = parsed.flatMap(p => p.unknowns)
-  const rawApiRequestCount = parsed.reduce((s, p) => s + p.apiRequestCount, 0)
-
-  // Collect cost-state records — convert from raw to schema type.
-  // Multiple cost-state records may appear (incremental snapshots); keep all.
-  const allCostStates: CostState[] = parsed.flatMap(p =>
-    p.costStates.map(cs => ({
-      evidence: [{ file: cs.sourceFile, line: cs.sourceLine, byteStart: cs.byteStart, byteEnd: cs.byteEnd }],
-      totalCostUSD: cs.totalCostUSD,
-      totalAPIDurationMs: cs.totalAPIDurationMs,
-      hasUnknownModelCost: cs.hasUnknownModelCost,
-      modelUsage: cs.modelUsage,
-    }))
-  )
-
-  // Detect version and layout from main file lines
-  const mainParsed = parsed[0]
-  if (!mainParsed) throw new Error('No parsed files')
-  const version = detectVersion(mainParsed.events.map(e => e.raw))
-  const layout = detectLayout(hasSubagentDir, mainParsed.events.map(e => e.raw))
-
-  // Derive entities
-  const entities = deriveEntities(allEvents)
-
-  // D1 fix: stamp transcriptFile onto agents that have a matching subagent JSONL.
-  // derive.ts creates Agent entries from agentId fields but can't know file paths.
-  // The subagent filenames are UUIDs matching the agentId they contain.
-  const subagentFiles = allFiles.slice(1) // everything after the main file
-  for (const agent of entities.agents) {
-    const match = subagentFiles.find(f => f.includes(agent.agentId))
-    if (match) agent.transcriptFile = match
-  }
-
-  // Determine Capture Level: L1 baseline, L2 if hooks events found
-  // (hooks-log import would upgrade; JSONL-only = L1)
-  const captureLevel = 1 as const
-
-  // Build sources
-  const sources: Source[] = parsed.map(p => ({
-    kind: 'jsonl' as const,
-    path: p.path,
-    sha256: p.sha256,
-    bytes: p.bytes,
-    lines: p.lines,
-  }))
-
-  // Session id from directory name or file name
-  const sessionId = mainJsonl.split(/[\\/]/).pop()?.replace('.jsonl', '') ?? 'unknown'
-
-  return {
-    id: sessionId,
-    harness: { tool: 'claude-code', version, layout },
-    capture: {
-      level: captureLevel,
-      flags,
-      truncated: false,
-      version,
-    },
-    truth: opts.truth ?? 'real',
-    sources,
-    events: allEvents,
-    ...entities,
-    unknowns: allUnknowns,
-    costStates: allCostStates,
-    rawApiRequestCount,
-  }
+  const files = allFiles.map(path => ({ path, bytes: new Uint8Array(readFileSync(path)) }))
+  return importFromFiles(files, opts, hasSubagentDir)
 }

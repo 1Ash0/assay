@@ -54,3 +54,22 @@ describe('forged usage range (ADR-021)', () => {
     expect(r.validity.inputTokenRange.min).toBe(r.validity.inputTokenRange.max)
   })
 })
+
+describe('fs-free import (ADR-019)', () => {
+  it('importFromFiles matches the directory importer', async () => {
+    const { readFileSync } = await import('fs')
+    const { importFromFiles } = await import('../packages/assay-core/src/index.js')
+    const viaDir = importClaudeCodeDir(DETECTORS)
+    const viaBytes = importFromFiles([{ path: DETECTORS, bytes: new Uint8Array(readFileSync(DETECTORS)) }])
+    expect(viaBytes.events.map(e => e.offset)).toEqual(viaDir.events.map(e => e.offset))
+    expect(viaBytes.sources[0]!.sha256).toBe(viaDir.sources[0]!.sha256)
+  })
+
+  it('parser and fs-free importer import no Node built-ins', async () => {
+    const { readFileSync } = await import('fs')
+    for (const f of ['parse.ts', 'from-files.ts', 'sha256.ts', 'derive.ts', 'version.ts']) {
+      const src = readFileSync(resolve('packages/assay-core/src/importers/claude-code-jsonl', f), 'utf-8')
+      expect(src).not.toMatch(/from '(fs|path|crypto|node:[a-z]+)'/)
+    }
+  })
+})
