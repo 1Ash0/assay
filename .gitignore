@@ -17,3 +17,6 @@ results/
 
 # Generated from results/ by web/prototype/extract.py
 web/prototype/data.js
+
+# Built by pnpm build:web from packages/assay-core
+web/prototype/assay-core.js

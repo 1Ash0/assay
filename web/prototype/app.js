@@ -425,6 +425,7 @@ function renderTable() {
 function load(id, opts = {}) {
   const r = byId[id]; if (!r) return;
   S.run = r; S.p = 0; S.playing = false; S.sel = null; S.item = null; prevBin = -1;
+  if (window.ASSAY_VIEWS) window.ASSAY_VIEWS.reset();
   if (!opts.keepMission) S.mission = null;
   unstrike(); prep(r);
   renderPlate(r); renderHead(r); renderGates(r); renderTape(r); renderCtx(r);
@@ -598,6 +599,7 @@ function go(v) {
   document.querySelectorAll('.view').forEach(x => x.classList.toggle('on', x.id === 'v-' + v));
   if (v === 'shelf') renderShelf();
   if (v === 'tamper') renderMissions();
+  if (window.ASSAY_VIEWS && ['traverse', 'replay', 'diff'].includes(v)) window.ASSAY_VIEWS.render(v);
   window.scrollTo({ top: 0 });
 }
 function live(t) { $('#live').textContent = t; }
@@ -671,6 +673,7 @@ document.addEventListener('keydown', e => {
   if (k === '?') return $('#help').classList.add('on');
   if (k === 'p' || k === 'P') return renderCard();
   if (k === '1') return go('bench'); if (k === '2') return go('shelf'); if (k === '3') return go('tamper');
+  if (k === '4') return go('traverse'); if (k === '5') return go('replay'); if (k === '6') return go('diff');
   if (S.view !== 'bench') return;
   if (k === ' ' && !e.target.closest('button')) { e.preventDefault(); return toggle(); }
   if (k === 'ArrowRight') { e.preventDefault(); return seek(Math.floor(S.p) + (e.shiftKey ? 10 : 1)); }
@@ -680,6 +683,51 @@ document.addEventListener('keydown', e => {
   if (k === 't' || k === 'T') return setTable(!S.table);
   if (k === 'd' || k === 'D') return setDesc(!S.desc);
 });
+
+// Shared with views.js (Traverse, Replay, Diff) and the folder drop.
+window.ASSAY = { runs: RUNS, byId, current: () => S.run, load, go, view: () => S.view, files: new Map() };
+
+/* ---------- folder drop (ADR-019): assay runs in a worker, on your files ---------- */
+async function readEntries(items) {
+  const out = [];
+  async function walk(entry, path) {
+    if (entry.isFile) { const f = await new Promise((res, rej) => entry.file(res, rej)); out.push({ path: path + f.name, file: f }); return; }
+    const reader = entry.createReader();
+    let batch;
+    do { batch = await new Promise((res, rej) => reader.readEntries(res, rej)); for (const e of batch) await walk(e, path + entry.name + '/'); } while (batch.length);
+  }
+  for (const it of items) { const e = it.webkitGetAsEntry && it.webkitGetAsEntry(); if (e) await walk(e, ''); }
+  return out;
+}
+let dropN = 0;
+async function assayFiles(list) {
+  const files = list.filter(x => x.path.endsWith('.jsonl'));
+  if (!files.length) return live('No .jsonl files in what was dropped.');
+  $('#dropzone').classList.add('busy'); $('#dropmsg').textContent = `Assaying ${files.length} file${files.length > 1 ? 's' : ''} on this machine…`;
+  const payload = await Promise.all(files.map(async x => ({ path: x.path, buffer: await x.file.arrayBuffer() })));
+  const id = 'dropped-' + (++dropN);
+  const w = new Worker('worker.js');
+  w.onmessage = e => {
+    w.terminate(); $('#dropzone').classList.remove('on', 'busy');
+    if (!e.data.ok) return live('Could not assay: ' + e.data.error);
+    const v = e.data.view;
+    files.forEach(x => window.ASSAY.files.set(x.path.split('/').pop(), x.file));
+    RUNS.unshift(v); byId[v.id] = v;
+    go('bench'); load(v.id, { autoplay: true }); live(`Assayed ${v.session} locally.`);
+  };
+  w.postMessage({ files: payload, id }, payload.map(x => x.buffer));
+}
+let dragDepth = 0;
+window.addEventListener('dragenter', e => { if (e.dataTransfer && [...e.dataTransfer.types].includes('Files')) { dragDepth++; $('#dropzone').classList.add('on'); } });
+window.addEventListener('dragleave', () => { if (--dragDepth <= 0) { dragDepth = 0; $('#dropzone').classList.remove('on'); } });
+window.addEventListener('dragover', e => e.preventDefault());
+window.addEventListener('drop', async e => {
+  e.preventDefault(); dragDepth = 0;
+  const items = [...(e.dataTransfer.items || [])];
+  const list = items.length && items[0].webkitGetAsEntry ? await readEntries(items) : [...e.dataTransfer.files].map(f => ({ path: f.name, file: f }));
+  assayFiles(list);
+});
+$('#pickdir').addEventListener('change', e => assayFiles([...e.target.files].map(f => ({ path: f.webkitRelativePath || f.name, file: f }))));
 
 // Landing shows a real run (DESIGN.md: no synthetic hero).
 {

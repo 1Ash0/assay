@@ -303,6 +303,9 @@ svg.fig{display:block;width:100%;height:auto;aspect-ratio:300/90;flex:none;backg
   .workbench.on{grid-template-columns:1fr}
   .shelfhead h2{font-size:32px}
 }
+#dropzone{position:fixed;inset:0;display:none;place-items:center;background:color-mix(in srgb,var(--paper) 80%,transparent);z-index:60;border:3px dashed var(--ink)}
+#dropzone.on{display:grid}
+#dropzone.busy #dropmsg{opacity:.7}
 @media (prefers-reduced-motion:reduce){*,*::before,*::after{animation-duration:.01ms!important;transition-duration:.01ms!important}}
 </style>
 </head>
@@ -316,9 +319,13 @@ svg.fig{display:block;width:100%;height:auto;aspect-ratio:300/90;flex:none;backg
     <button class="tab" role="tab" data-view="bench" aria-selected="true">Bench <kbd>1</kbd></button>
     <button class="tab" role="tab" data-view="shelf" aria-selected="false">Shelf <kbd>2</kbd></button>
     <button class="tab" role="tab" data-view="tamper" aria-selected="false">Tamper <kbd>3</kbd></button>
+    <button class="tab" role="tab" data-view="traverse" aria-selected="false">Traverse <kbd>4</kbd></button>
+    <button class="tab" role="tab" data-view="replay" aria-selected="false">Replay <kbd>5</kbd></button>
+    <button class="tab" role="tab" data-view="diff" aria-selected="false">Diff <kbd>6</kbd></button>
   </nav>
   <div class="spacer"></div>
   <div class="score" id="score" title="Tamper missions where assay caught the lie"></div>
+  <label class="tool" title="Assay a session folder on this machine; nothing is uploaded" style="cursor:pointer">Open folder<input type="file" id="pickdir" webkitdirectory multiple hidden></label>
   <button class="tool" id="sound" aria-pressed="false" title="Sound">Sound</button>
   <button class="tool" id="theme" title="Switch theme">Theme</button>
   <button class="tool" id="helpBtn" aria-label="Keyboard shortcuts">?</button>
@@ -424,7 +431,12 @@ svg.fig{display:block;width:100%;height:auto;aspect-ratio:300/90;flex:none;backg
     <div class="missions" id="missions"></div>
     <div class="panel workbench" id="workbench"></div>
   </section>
+
+  <section class="view" id="v-traverse" aria-label="Traverse"><div class="host"></div></section>
+  <section class="view" id="v-replay" aria-label="Replay"><div class="host"></div></section>
+  <section class="view" id="v-diff" aria-label="Run Diff"><div class="host"></div></section>
 </main>
+<div id="dropzone" aria-hidden="true"><div class="panel" style="padding:28px 34px;text-align:center"><div class="label">Drop a session folder</div><div id="dropmsg" style="font-size:22px;margin-top:8px">assay reads it here. Nothing leaves this machine.</div></div></div>
 
 <div class="outcome" id="outcome" role="dialog" aria-modal="true" aria-labelledby="oTitle"><div class="panel ocard" id="ocard"></div></div>
 <div class="help" id="help" role="dialog" aria-modal="true" aria-label="Keyboard shortcuts">
@@ -435,6 +447,8 @@ svg.fig{display:block;width:100%;height:auto;aspect-ratio:300/90;flex:none;backg
       <kbd>← →</kbd><span>Step one column (Shift: ten)</span>
       <kbd>Home End</kbd><span>Rewind / finish</span>
       <kbd>1 2 3</kbd><span>Bench, Shelf, Tamper</span>
+      <kbd>4 5 6</kbd><span>Traverse, Replay, Diff</span>
+      <kbd>J K</kbd><span>Replay: next / previous step</span>
       <kbd>T</kbd><span>Table mode</span>
       <kbd>P</kbd><span>Punch card</span>
       <kbd>D</kbd><span>Describe mode</span>
@@ -454,5 +468,6 @@ svg.fig{display:block;width:100%;height:auto;aspect-ratio:300/90;flex:none;backg
 
 <script src="data.js"></script>
 <script src="app.js"></script>
+<script src="views.js"></script>
 </body>
 </html>

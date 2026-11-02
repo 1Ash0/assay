@@ -5,10 +5,12 @@
   "scripts": {
     "check": "pnpm -r typecheck && pnpm test",
     "test": "vitest run",
-    "build": "pnpm -r build"
+    "build": "pnpm -r build",
+    "build:web": "esbuild packages/assay-core/src/browser.ts --bundle --format=iife --global-name=AssayCore --target=es2020 --outfile=web/prototype/assay-core.js"
   },
   "devDependencies": {
     "@types/node": "^22.0.0",
+    "esbuild": "0.21.5",
     "tsx": "^4.23.15",
     "typescript": "^5.5.0",
     "vitest": "^2.0.0"
