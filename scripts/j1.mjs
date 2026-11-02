@@ -43,8 +43,12 @@ function load() {
 const cache = () => new Map((existsSync(CACHE) ? readFileSync(CACHE, 'utf8').split('\n').filter(Boolean) : []).map(l => { const o = JSON.parse(l); return [o.id, o] }))
 
 async function run() {
-  const keys = [process.env.GROQ_API_KEY, process.env.GROQ_API_KEY_2].filter(Boolean)
-  if (!keys.length) { console.error('Set GROQ_API_KEY (and optionally GROQ_API_KEY_2) in your shell; keys are read from the environment only.'); process.exit(1) }
+  // Any of these names; duplicates dropped. A key Groq rejects is set aside
+  // and the next one tried; the run stops only when none is accepted.
+  const names = ['GROQ_API_KEY', 'GROQ_API_KEY_1', 'GROQ_API_KEY_2']
+  const keys = [...new Set(names.map(n => process.env[n]).filter(v => v && !/^<.*>$/.test(v)))]
+  const rejected = new Set()
+  if (!keys.length) { console.error(`Set ${names.join(', ')} in your shell (a value still in <angle brackets> is ignored); keys are read from the environment only.`); process.exit(1) }
   mkdirSync(DIR, { recursive: true })
   let k = 0
   const call = async (path, body) => {
@@ -59,7 +63,12 @@ async function run() {
         await new Promise(res => setTimeout(res, 2000 * 2 ** attempt)); continue
       }
       if (r.ok) return r.json()
-      if (r.status === 401) throw new Error(`groq 401: key ${k % keys.length + 1} rejected; check the value in your shell (it is never printed)`)
+      if (r.status === 401) {
+        rejected.add(k % keys.length)
+        if (rejected.size >= keys.length) throw new Error(`groq 401: all ${keys.length} key(s) rejected; check ${names.join(' / ')} in your shell (values are never printed)`)
+        do { k++ } while (rejected.has(k % keys.length))
+        attempt--; continue
+      }
       if (r.status === 429 || r.status >= 500) { last = `http ${r.status}`; k++; await new Promise(res => setTimeout(res, 2000 * 2 ** attempt)); continue }
       throw new Error(`groq ${r.status}: ${(await r.text()).slice(0, 200)}`)
     }
