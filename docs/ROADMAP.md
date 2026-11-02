@@ -33,7 +33,7 @@ assay-stage renderer (instanced beads, LoD, GPU picking); Run Card (Health first
 - Also done: Traverse (Marey), Replay (three columns, exact bytes from a dropped file), Run Diff stub (exact tool-sequence divergence), local folder drop running core in a worker (`pnpm build:web`).
 - M4 hooks in place: every spine step carries `context: null` (reconstruction) and `provenance: null`; `RunView.m4` holds run-level slots; Replay's "What it was made of" box must reconcile to the step's measured total; Run Diff's key is `spine.toolSequence` with `firstDivergence`.
 - Also done (late 2026-11-02): OTLP importer and L3 (ADR-025, closes the M1 carry-over and R1-F2 surfacing); subagent transcripts counted and D1 firing on real data (ADR-024, closes ADR-011's gap); 8 more real sessions on the site; `pnpm check` with JSON-Schema drift, `pnpm web`, `pnpm web-check` (Makefile wraps them); manual a11y and keyboard pass.
-- Open for exit (human): informal 3-person 30-second hallmark test; phone check; ≥3 users in the corpus (not possible from this machine). Colour contrast not yet measured. Site data is 6 MB for 32 runs (budget 8 MB in web-check).
+- Open for exit (human): informal 3-person 30-second hallmark test; phone check; ≥3 users in the corpus (not possible from this machine). Colour contrast now measured (`pnpm contrast`, 2026-11-02): dark theme passes all text pairs; light theme fails AA text for `verm` (4.18 on ground, 3.75 on verm-soft) and `ochre` (3.65-4.23 across grounds), and the `u` (user) mark is 1.9-2.2:1 against light grounds (2.8-3.0 in dark). Not yet in `pnpm check` because it would fail; needs a palette decision (darken light-theme verm/ochre, give `u` a stronger fill or an outline), then add it to `check`. Site data is 6 MB for 32 runs (budget 8 MB in web-check).
 
 **M3 prep — corpus quality (carry in from M2):**
 - Add ≥1 multi-agent session where main file references an absent subagent (to confirm D1 on real data — ADR-011).
@@ -52,7 +52,7 @@ CLI polish; trace assertions + CI Action; judge-plane interface and Jev calibrat
 **Exit:** reproducible `results/`; README claims all at [read]/own-artifact level; cumulative gate passed.
 
 ## Later (each needs evidence trigger + ADR)
-Atlas (cross-run corpus graph; the only force layout, with a "proximity is not meaning" notice) · MCP server · OpenInference/Langfuse importers · WASM/Rust parser · T5 comprehension study · interop with context-analyzer · other harnesses (Codex) · hosted backend (cut unless a trigger appears).
+Atlas (cross-run corpus graph; the only force layout, with a "proximity is not meaning" notice) · MCP server · OpenInference/Langfuse importers · WASM/Rust parser · T5 comprehension study · interop with context-analyzer · other harnesses (Codex) · hosted backend (cut unless a trigger appears) · D-fork-dup, the fork-subagent duplicate detector (trigger: a real session with an `isFork` meta file; M4_PLAN §4a) · changelog watcher, off by default (trigger: a format change missed by the census).
 
 ## Scope fence
 Anything not on this page goes to Later. A feature that needs a judge model for a primary outcome is out of scope for core.

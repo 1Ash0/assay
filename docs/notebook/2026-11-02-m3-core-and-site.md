@@ -31,3 +31,14 @@ Claude Code versions in corpus: 2.1.165–2.1.309. Content flags unchanged (all 
 - **Accessibility:** axe could not be loaded into the page here, so the pass was manual: every interactive element named, every SVG with a role, Traverse steps and Shelf dots now keyboard-operable. Colour contrast was not measured.
 
 What would change my mind: a Claude Code version where sidechain lines also appear inline in the main file with different message ids (the dedup assumption in ADR-024 would then double count).
+
+## Evening: M4 P0 and the first L4 calibration
+
+- **Request records verify.** Transcripts from 2.1.299 store requests as a hash chain. Blob hash, shape hash and `requestDigest` all reproduce (sorted-key JSON SHA-256; `requestDigest` with cacheControl applied). Every request whose messages were all stored matched (4 of 4). ADR-026 makes them R2's ground truth; R2 is preregistered with a 6 / 14 dev / held-out split fixed before scoring.
+- **L4 calibration on `cae68025`** (`scripts/l4-calibrate.mjs`, `results/L4-calibration-cae68025.json`). On 2.1.316 the wire uses server-side threads (`thread: create | continue`), so a raw body is only a delta. Replaying the chain:
+  - params 9 of 9, system and tools 2 of 2, messages 25 of 26.
+  - The differences are named and counted: a billing-header system block on the wire only; cache markers inline vs paths; one client-filled default (`replace_all: false`) in a re-sent `Edit` input; and 356 values the raw-body logger itself redacts.
+  - 3 of 12 wire requests (1 title, 2 prompt suggestions) have no record.
+- **What I believe now:** for the main thread, the transcript record is the better context ground truth than L4: L4 is delta-encoded and redacted, and the record is neither. L4 remains the only view of side calls and of client-filled defaults.
+- **Side-session quality list triaged** (M4_PLAN §4a). Most counters go into P1. D-fork-dup is deferred because no fork session exists on this machine; building it from an issue summary would be a detector without a real fixture.
+- **What would change my mind:** a second calibration (another version, or a session with subagents) where record and wire disagree beyond the four named differences.

@@ -40,6 +40,23 @@ Verified 2026-11-02 (scratch scripts; P1 turns them into tests):
 
 This is the one thing in M4 that needs you, and it is cheap.
 
+### 1a. Calibration result (done 2026-11-02, `cae68025`, 2.1.316)
+Run with `node scripts/l4-calibrate.mjs`; output in `results/L4-calibration-cae68025.json`; raw bodies frozen in `corpus/frozen/l4/2026-11-02-cae68025/`.
+
+- **The wire protocol has changed, which makes L4 weaker than assumed.** On 2.1.316 the client sends `thread: {type: create | continue, previous_message_id}`, and a `continue` body carries only the new messages; the history lives on the server. A raw body is therefore not the context. To compare, the wire chain has to be replayed: the previous messages, plus the previous response, plus the new messages.
+- **Pairing.** 9 of 9 main-thread wire requests pair to exactly one record each. A pair requires the record's tail hashes to appear among the wire messages.
+- **Agreement.** params 9 of 9; system 2 of 2 and tools 2 of 2 (only `create` bodies carry them); messages **25 of 26** where both sides hold the message.
+- **The differences, all counted:**
+  - **A billing header.** Every wire body starts its system with `x-anthropic-billing-header: cc_version=…` (9 blocks). The record never has it, so it is `not_captured` in the transcript.
+  - **Cache markers.** They sit inline on the wire and as paths in the record; this difference is expected.
+  - **Defaults filled in.** An `Edit` tool call in the history the client sends carries `"replace_all": false`. The model's output, as stored in the blob, has no such field: the client fills defaults into the history it re-sends. This is the 1 of 26.
+  - **The raw-body logger redacts.** 356 leaves were replaced by `<REDACTED>` (thinking) or `[account memory text not recorded]` (some tool-schema fields). In those places **the transcript record holds more than L4.**
+- **Coverage.**
+  - 3 of 12 wire requests have no record: 1 `generate_session_title` and 2 `prompt_suggestion`. That confirms the side-call gap and adds a second kind of side call.
+  - 64 recorded messages are not stored as blobs. L4 has them, so this session can score R2's rebuild of exactly those messages.
+
+**Verdict.** For the main thread, the record equals the wire request apart from the four named, counted differences. It is the better ground truth for context, because L4 is both delta-encoded and redacted. L4 stays essential for side calls and for the defaults the client fills in. That holds for n = 1 session, one version and one user, and the result says so.
+
 ## 2. Self-critique of rev 1
 
 | Rev 1 said | Problem | Rev 2 |
@@ -121,12 +138,28 @@ From comparative genomics (JBrowse 2's linear synteny and dotplot views).
 - Raw text on the site stays redacted by core; the Charge shows block categories, sizes and offsets, not prompt text, unless redacted.
 - `web-check` gains a scan for system-prompt fragments and the user's email, which do appear in request records.
 
+## 4a. Quality items from the side session (2026-11-02), triaged against the code and real bytes
+
+| Item | Exists already? | Decision |
+|---|---|---|
+| 1 D-fork-dup | No. **No fork session exists on this machine**: no `isFork` meta file and no `fork-context-ref` record anywhere in `~/.claude/projects` or `corpus/`. The source is an issue read as a summary. | **Deferred** until a real fork session is captured. Building it from an issue description would be a detector with no real fixture. D2's cross-file message.id dedup already keeps an exact copy from counting twice; the fork case must be tested against it when it appears. ROADMAP Later. |
+| 2a `assay catalogue check` | No | **P1.** Exits non-zero on a version outside the importer's range. |
+| 2b unknown-key census | Partly: unknown types are kept and flagged | **P1.** Per version, the record types and field names; diffed against the previous version into `results/catalogue/<version>.json`. |
+| 2c changelog watcher | No | **Later**, off by default (network, human review). |
+| 2d canary per version | No | **P1, local only.** A real session cannot go into the repo (Rule 8), so the canary is the importer-output hash of a frozen corpus file, checked when the corpus is present and skipped visibly when not. |
+| 3 capture-quality counters | Orphan parent = D3; subagent expected vs read = D1; unknown type count = catalogue | **P1:** duplicate uuid, duplicate requestId across files, sessionId mismatch (flag, never rewrite), non-monotonic timestamps within a parent chain. Each carries a false-positive line. |
+| 4 three usage numbers | Partly: the D6 range, D2 dedup, OTel-only tokens | **P3:** `as_written`, `deduped` and `unattributed` (OTel-only) shown together on the certificate and in the Core. |
+| 5 cross-channel check | Mostly (ADR-025: matched, OTel-only, transcript-only) | **P1:** add the first disagreement linked to raw bytes on both sides. |
+| 6 reconstruction ledger | No | **P2.** Every request field gets a status (`captured_exact`, `captured_derived`, `version_dependent`, `not_captured`) with its reason. The calibration fixes the first entries: billing header `not_captured`; cache markers `captured_derived`; client-filled tool defaults `version_dependent`; side calls `not_captured`. |
+
+Each item that changes a published number gets an ADR, a CHANGES.md line and a notebook entry.
+
 ## 5. Phases (each ends playable)
 
 | Phase | What | Size | Ends with |
 |---|---|---|---|
 | P0 | This plan; ADR-026; EVAL_DESIGN R2; R2 preregistration; catalogue to 2.1.316; gate recorded | docs, ~30 code | plan approved |
-| P1 | Request-record importer: shapes, blobs, chain, digest check; `RequestRecord` with offsets; tests from the corpus findings | ~250 | the CLI prints sealed / unsealed per request |
+| P1 | Request-record importer: shapes, blobs, chain, digest check; `RequestRecord` with offsets; tests from the corpus findings. Plus the quality items: catalogue check, census, local canary, the four new counters, cross-channel first disagreement (§4a) | ~250 + ~300 | the CLI prints sealed / unsealed per request; `assay catalogue check` |
 | P2 | Reconstruction of missing messages from lines (tool results plus merged attachments); R2 scorer; `results/R2-*.json` | ~300 | the R2 number; the Charge with the seal on the site |
 | P3 | Delta token attribution; 11-category markers; `spine.context` | ~250 | the Core box with real bands and unconformities |
 | P4 | Provenance literals; `spine.provenance`; R5 validation | ~250 | streak lines in Replay |
@@ -134,6 +167,6 @@ From comparative genomics (JBrowse 2's linear synteny and dotplot views).
 | P6 | L4 calibration (needs your one session); R4 audit sheet; notebook; ROADMAP | docs | M4 exit |
 
 ## 6. Needs Asmit
-1. One L4 calibration session (§1), any time before P6.
+1. ~~One L4 calibration session~~ Done 2026-11-02 (§1a). A second on a later version would test T-R2-3.
 2. Two twin runs (the same prompt twice) when convenient, for the real Diff.
 3. R4 audit passes, at least 7 days apart.
