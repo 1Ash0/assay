@@ -2,6 +2,7 @@ import { HealthReport } from '../health/types.js'
 import { CONTEXT_LIMITS } from '../health/detectors.js'
 import { Run, Truth } from '../schema/index.js'
 import { basename, redact, stripPaths } from './redact.js'
+import { buildSpine } from './spine.js'
 
 // The site's view of one run (ADR-020). Every number the site shows comes
 // from here; the site itself only lays it out. Field names match what the
@@ -138,6 +139,9 @@ export function buildRunView(run: Run, report: HealthReport, opts: ViewOptions =
     unknownReasons: counter(run.unknowns.map(u => u.reason), 8),
     unknownSample,
     rawApi: run.rawApiRequestCount,
+    spine: buildSpine(run, report),
+    // M4 fills these per run; null means not reconstructed / not traced yet.
+    m4: { reconstruction: null, provenance: null },
   }
 }
 

@@ -1,3 +1,5 @@
 export { buildRunView, SEGMENTS } from './build.js'
 export type { RunView, ViewOptions } from './build.js'
 export { redact } from './redact.js'
+export { buildSpine, firstDivergence } from './spine.js'
+export type { Spine, SpineStep, SpineTool } from './spine.js'

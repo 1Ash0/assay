@@ -60,3 +60,25 @@ describe('path stripping', () => {
     for (const f of v.findings) for (const i of f.items) for (const e of i.ev) expect(e.file).not.toMatch(/[\\/]/)
   })
 })
+
+describe('spine (Traverse, Replay, Run Diff)', () => {
+  it('has one step per LlmRequest, in line order, with M4 slots empty', () => {
+    const run = importClaudeCodeDir(DETECTORS)
+    const s = buildRunView(run, runHealth(run)).spine
+    expect(s.steps.length).toBe(run.llmRequests.length)
+    for (let i = 1; i < s.steps.length; i++) expect(s.steps[i]!.line).toBeGreaterThanOrEqual(s.steps[i - 1]!.line)
+    expect(s.steps.every(x => x.context === null && x.provenance === null)).toBe(true)
+  })
+  it('tool latency is observed or null, never negative-by-guess', () => {
+    const run = importClaudeCodeDir(resolve('fixtures/real/session-minimal.jsonl'))
+    const tools = buildRunView(run, runHealth(run)).spine.steps.flatMap(x => x.tools)
+    expect(tools.length).toBeGreaterThan(0)
+    for (const t of tools) expect(t.resultLine === null ? t.edge === null : t.edge === 'observed').toBe(true)
+  })
+  it('firstDivergence', async () => {
+    const { firstDivergence } = await import('../packages/assay-core/src/view/spine.js')
+    expect(firstDivergence(['Read', 'Edit'], ['Read', 'Edit'])).toBeNull()
+    expect(firstDivergence(['Read', 'Edit'], ['Read', 'Bash'])).toBe(1)
+    expect(firstDivergence(['Read'], ['Read', 'Bash'])).toBe(1)
+  })
+})
