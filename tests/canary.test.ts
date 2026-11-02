@@ -43,8 +43,9 @@ const hash = (v: unknown) => createHash('sha256').update(JSON.stringify(v)).dige
 const present = Object.values(CANARIES).every(p => existsSync(resolve(p)))
 describe.skipIf(!present)('version canaries (local corpus)', () => {
   const stored = existsSync(STORE) ? (JSON.parse(readFileSync(STORE, 'utf-8')) as Record<string, string>) : {}
-  const now = Object.fromEntries(Object.entries(CANARIES).map(([v, p]) => [v, hash(summary(p))]))
-  if (process.env['CANARY_UPDATE'] === '1') writeFileSync(STORE, JSON.stringify(now, null, 2) + '\n')
+  // skipIf still runs this body to collect tests, so nothing is read unless the corpus exists.
+  const now: Record<string, string> = present ? Object.fromEntries(Object.entries(CANARIES).map(([v, p]) => [v, hash(summary(p))])) : {}
+  if (present && process.env['CANARY_UPDATE'] === '1') writeFileSync(STORE, JSON.stringify(now, null, 2) + '\n')
 
   for (const v of Object.keys(CANARIES)) {
     it(`importer output for ${v} is unchanged`, () => {

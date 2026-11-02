@@ -3,7 +3,7 @@
   "private": true,
   "version": "0.0.1",
   "scripts": {
-    "check": "pnpm -r typecheck && pnpm test && pnpm schema:check && pnpm claims && pnpm public-check",
+    "check": "pnpm --filter @assay/core build && pnpm -r typecheck && pnpm test && pnpm schema:check && pnpm claims && pnpm public-check",
     "test": "vitest run",
     "build": "pnpm -r build",
     "build:web": "esbuild packages/assay-core/src/browser.ts --bundle --format=iife --global-name=AssayCore --target=es2020 --outfile=web/prototype/assay-core.js",
