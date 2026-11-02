@@ -2,3 +2,7 @@ export { importClaudeCodeDir, importFromFiles } from './claude-code-jsonl/index.
 export type { ImportOptions, SourceFile } from './claude-code-jsonl/index.js'
 export { attachOtlp } from './otlp/index.js'
 export type { OtlpFile } from './otlp/index.js'
+export { census, diffCensus } from './claude-code-jsonl/census.js'
+export type { VersionCensus, CensusDiff } from './claude-code-jsonl/census.js'
+export { IMPORTER_SUPPORT, versionSupport } from './claude-code-jsonl/support.js'
+export type { VersionSupport } from './claude-code-jsonl/support.js'

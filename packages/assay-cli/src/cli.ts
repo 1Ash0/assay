@@ -1,7 +1,8 @@
 #!/usr/bin/env node
-import { attachOtlp, buildRunView, importClaudeCodeDir, Run, runHealth, Truth } from '@assay/core'
-import { readFileSync, writeFileSync } from 'fs'
-import { resolve } from 'path'
+import { attachOtlp, buildRunView, census, diffCensus, IMPORTER_SUPPORT, importClaudeCodeDir, Run, runHealth, Truth } from '@assay/core'
+import { existsSync, mkdirSync, readdirSync, readFileSync, statSync, writeFileSync } from 'fs'
+import { homedir } from 'os'
+import { join, resolve } from 'path'
 
 const [, , command, ...args] = process.argv
 
@@ -13,6 +14,9 @@ Commands:
   import <path>        Import a Claude Code session directory or JSONL file [--otlp file]
   health <run.json>    Run Health detectors on an imported run
   requests <path>      Seal of every request record in a session (ADR-026)
+  catalogue check [dir ...]
+                       Versions and record formats seen vs the importer's support
+                       (default: corpus/frozen and ~/.claude/projects) [--results dir]
   export-view <path>   Redacted view model of one session [--truth t] [--id x]
   export-site <runs.json> --out <data.js> [--results dir]
                        Site data for every listed run; regenerates health results
@@ -84,6 +88,40 @@ if (command === 'import') {
   const n = (s: string) => q.records.filter(r => r.seal === s).length
   console.error(`requests  ${q.records.length}  sealed ${n('sealed')}  broken ${n('broken')}  unresolved ${n('unresolved')}  no-shape ${n('no-shape')}  blobs failing their key ${q.blobsFailed.length}`)
   if (n('broken') > 0 || q.blobsFailed.length + q.shapesFailed.length > 0) process.exit(2)
+} else if (command === 'catalogue' && args[0] === 'check') {
+  // Rule 7 as a signal (M4_PLAN §4a, 2a/2b): every version seen against the
+  // importer's declared support, and what changed in the record format from
+  // one version to the next. Exit 1 when any version is outside the range.
+  const dirs = args.slice(1).filter(a => !a.startsWith('--') && a !== flag('--results'))
+  const roots = dirs.length ? dirs : ['corpus/frozen', join(homedir(), '.claude', 'projects')]
+  const paths: string[] = []
+  const walk = (d: string) => {
+    if (!existsSync(d)) return
+    for (const f of readdirSync(d)) {
+      const q = join(d, f)
+      if (statSync(q).isDirectory()) { if (!['tool-results', 'otel', 'l4'].includes(f)) walk(q) }
+      else if (f.endsWith('.jsonl')) paths.push(q)
+    }
+  }
+  roots.forEach(r => walk(resolve(r)))
+  const c = census(paths.map(path => ({ path, bytes: new Uint8Array(readFileSync(path)) })))
+  const diffs = diffCensus(c)
+  const resultsDir = flag('--results')
+  if (resultsDir) {
+    mkdirSync(resolve(resultsDir, 'catalogue'), { recursive: true })
+    for (const v of c) writeFileSync(resolve(resultsDir, 'catalogue', `${v.version}.json`), JSON.stringify({ ...v, diff: diffs.find(d => d.version === v.version) }, null, 2))
+  }
+  console.log(`importer support: ${IMPORTER_SUPPORT.tool} ${IMPORTER_SUPPORT.min}–${IMPORTER_SUPPORT.max}  (${paths.length} files)`)
+  for (const v of c) {
+    const d = diffs.find(x => x.version === v.version)!
+    const changes = [
+      ...d.newTypes.map(t => `+type ${t}`),
+      ...Object.entries(d.newFields).map(([t, f]) => `+fields ${t}: ${f.join(', ')}`),
+    ]
+    console.log(`${v.version.padEnd(10)} ${v.support.padEnd(19)} ${String(v.files).padStart(4)} files ${String(v.lines).padStart(7)} lines`)
+    for (const ch of changes) console.log(`             first seen here: ${ch}`)
+  }
+  if (c.some(v => v.support === 'outside-range')) process.exit(1)
 } else if (command === 'export-view') {
   // ADR-020: the view is redacted by construction (raw samples pass through redact()).
   const path = args[0]

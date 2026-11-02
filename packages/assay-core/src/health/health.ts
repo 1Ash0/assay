@@ -11,9 +11,11 @@ import {
   d9TimestampReversal,
   d10ApiRequestCount,
   d11RequestSeals,
+  d0VersionSupport,
   dCostStateCheck,
 } from './detectors.js'
 import { CategoryObservability, Finding, FinenessRate, HealthReport, MetricVerdict, ValidityCard } from './types.js'
+import { IMPORTER_SUPPORT, versionSupport } from '../importers/claude-code-jsonl/support.js'
 
 export function runHealth(run: Run): HealthReport {
   const findings: Finding[] = [
@@ -28,6 +30,7 @@ export function runHealth(run: Run): HealthReport {
     ...d9TimestampReversal(run),
     ...d10ApiRequestCount(run),
     ...d11RequestSeals(run),
+    ...d0VersionSupport(run),
     ...dCostStateCheck(run),
   ]
 
@@ -117,6 +120,11 @@ export function buildValidityCard(run: Run, findings: Finding[], overall: Metric
   const inputTokenRange = inputTokenRangeOf(run, totalInputTokens)
   const otel = otelSummary(run)
   const requests = requestSummary(run)
+  const version = {
+    value: run.harness.version ?? null,
+    support: versionSupport(run.harness.version),
+    range: `${IMPORTER_SUPPORT.min}–${IMPORTER_SUPPORT.max}`,
+  }
   const fineness = finenessOf({
     'usage coverage': usageCoverageRate,
     'parsed telemetry': totalLines > 0 ? 1 - unparsedTelemetryRatio : null,
@@ -295,6 +303,7 @@ export function buildValidityCard(run: Run, findings: Finding[], overall: Metric
     inputTokenRange,
     otel,
     requests,
+    version,
     fineness,
     observability,
     runtimeCostUSD,

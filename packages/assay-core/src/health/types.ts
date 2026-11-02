@@ -97,6 +97,13 @@ export interface ValidityCard {
   // the largest (the importer's choice). A point total only when min === max.
   inputTokenRange: { min: number; max: number }
 
+  // Rule 7: the harness version against the importer's declared support.
+  version: {
+    value: string | null
+    support: 'checked' | 'in-range-unchecked' | 'outside-range' | 'no-version'
+    range: string
+  }
+
   // Request records in the transcript (ADR-026); null when the version writes none.
   // sealed = rebuilt body hashes to requestDigest; unresolved = a message in the
   // chain has no verified blob (the reconstruction gap R2 measures).

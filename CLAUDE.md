@@ -22,6 +22,7 @@ Working name. A trace-trust toolkit for coding-agent runs: it answers **"can you
 - `make test` offline, fixtures only
 - `assay import <path|otlp-file> --profile claude-code` then `assay health <run>`
 - `assay requests <session>` seal per transcript request record (ADR-026/027)
+- `assay catalogue check [dir…] [--results results]` versions and record formats vs importer support (Rule 7; exit 1 outside range)
 - `assay corpus add|audit|stats` · `make web` · `make web-check`
 - `assay export-site web/prototype/site-runs.json --out web/prototype/data.js --results results` regenerates the site data and `results/` from the local corpus
 

@@ -1,3 +1,4 @@
+import { IMPORTER_SUPPORT, versionSupport } from '../importers/claude-code-jsonl/support.js'
 import { Run } from '../schema/run.js'
 import { Finding } from './types.js'
 
@@ -464,6 +465,24 @@ export function d10ApiRequestCount(run: Run): Finding[] {
   }
 
   return findings
+}
+
+// D0 — harness version outside the importer's declared support (Rule 7)
+// The run is still read, but every figure carries this warning, so a format
+// change can never pass as a clean parse. A version inside the range that has
+// never been checked is reported as info, not warn.
+// False positive: a version with no format change at all; the census
+// (`assay catalogue check`) is how it gets checked and added to `seen`.
+export function d0VersionSupport(run: Run): Finding[] {
+  const v = run.harness.version
+  const s = versionSupport(v)
+  const range = `${IMPORTER_SUPPORT.min}–${IMPORTER_SUPPORT.max}`
+  if (s === 'checked') return []
+  if (s === 'in-range-unchecked') {
+    return [{ detectorId: 'D0', severity: 'info', message: `Claude Code ${v} is inside the importer's range (${range}) but no session at this version has been checked`, evidence: [] }]
+  }
+  const what = s === 'no-version' ? 'no Claude Code version on any line' : `Claude Code ${v} is outside the importer's range (${range})`
+  return [{ detectorId: 'D0', severity: 'warn', message: `${what}; the run is read, but the format is not known to match`, evidence: [] }]
 }
 
 // D11 — request-record seals (ADR-026)
