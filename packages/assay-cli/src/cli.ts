@@ -1,5 +1,6 @@
 #!/usr/bin/env node
 import { attachOtlp, buildRunView, census, diffCensus, IMPORTER_SUPPORT, importClaudeCodeDir, Run, runHealth, Truth } from '@assay/core'
+import { corpusAdd, corpusAudit, corpusStats } from './corpus.js'
 import { existsSync, mkdirSync, readdirSync, readFileSync, statSync, writeFileSync } from 'fs'
 import { homedir } from 'os'
 import { dirname, join, resolve } from 'path'
@@ -14,6 +15,10 @@ Commands:
   import <path>        Import a Claude Code session directory or JSONL file [--otlp file]
   health <run.json>    Run Health detectors on an imported run
   requests <path>      Seal of every request record in a session (ADR-026)
+  corpus add <session.jsonl> [--project p] [--truth t]
+                       Freeze a finished session (and its subagents) read-only
+  corpus audit         Every manifest entry still matches its sha
+  corpus stats         Sessions by project, truth and version
   catalogue check [dir ...]
                        Versions and record formats seen vs the importer's support
                        (default: corpus/frozen and ~/.claude/projects) [--results dir]
@@ -88,6 +93,12 @@ if (command === 'import') {
   const n = (s: string) => q.records.filter(r => r.seal === s).length
   console.error(`requests  ${q.records.length}  sealed ${n('sealed')}  broken ${n('broken')}  unresolved ${n('unresolved')}  no-shape ${n('no-shape')}  blobs failing their key ${q.blobsFailed.length}`)
   if (n('broken') > 0 || q.blobsFailed.length + q.shapesFailed.length > 0) process.exit(2)
+} else if (command === 'corpus') {
+  const sub = args[0]
+  if (sub === 'add' && args[1]) process.exit(corpusAdd(args[1], { ...(flag('--project') ? { project: flag('--project')! } : {}), ...(flag('--truth') ? { truth: flag('--truth')! } : {}) }))
+  else if (sub === 'audit') process.exit(corpusAudit())
+  else if (sub === 'stats') process.exit(corpusStats())
+  else usage()
 } else if (command === 'catalogue' && args[0] === 'check') {
   // Rule 7 as a signal (M4_PLAN §4a, 2a/2b): every version seen against the
   // importer's declared support, and what changed in the record format from

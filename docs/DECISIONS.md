@@ -180,6 +180,17 @@ Context: M3's diff key was the flat tool-name sequence, so reordering two parall
 Decision: a step's key is the sorted multiset of its tool names. Runs are aligned by LCS over keys with exact equality (Rule 5) and report pairs, one-sided steps and the first divergence. `align` and `stepKey` are in core and in the browser bundle.
 Consequence: T3 stability is 60 of 60 and detection 16 of 17. The miss is a run of identical steps, so the view shows the first divergence as "at or after" when neighbours share a key, and states that keys ignore inputs.
 
+## ADR-035 · 2026-11-03 · accepted · Judge plane: interface, redaction and calibration in core; Groq adapter in a script; calibrated on TRAIL
+Context: M5 includes the judge plane and a calibration study (LEARNING unit 9). Jev was set aside by Asmit. A Groq-hosted model was chosen. Rule 6: optional, off by default, `model-judged` with a probability, never mixed with deterministic verdicts, and only after redaction.
+Decision:
+- **Core holds the pieces that need no network:** the `Judge` interface, `redactForJudge` (identity fields dropped; emails, keys, long hex and home paths masked) and pure calibration maths (reliability bins, ECE, AUROC, F1 threshold, confusion).
+- **The Groq adapter lives in `scripts/j1.mjs`**, reading keys only from `GROQ_API_KEY`/`GROQ_API_KEY_2` and caching answers.
+- **Nothing in import, Health or the view calls a judge.**
+- **The calibration study (J1) uses TRAIL's human span labels**, not our corpus. So no private trace leaves the machine, and the truth is human, not computed.
+- **TRAIL is gated (no resharing)**, so it is gitignored, and results carry aggregates and hashed span ids only.
+
+Consequence: the judge can be measured before it is trusted. The ROADMAP's "Jev calibration" becomes J1 on Groq. Asmit sets the keys in his own shell.
+
 ## Proposed (not yet accepted)
 - ADR-P1 Interop with context-analyzer (decide after M0 source read).
 - ADR-P2 Upstream OTel proposal for compaction and skill entities (decide after M0 repo check).
