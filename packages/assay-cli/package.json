@@ -15,5 +15,9 @@
   },
   "devDependencies": {
     "typescript": "*"
-  }
+  },
+  "files": [
+    "dist"
+  ],
+  "license": "MIT"
 }

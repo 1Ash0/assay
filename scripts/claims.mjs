@@ -21,5 +21,14 @@ for (const r of rows) {
   if (pass) ok++
   else { bad++; console.log(`MISMATCH   ${r.id.padEnd(22)} published ${r.value}, artifact ${JSON.stringify(got)} (${r.artifact}${r.pointer})`) }
 }
-console.log(`claims: ${ok} match, ${bad} mismatch, ${unchecked} unchecked (artifact absent) of ${rows.length}`)
+// Every [claim-id] cited in published docs must exist here, so a number
+// cannot point at a row that is never checked.
+const ids = new Set(rows.map(r => r.id))
+for (const doc of ['docs/REPORT.md', 'README.md']) {
+  if (!existsSync(doc)) continue
+  for (const m of readFileSync(doc, 'utf8').matchAll(/\[([a-z0-9]+(?:-[a-z0-9]+)+)(?:, ([a-z0-9-]+))*\]/g)) {
+    for (const id of m[0].slice(1, -1).split(/,\s*/)) if (!ids.has(id)) { bad++; console.log(`UNKNOWN    ${id.padEnd(22)} cited in ${doc}, not in docs/CLAIMS.md`) }
+  }
+}
+console.log(`claims: ${ok} match, ${bad} mismatch or unknown, ${unchecked} unchecked (artifact absent) of ${rows.length}`)
 process.exit(bad ? 1 : 0)
