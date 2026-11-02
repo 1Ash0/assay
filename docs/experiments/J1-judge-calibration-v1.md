@@ -31,3 +31,8 @@
   - One judge model.
 - **What would change my mind:** an ECE under 0.05 together with AUROC above 0.8. That would make the judge usable as a probability, not just a ranking.
 - **Result artifact path:** `results/J1-judge-calibration-v1.json` (aggregates and per-span p and labels by hashed id), summarised in `J1-judge-calibration-v1.result.md`.
+
+## Amendment 1 (2026-11-03, before any judge call)
+Groq no longer lists `llama-3.3-70b-versatile` or any `*70b*` model. The models listed were: allam-2-7b, openai/gpt-oss-120b, openai/gpt-oss-20b, openai/gpt-oss-safeguard-20b, qwen/qwen3.8-27b, plus speech and guard models.
+
+The judge model is changed to **`openai/gpt-oss-120b`**, the largest general model listed. If it is unavailable, `qwen/qwen3.8-27b` is used. The model id used is recorded in every cached answer and in the result. Nothing else changes; no judge answer existed when this was written.

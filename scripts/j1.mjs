@@ -75,8 +75,9 @@ async function run() {
     throw new Error(`groq: retries exhausted (${last}); if this is a connection timeout, check VPN or proxy settings for api.groq.com`)
   }
   const models = (await call('models')).data.map(m => m.id)
-  const model = models.includes('llama-3.3-70b-versatile') ? 'llama-3.3-70b-versatile' : models.find(m => /70b/.test(m))
-  if (!model) { console.error(`no 70b model listed: ${models.join(', ')}`); process.exit(1) }
+  // Preference order from the preregistration, as amended before any call (Amendment 1).
+  const model = ['openai/gpt-oss-120b', 'qwen/qwen3.8-27b'].find(m => models.includes(m))
+  if (!model) { console.error(`none of the preregistered models is listed: ${models.join(', ')}`); process.exit(1) }
   const { sample } = load(), done = cache()
   let n = 0
   for (const s of sample) {
