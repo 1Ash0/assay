@@ -1,0 +1,30 @@
+# EXP-R2 Reconstruction fidelity v1 (preregistration, 2026-11-02, before any scoring)
+- **Question:** From the ordinary transcript lines alone (user, assistant, tool results, attachments, compaction), can assay rebuild exactly the request Claude Code sent?
+- **Truth badge of data used:** `real`. The real-perturbed copies of `3620a96a` are excluded.
+- **Truth source:** the transcript's own request records (ADR-026). A rebuilt request is exact when its SHA-256 over the sorted-key body, with `cacheControl` applied, equals `requestDigest`.
+- **Sessions / n:** every real session frozen in `corpus/` by 2026-11-02 with at least one `api-request` record, which is **n = 20 sessions and 3,065 requests**. Subagent files have no records and are out of scope.
+  - **Split.** Sessions are ordered by SHA-256 of `assay-R2-v1:<id8>`.
+    - The first 6 are the **dev set**, on which rebuild rules may be developed and inspected: `2b152411 3620a96a c99e5c98 ef76e3fc 2825791a f6c8e47e`.
+    - The other 14 are the **held-out set**, scored once with the frozen scorer: `3ff3c7b6 48ad08c2 435395c9 4a153124 ef28c299 93de073c 2f1182fe c3170ecf 2ac7ce78 334cd181 17f6f5b7 6973b17c d013da8e c438a9b3`.
+  - **Disclosure.** Before this split, blob hashes (not rebuild rules) were inspected in `2ac7ce78` and `3ff3c7b6` (held-out), and message structure in `3620a96a` and `ef76e3fc` (dev).
+- **Claude Code versions covered:** 2.1.301–2.1.316.
+- **Capture Level mix and content flags:** L1 for all, except `93de073c` and `ef76e3fc`, which are L3 (OTel). Content flags are off. OTel is not used by this experiment.
+- **Primary metric (fixed now):** digest-exact rate. Per session, it is (requests whose rebuild hashes to `requestDigest`) ÷ (requests recorded). This is averaged over held-out sessions with equal weight per session.
+  - A request whose rebuild depends on an earlier request that failed is still attempted from the record chain as far as possible, and counts as not exact if it does not hash.
+- **Secondary metrics:**
+  - block-exact rate per category (11 plus uncategorised);
+  - share of measured input tokens (by usage deltas) carried by exact blocks;
+  - uncategorised share;
+  - the same primary metric with requests pooled, reported alongside and never in place of it.
+- **Analysis:** session is the unit of analysis. 95% CI by bootstrap over held-out sessions (10,000 resamples, seed 26). Dev-set numbers are reported separately and marked dev.
+- **Stopping rule:** a single scoring run on the held-out set, after the scorer is frozen at a recorded commit. Any rule change after that is a v2 with its own preregistration.
+- **Threats specific to this experiment:**
+  - **T-R2-1:** the truth and the rebuild come from one client-written file. Mitigated by one L4 calibration session before M4 exits.
+  - **T-R2-2:** one user, one machine.
+  - **T-R2-3:** the format may change after 2.1.316.
+  - **T-R2-4:** only 2.1.299+ sessions have truth, so fidelity for older sessions is extrapolated and must be labelled so.
+  - **T-R2-5:** one large session (`4a153124`, 1,249 records) would dominate a pooled rate, which is why the primary rate is per session.
+- **What would change my mind:**
+  - The L4 calibration shows request records differing from raw bodies.
+  - The dev rate is far higher than the held-out rate, which would mean rules overfit to the dev sessions.
+- **Result artifact path:** `results/R2-reconstruction-v1.json` (gitignored; the numbers are summarised in the notebook).
