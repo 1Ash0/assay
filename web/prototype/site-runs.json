@@ -1,0 +1,125 @@
+{
+ "_comment": "Runs the site shows. Paths are local corpus files (gitignored); this list holds no content.",
+ "runs": [
+  {
+   "id": "9e6a9543",
+   "path": "corpus/frozen/E--RL/9e6a9543-0d5d-4a8a-9d76-d51b83368c61.jsonl",
+   "truth": "real"
+  },
+  {
+   "id": "3620a96a",
+   "path": "corpus/frozen/e--m26-mp2-2026121006/3620a96a-e976-4e0d-81e8-a14359aee837.jsonl",
+   "truth": "real"
+  },
+  {
+   "id": "f6c8e47e",
+   "path": "corpus/frozen/e--m26-mp2-2026121006/f6c8e47e-585c-4f35-83ed-b7a11dc141bc.jsonl",
+   "truth": "real"
+  },
+  {
+   "id": "435395c9",
+   "path": "corpus/frozen/E--surfacelab/435395c9-3ae5-4a23-9e36-407a507d6251.jsonl",
+   "truth": "real"
+  },
+  {
+   "id": "2f1182fe",
+   "path": "corpus/frozen/E--ctxagent/2f1182fe-9de7-48ba-b514-4530ebd07899.jsonl",
+   "truth": "real"
+  },
+  {
+   "id": "3ff3c7b6",
+   "path": "corpus/frozen/E--ctxagent/3ff3c7b6-f258-4277-83e1-82acb6a53fc4.jsonl",
+   "truth": "real"
+  },
+  {
+   "id": "4a153124",
+   "path": "corpus/frozen/E--surfacelab/4a153124-cf3a-4de3-b59d-d262b06c7f0f.jsonl",
+   "truth": "real"
+  },
+  {
+   "id": "c3170ecf",
+   "path": "corpus/frozen/E--ctxagent/c3170ecf-d472-429e-9168-e3c6ffb069ef.jsonl",
+   "truth": "real"
+  },
+  {
+   "id": "453b573b",
+   "path": "corpus/frozen/E--RL/453b573b-3bb5-4d7c-9f0f-77e88a358a6d.jsonl",
+   "truth": "real"
+  },
+  {
+   "id": "d1-trigger",
+   "path": "corpus/frozen/E--RL-d1-trigger/453b573b-3bb5-4d7c-9f0f-77e88a358a6d.jsonl",
+   "truth": "real"
+  },
+  {
+   "id": "2b152411",
+   "path": "corpus/frozen/E--assay/2b152411-20f3-4422-9a7e-3914a988e040.jsonl",
+   "truth": "real"
+  },
+  {
+   "id": "334cd181",
+   "path": "corpus/frozen/E--assay/334cd181-c965-40bb-ae91-a1aef63fd80f.jsonl",
+   "truth": "real"
+  },
+  {
+   "id": "37216832",
+   "path": "corpus/frozen/E--SPARK-Paper2/37216832-7dd8-45e9-b230-c2c9c5b5403c.jsonl",
+   "truth": "real"
+  },
+  {
+   "id": "6973b17c",
+   "path": "corpus/frozen/E--assay/6973b17c-2043-40dd-9ddd-5a5e95d7727a.jsonl",
+   "truth": "real"
+  },
+  {
+   "id": "93de073c",
+   "path": "corpus/frozen/E--assay/93de073c-a732-4a12-8903-599cc0e931e4.jsonl",
+   "truth": "real"
+  },
+  {
+   "id": "d013da8e",
+   "path": "corpus/frozen/E--assay/d013da8e-30c0-4ec9-9a53-4be223411dbf.jsonl",
+   "truth": "real"
+  },
+  {
+   "id": "d1-perturbed",
+   "path": "corpus/frozen/real-perturbed/d1-subagent-blind-spot.jsonl",
+   "truth": "real-perturbed"
+  },
+  {
+   "id": "d5-perturbed",
+   "path": "corpus/frozen/real-perturbed/d5-context-overflow.jsonl",
+   "truth": "real-perturbed"
+  },
+  {
+   "id": "d6-perturbed",
+   "path": "corpus/frozen/real-perturbed/d6-input-disagree.jsonl",
+   "truth": "real-perturbed"
+  },
+  {
+   "id": "forged-copy",
+   "path": "corpus/frozen/real-perturbed/d6-forged-copy.jsonl",
+   "truth": "real-perturbed"
+  },
+  {
+   "id": "sc-d1-mock",
+   "path": "corpus/frozen/scripted/d1-subagent-absent.jsonl",
+   "truth": "scripted"
+  },
+  {
+   "id": "sc-high-unknown",
+   "path": "corpus/frozen/scripted/high-unknown-ratio.jsonl",
+   "truth": "scripted"
+  },
+  {
+   "id": "sc-multi-comp",
+   "path": "corpus/frozen/scripted/multi-compaction-precise.jsonl",
+   "truth": "scripted"
+  },
+  {
+   "id": "sc-pure-chat",
+   "path": "corpus/frozen/scripted/pure-chat.jsonl",
+   "truth": "scripted"
+  }
+ ]
+}
