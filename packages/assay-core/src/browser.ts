@@ -3,3 +3,4 @@
 export { importFromFiles } from './importers/claude-code-jsonl/from-files.js'
 export { runHealth } from './health/health.js'
 export { buildRunView } from './view/build.js'
+export { align, stepKey } from './diff/align.js'
