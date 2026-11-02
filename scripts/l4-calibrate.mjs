@@ -48,7 +48,9 @@ const records = lines.filter(o => o.type === 'api-request')
 const chain = new Map()
 for (const q of records) chain.set(q.id, [...(q.base ? chain.get(q.base) ?? [] : []).slice(0, q.keep), ...q.tail])
 
-const index = readFileSync(`${rawDir}/index.jsonl`, 'utf8').split('\n').filter(Boolean).map(l => JSON.parse(l))
+// One raw-body folder can hold several sessions; keep only this one's requests.
+const sessionId = lines.find(o => typeof o.sessionId === 'string')?.sessionId
+const index = readFileSync(`${rawDir}/index.jsonl`, 'utf8').split('\n').filter(Boolean).map(l => JSON.parse(l)).filter(x => !sessionId || x.session_id === sessionId)
 const read = f => JSON.parse(readFileSync(`${rawDir}/${f}`, 'utf8'))
 
 const wire = []

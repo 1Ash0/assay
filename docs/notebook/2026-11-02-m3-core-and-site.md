@@ -75,3 +75,11 @@ What would change my mind: a Claude Code version where sidechain lines also appe
   - Heredocs ate regex backslashes twice; fixed with the Edit tool.
   - web-check caught a path tail that looked like an email, and an over-budget `data.js`. Both were fixed by stricter redaction and a compact view, not by loosening the checks.
 - **What would change my mind:** a second L4 calibration on a later version showing the request record and the wire differ beyond the four named differences.
+
+## 2026-11-03: twins and the second L4 calibration
+- **Twin pair (`twin-a` / `twin-b`):** the same prompt at the same commit diverges at the first step (Read vs PowerShell), and costs 417k vs 161k input tokens. Every request in both seals.
+- **The record and the wire differ on tool inputs in both directions:**
+  - here the record holds the `cd <cwd> &&`-prefixed command, and the wire the original;
+  - in calibration 1 the wire held the filled-in `replace_all`.
+- **Subagent requests appear in the raw bodies (3 Explore calls) but never as transcript records.** This is the strongest evidence yet that subagent context needs L4.
+- **What would change my mind:** a twin pair that aligns fully. It would show the divergence here is the task's openness, not something general.

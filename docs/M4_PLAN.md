@@ -57,6 +57,24 @@ Run with `node scripts/l4-calibrate.mjs`; output in `results/L4-calibration-cae6
 
 **Verdict.** For the main thread, the record equals the wire request apart from the four named, counted differences. It is the better ground truth for context, because L4 is both delta-encoded and redacted. L4 stays essential for side calls and for the defaults the client fills in. That holds for n = 1 session, one version and one user, and the result says so.
 
+### 1b. Second calibration and twin runs (2026-11-03, `E--twin-demo`, 2.1.316, Sonnet 5.5)
+Three sessions, frozen with 37 raw-body files: twin A `ff627b48`, twin B `6068d64d`, and the subagent session `257eafee`. Results are in `results/L4-calibration-<id>.json`. The script now filters the raw-body index by session.
+
+**Agreement.**
+- All 10 main-thread wire requests pair to exactly one record.
+- params 10 of 10; system and tools 3 of 3.
+- Messages: twin B 5 of 5, subagent session 7 of 7, twin A 10 of 15.
+
+**Twin A's 5 differences are one new kind.** The record stores the client-rewritten Bash command (`cd <cwd> && ` + command), while the wire re-sent the model's original command. The first calibration found the opposite direction (a default filled in on the wire). So tool-call inputs can differ between record and wire either way, and the reconstruction ledger marks them `version_dependent`.
+
+**Subagents: L4 sees them; the transcript records none.** The 3 `agent:builtin:Explore` requests appear in the raw bodies, while the subagent transcript has no request records. This confirms the coverage gap with data: subagent context is only fully visible at L4. Title generation and prompt suggestions are unrecorded in every session (6 more side calls).
+
+**Twin runs: same prompt, same commit (`9e14bbab`), divergent from step 1.**
+- A: `Read`, then Bash+Write twice, 5 requests, 417,194 input tokens.
+- B: one `PowerShell` call, 2 requests, 161,180.
+- Run Diff: first divergence at step 1, 1 step matched.
+- Every request in both runs seals, so this is real model variation on identical input, not a capture artifact. It is shown on the site as the recorded twin pair `twin-a` / `twin-b`.
+
 ## 2. Self-critique of rev 1
 
 | Rev 1 said | Problem | Rev 2 |
@@ -198,6 +216,7 @@ Only pairs recorded this way are shown as twins in Run Diff.
 Use the same collector setup as before. In the task, ask for at least one subagent, for example "use an Explore subagent to find …". That shows whether subagent requests appear in the raw bodies when the transcript records none.
 
 ## 6. Needs Asmit
-1. ~~One L4 calibration session~~ Done 2026-11-02 (§1a). A second on a later version would test T-R2-3.
+1. ~~One L4 calibration session~~ Done 2026-11-02 (§1a). ~~Second calibration~~ Done 2026-11-03 (§1b).
+2. ~~Two twin runs~~ Done 2026-11-03 (§1b).
 2. Two twin runs (the same prompt twice) when convenient, for the real Diff.
 3. R4 audit passes, at least 7 days apart.

@@ -86,6 +86,26 @@
    "otlp": "corpus/frozen/otel/2026-11-02.otlp.jsonl"
   },
   {
+   "id": "twin-a",
+   "path": "corpus/frozen/E--twin-demo/ff627b48-1ecc-4528-a679-e6e8fae001ff.jsonl",
+   "truth": "real",
+   "twinOf": "twin-b",
+   "otlp": "corpus/frozen/otel/2026-11-03.otlp.jsonl"
+  },
+  {
+   "id": "twin-b",
+   "path": "corpus/frozen/E--twin-demo/6068d64d-2aea-4e2c-843a-43460fa835e0.jsonl",
+   "truth": "real",
+   "twinOf": "twin-a",
+   "otlp": "corpus/frozen/otel/2026-11-03.otlp.jsonl"
+  },
+  {
+   "id": "257eafee",
+   "path": "corpus/frozen/E--twin-demo/257eafee-c066-4947-ae42-582538c1e84d.jsonl",
+   "truth": "real",
+   "otlp": "corpus/frozen/otel/2026-11-03.otlp.jsonl"
+  },
+  {
    "id": "d013da8e",
    "path": "corpus/frozen/E--assay/d013da8e-30c0-4ec9-9a53-4be223411dbf.jsonl",
    "truth": "real"

@@ -55,8 +55,7 @@ R2 reconstruction fidelity; exact-match provenance and unsourced-literal reporti
 Open for exit:
 - P6, drawing the Charge, the Core box, streak lines and twin lanes on the site; site data is at 7.9 of 8 MB, so P6 must move per-step detail out of `data.js`;
 - R4 audit passes;
-- real twin runs;
-- a second L4 calibration;
+- more twin pairs (one pair recorded 2026-11-03; it diverges at step 1);
 - the gate. Gate unit 7 recorded as passed on Asmit's statement (ADR-026).
 
 ## M5 — Ship
