@@ -1,4 +1,5 @@
 import { Offset } from '../schema/offset.js'
+import { CaptureQuality } from './quality.js'
 
 export type FinenessRate = 'usage coverage' | 'parsed telemetry' | 'model identification'
 
@@ -96,6 +97,9 @@ export interface ValidityCard {
   // a message that disagree on inputTokens, min uses the smallest copy and max
   // the largest (the importer's choice). A point total only when min === max.
   inputTokenRange: { min: number; max: number }
+
+  // Deterministic capture-quality counters with first offsets (health/quality.ts).
+  captureQuality: CaptureQuality
 
   // Rule 7: the harness version against the importer's declared support.
   version: {

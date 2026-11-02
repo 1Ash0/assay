@@ -15,6 +15,7 @@ import {
   dCostStateCheck,
 } from './detectors.js'
 import { CategoryObservability, Finding, FinenessRate, HealthReport, MetricVerdict, ValidityCard } from './types.js'
+import { captureQuality } from './quality.js'
 import { IMPORTER_SUPPORT, versionSupport } from '../importers/claude-code-jsonl/support.js'
 
 export function runHealth(run: Run): HealthReport {
@@ -304,6 +305,7 @@ export function buildValidityCard(run: Run, findings: Finding[], overall: Metric
     otel,
     requests,
     version,
+    captureQuality: captureQuality(run),
     fineness,
     observability,
     runtimeCostUSD,

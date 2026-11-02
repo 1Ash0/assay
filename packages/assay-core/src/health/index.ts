@@ -7,3 +7,5 @@ export {
   d8SessionIdConflict,
   d9TimestampReversal,
 } from './detectors.js'
+export { captureQuality } from './quality.js'
+export type { CaptureQuality, Counter } from './quality.js'

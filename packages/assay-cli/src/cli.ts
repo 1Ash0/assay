@@ -83,7 +83,7 @@ if (command === 'import') {
   if (!q) { console.error('no request records (Claude Code before 2.1.299, or none written)'); process.exit(0) }
   for (const r of q.records) {
     const gap = r.seal === 'unresolved' ? `  ${r.missingMessages}/${r.messageCount} messages without blob` : ''
-    console.log(`${r.seal.padEnd(10)} line ${String(r.offset.line).padStart(6)}  ${(r.querySource ?? '?').padEnd(18)} ${r.messageCount} msgs${gap}`)
+    console.log(`${r.seal.padEnd(10)} line ${String(r.offset.line + 1).padStart(6)}  ${(r.querySource ?? '?').padEnd(18)} ${r.messageCount} msgs${gap}`)
   }
   const n = (s: string) => q.records.filter(r => r.seal === s).length
   console.error(`requests  ${q.records.length}  sealed ${n('sealed')}  broken ${n('broken')}  unresolved ${n('unresolved')}  no-shape ${n('no-shape')}  blobs failing their key ${q.blobsFailed.length}`)
