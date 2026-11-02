@@ -1,21 +1,29 @@
 // Site checks that run offline (M3 exit). Fails on: personal data or local
 // paths in the generated data, budgets exceeded, or basic markup a11y gaps.
-import { readFileSync, statSync, existsSync } from 'fs'
+import { readFileSync, readdirSync, statSync, existsSync } from 'fs'
 
 const fail = []
 const dir = 'web/prototype'
 const KB = f => Math.round(statSync(`${dir}/${f}`).size / 1024)
 
 // 1. Privacy: the data file is redacted by core; check nothing slipped through.
-if (existsSync(`${dir}/data.js`)) {
-  const data = readFileSync(`${dir}/data.js`, 'utf-8')
-  const leaks = [
+const leaks = [
     [/[A-Za-z]:\\[A-Za-z]/, 'Windows path'],
     [/\/(home|Users)\/[^"\s]+/, 'home path'],
     [/[\w.+-]+@[\w-]+\.[\w.]+/, 'email address'],
     [/user\.account|organization\.id/, 'OTel identity attribute'],
-  ]
-  for (const [re, what] of leaks) { const m = data.match(re); if (m) fail.push(`data.js contains a ${what}: ${m[0].slice(0, 40)}`) }
+]
+const scan = (name, data) => { for (const [re, what] of leaks) { const m = data.match(re); if (m) fail.push(`${name} contains a ${what}: ${m[0].slice(0, 40)}`) } }
+// Per-run spine files (written by export-site) get the same scan and their own budget.
+if (existsSync(`${dir}/runs`)) {
+  for (const f of readdirSync(`${dir}/runs`)) {
+    scan(`runs/${f}`, readFileSync(`${dir}/runs/${f}`, 'utf-8'))
+    if (KB(`runs/${f}`) > 4 * 1024) fail.push(`runs/${f} is ${KB(`runs/${f}`)} KB (budget 4096)`)
+  }
+}
+if (existsSync(`${dir}/data.js`)) {
+  const data = readFileSync(`${dir}/data.js`, 'utf-8')
+  scan('data.js', data)
   // 2. Budgets (site data grows with the corpus; split per run past this).
   if (KB('data.js') > 8 * 1024) fail.push(`data.js is ${KB('data.js')} KB (budget 8192)`)
 } else fail.push('data.js missing: run pnpm web')

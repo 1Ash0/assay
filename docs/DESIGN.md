@@ -27,7 +27,13 @@ Six punches read left to right: sponsor (harness version) · capture · fineness
 - **Certificate**: verdict per metric family, assay notes (findings by severity, each with an offset), "not counted" footnotes, the observability boxes, and per-detector figures (D1 no-recovery box, D2 copies, D6 range, D-cost balance, …).
 - **Core**: four measured token layers per request at L1, plus an "unlogged at L1" column (ADR-018). The 11-category split is M4.
 - **Shelf**: every run in the corpus as a specimen, filterable by truth and verdict.
-- **Traverse, Replay, Run Diff**: designed in M3_PLAN §5.3–5.5; not yet built on the site (ROADMAP M3 status).
+- **Traverse**: a Marey chart of who did what, when.
+- **Replay** (M4, P6), around the selected step:
+  - **Core box:** one column per request with category bands at measured height; dashed means not reconstructed, a wavy line means compaction.
+  - **The Charge:** the selected request's make-up, with a Rebuild play that lays the blocks back and strikes the seal. The seal is core's digest check and appears only for sealed requests; categories mostly split by characters are stippled.
+  - **Streaks:** each tool call's literals and where each first appeared, with `l1-lines` labelled as an upper bound.
+- **Run Diff**: twin lanes from core's `align` (ADR-034), with ribbons for exact key matches and the first divergence shown as "at or after" when neighbours share a key. The view says that keys ignore inputs, and whether the pair is a recorded twin.
+- **Site data**: `data.js` holds what the bench and shelf draw; each run's spine is in `runs/<id>.json` (gitignored, scanned by web-check), loaded on first use.
 
 ## Play layer (ADR-017)
 Call it (commit to a verdict before the hallmark strikes), the punch card (detectors you have watched fire), and tamper missions on `real-perturbed` files. A mission stamps CAUGHT only when the tamper is flagged *and* kept out of point totals; otherwise FLAGGED, naming the leak. All play state is local; nothing compares people. Copy is labels, verbs and numbers with their source.
