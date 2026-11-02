@@ -27,7 +27,11 @@ const artifacts = [
   // Slowest last: T3 imports every session five times.
   sh('node scripts/t3-score.mjs results/T3-diff-stability-v1.json', 'results/T3-diff-stability-v1.json'),
 ].filter(Boolean)
-if (existsSync('results/J1/cache.jsonl')) artifacts.push(sh('node scripts/j1.mjs score', 'results/J1-judge-calibration-v1.json'))
+// J1 is scored only once every span has been attempted; until then it is skipped, not partially written.
+if (existsSync('results/J1/cache.jsonl')) {
+  try { execSync('node scripts/j1.mjs score', { stdio: ['ignore', 'ignore', 'inherit'] }); artifacts.push('results/J1-judge-calibration-v1.json') }
+  catch { console.error('results: J1 skipped (study not complete)') }
+}
 const run = {
   commit: execSync('git rev-parse HEAD').toString().trim(),
   dirty: execSync('git status --porcelain -- packages scripts').toString().trim().length > 0,

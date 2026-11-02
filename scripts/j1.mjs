@@ -104,6 +104,13 @@ function score() {
   const { spans, sample, notFound } = load(), done = cache()
   const rows = sample.map(s => ({ ...s, ans: done.get(sha(`${s.trace}:${s.span}`).slice(0, 16)) }))
   const answered = rows.filter(r => r.ans && r.ans.p !== null)
+  // The preregistration fixes one pass over all 600 spans: no result is written
+  // until every span has been attempted (answered or failed after retries).
+  const attempted = rows.filter(r => r.ans).length
+  if (attempted < rows.length) {
+    console.error(`J1 not complete: ${attempted}/${rows.length} spans attempted (${answered.length} answered). Run \`node scripts/j1.mjs run\` until done; no result is written before that.`)
+    process.exit(process.argv.includes('--progress') ? 0 : 1)
+  }
   const set = sp => answered.filter(r => r.split === sp).map(r => ({ p: r.ans.p, y: r.y, trace: r.trace }))
   const cal = set('calibration'), held = set('held-out')
   const t = bestF1Threshold(cal)
