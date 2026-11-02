@@ -48,13 +48,22 @@ async function run() {
   mkdirSync(DIR, { recursive: true })
   let k = 0
   const call = async (path, body) => {
-    for (let attempt = 0; attempt < 4; attempt++) {
-      const r = await fetch(`https://api.groq.com/openai/v1/${path}`, { method: body ? 'POST' : 'GET', headers: { Authorization: `Bearer ${keys[k % keys.length]}`, 'Content-Type': 'application/json' }, ...(body ? { body: JSON.stringify(body) } : {}) })
+    let last = ''
+    for (let attempt = 0; attempt < 6; attempt++) {
+      let r
+      try {
+        r = await fetch(`https://api.groq.com/openai/v1/${path}`, { method: body ? 'POST' : 'GET', signal: AbortSignal.timeout(60_000), headers: { Authorization: `Bearer ${keys[k % keys.length]}`, 'Content-Type': 'application/json' }, ...(body ? { body: JSON.stringify(body) } : {}) })
+      } catch (e) {
+        // A dropped or timed-out connection is retried, not fatal; the cause is named.
+        last = `network: ${e.cause?.code ?? e.name}`
+        await new Promise(res => setTimeout(res, 2000 * 2 ** attempt)); continue
+      }
       if (r.ok) return r.json()
-      if (r.status === 429 || r.status >= 500) { k++; await new Promise(res => setTimeout(res, 2000 * 2 ** attempt)); continue }
+      if (r.status === 401) throw new Error(`groq 401: key ${k % keys.length + 1} rejected; check the value in your shell (it is never printed)`)
+      if (r.status === 429 || r.status >= 500) { last = `http ${r.status}`; k++; await new Promise(res => setTimeout(res, 2000 * 2 ** attempt)); continue }
       throw new Error(`groq ${r.status}: ${(await r.text()).slice(0, 200)}`)
     }
-    throw new Error('groq: retries exhausted')
+    throw new Error(`groq: retries exhausted (${last}); if this is a connection timeout, check VPN or proxy settings for api.groq.com`)
   }
   const models = (await call('models')).data.map(m => m.id)
   const model = models.includes('llama-3.3-70b-versatile') ? 'llama-3.3-70b-versatile' : models.find(m => /70b/.test(m))
@@ -114,6 +123,6 @@ function score() {
 }
 
 const cmd = process.argv[2]
-if (cmd === 'run') await run()
+if (cmd === 'run') await run().catch(e => { console.error(e.message); process.exit(1) })
 else if (cmd === 'score') score()
 else { console.error('usage: node scripts/j1.mjs run|score'); process.exit(1) }
