@@ -1,3 +1,4 @@
 export * from './schema/index.js'
 export * from './importers/index.js'
 export * from './health/index.js'
+export * from './view/index.js'

@@ -11,7 +11,7 @@ import { Finding } from './types.js'
 //   200K models: claude-haiku-4-5-20251001 (absent from 1M list; standard 200K window
 //      for Haiku 4.x per April 2026 release notes)
 //   <synthetic>: excluded — no real context limit applies
-const CONTEXT_LIMITS: Record<string, number> = {
+export const CONTEXT_LIMITS: Record<string, number> = {
   'claude-sonnet-4-6':          1_000_000,
   'claude-haiku-4-5-20251001':    200_000,
   'claude-sonnet-5-5':          1_000_000,
