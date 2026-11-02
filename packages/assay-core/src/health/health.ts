@@ -10,6 +10,7 @@ import {
   d8SessionIdConflict,
   d9TimestampReversal,
   d10ApiRequestCount,
+  d11RequestSeals,
   dCostStateCheck,
 } from './detectors.js'
 import { CategoryObservability, Finding, FinenessRate, HealthReport, MetricVerdict, ValidityCard } from './types.js'
@@ -26,6 +27,7 @@ export function runHealth(run: Run): HealthReport {
     ...d8SessionIdConflict(run),
     ...d9TimestampReversal(run),
     ...d10ApiRequestCount(run),
+    ...d11RequestSeals(run),
     ...dCostStateCheck(run),
   ]
 
@@ -114,6 +116,7 @@ export function buildValidityCard(run: Run, findings: Finding[], overall: Metric
 
   const inputTokenRange = inputTokenRangeOf(run, totalInputTokens)
   const otel = otelSummary(run)
+  const requests = requestSummary(run)
   const fineness = finenessOf({
     'usage coverage': usageCoverageRate,
     'parsed telemetry': totalLines > 0 ? 1 - unparsedTelemetryRatio : null,
@@ -291,6 +294,7 @@ export function buildValidityCard(run: Run, findings: Finding[], overall: Metric
     importerCoverage,
     inputTokenRange,
     otel,
+    requests,
     fineness,
     observability,
     runtimeCostUSD,
@@ -376,6 +380,18 @@ function finenessOf(rates: Record<FinenessRate, number | null>): ValidityCard['f
 }
 
 // ADR-025. Exact request_id equality only; nothing is matched by time or size.
+function requestSummary(run: Run): ValidityCard['requests'] {
+  const q = run.requests
+  if (!q) return null
+  const n = (s: string) => q.records.filter(r => r.seal === s).length
+  return {
+    records: q.records.length,
+    sealed: n('sealed'), broken: n('broken'), unresolved: n('unresolved'), noShape: n('no-shape'),
+    blobs: q.blobs, blobsFailed: q.blobsFailed.length, shapesFailed: q.shapesFailed.length,
+    messagesWithoutBlob: q.records.reduce((s, r) => s + r.tail.filter(t => !t.blob).length, 0),
+  }
+}
+
 function otelSummary(run: Run): ValidityCard['otel'] {
   if (!run.otel) return null
   const only = run.otel.apiRequests.filter(q => !q.inTranscript)

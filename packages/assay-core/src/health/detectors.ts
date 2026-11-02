@@ -466,6 +466,38 @@ export function d10ApiRequestCount(run: Run): Finding[] {
   return findings
 }
 
+// D11 — request-record seals (ADR-026)
+// A complete request whose rebuilt body does not hash to its own requestDigest,
+// or a blob or shape whose content does not hash to its key, means the record
+// disagrees with itself: either the file was altered or the format changed.
+// Unresolved requests are not findings: a missing blob is the normal case that
+// reconstruction (R2) has to fill, and the validity card counts them.
+// False positive: a new Claude Code version changing the hash rule would turn
+// every complete request broken at once; the finding names the version.
+export function d11RequestSeals(run: Run): Finding[] {
+  const q = run.requests
+  if (!q) return []
+  const findings: Finding[] = []
+  const broken = q.records.filter(r => r.seal === 'broken')
+  if (broken.length > 0) {
+    const versions = [...new Set(broken.map(r => r.version ?? '?'))].join(', ')
+    findings.push({
+      detectorId: 'D11', severity: 'warn',
+      message: `${broken.length} request record(s) have every part present but do not hash to their own digest (version ${versions}); the record or the format has changed`,
+      evidence: broken.slice(0, 20).map(r => r.offset), captureIntegrity: true,
+    })
+  }
+  const bad = [...q.blobsFailed, ...q.shapesFailed]
+  if (bad.length > 0) {
+    findings.push({
+      detectorId: 'D11', severity: 'warn',
+      message: `${q.blobsFailed.length} message blob(s) and ${q.shapesFailed.length} shape(s) do not hash to their own key; they are kept but never used to rebuild a request`,
+      evidence: bad.slice(0, 20), captureIntegrity: true,
+    })
+  }
+  return findings
+}
+
 // D-cost — runtime cost-state cross-check
 // Compares the runtime's own token accounting (cost-state totalCostUSD and per-model
 // token sums) against JSONL usage field totals. Meaningful disagreement indicates

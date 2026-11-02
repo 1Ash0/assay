@@ -97,6 +97,21 @@ export interface ValidityCard {
   // the largest (the importer's choice). A point total only when min === max.
   inputTokenRange: { min: number; max: number }
 
+  // Request records in the transcript (ADR-026); null when the version writes none.
+  // sealed = rebuilt body hashes to requestDigest; unresolved = a message in the
+  // chain has no verified blob (the reconstruction gap R2 measures).
+  requests: {
+    records: number
+    sealed: number
+    broken: number
+    unresolved: number
+    noShape: number
+    blobs: number
+    blobsFailed: number
+    shapesFailed: number
+    messagesWithoutBlob: number
+  } | null
+
   // Cross-channel check against OTel (ADR-025); null when no OTLP capture is
   // attached. otelOnly = api_request records with no transcript request of the
   // same request_id: internal calls the JSONL never wrote (R1-F2).

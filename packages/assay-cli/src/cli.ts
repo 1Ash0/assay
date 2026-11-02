@@ -12,6 +12,7 @@ assay <command> [options]
 Commands:
   import <path>        Import a Claude Code session directory or JSONL file [--otlp file]
   health <run.json>    Run Health detectors on an imported run
+  requests <path>      Seal of every request record in a session (ADR-026)
   export-view <path>   Redacted view model of one session [--truth t] [--id x]
   export-site <runs.json> --out <data.js> [--results dir]
                        Site data for every listed run; regenerates health results
@@ -69,6 +70,20 @@ if (command === 'import') {
     console.error('health failed:', err instanceof Error ? err.message : err)
     process.exit(1)
   }
+} else if (command === 'requests') {
+  // One line per request record: sealed means the rebuilt body hashes to the
+  // record's own digest; unresolved names how many messages have no blob.
+  const path = args[0]
+  if (!path) { console.error('requests requires a session path'); process.exit(1) }
+  const q = importClaudeCodeDir(resolve(path)).requests
+  if (!q) { console.error('no request records (Claude Code before 2.1.299, or none written)'); process.exit(0) }
+  for (const r of q.records) {
+    const gap = r.seal === 'unresolved' ? `  ${r.missingMessages}/${r.messageCount} messages without blob` : ''
+    console.log(`${r.seal.padEnd(10)} line ${String(r.offset.line).padStart(6)}  ${(r.querySource ?? '?').padEnd(18)} ${r.messageCount} msgs${gap}`)
+  }
+  const n = (s: string) => q.records.filter(r => r.seal === s).length
+  console.error(`requests  ${q.records.length}  sealed ${n('sealed')}  broken ${n('broken')}  unresolved ${n('unresolved')}  no-shape ${n('no-shape')}  blobs failing their key ${q.blobsFailed.length}`)
+  if (n('broken') > 0 || q.blobsFailed.length + q.shapesFailed.length > 0) process.exit(2)
 } else if (command === 'export-view') {
   // ADR-020: the view is redacted by construction (raw samples pass through redact()).
   const path = args[0]

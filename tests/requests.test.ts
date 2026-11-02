@@ -42,7 +42,22 @@ describe('request records (ADR-026)', () => {
   })
 
   it('leaves runs without records alone', () => {
-    expect(importClaudeCodeDir(resolve('fixtures/scripted/catalogue.jsonl')).requests).toBeUndefined()
+    const plain = importClaudeCodeDir(resolve('fixtures/scripted/catalogue.jsonl'))
+    expect(plain.requests).toBeUndefined()
+    expect(runHealth(plain).validity.requests).toBeNull()
+  })
+
+  it('puts seal counts on the validity card', () => {
+    expect(runHealth(run).validity.requests).toMatchObject({
+      records: 5, sealed: 2, broken: 1, unresolved: 1, noShape: 1, blobs: 4, blobsFailed: 1, messagesWithoutBlob: 2,
+    })
+  })
+
+  it('D11 flags a broken seal and a blob that fails its key, not unresolved requests', () => {
+    const d11 = runHealth(run).findings.filter(f => f.detectorId === 'D11')
+    expect(d11).toHaveLength(2)
+    expect(d11.every(f => f.captureIntegrity)).toBe(true)
+    expect(d11[0]!.evidence).toEqual([run.requests!.records.find(r => r.id === 'r4')!.offset])
   })
 })
 

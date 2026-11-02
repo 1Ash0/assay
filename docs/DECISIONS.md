@@ -112,6 +112,11 @@ Context: R2 assumed L4 raw API bodies as ground truth; none exist in the corpus.
 Decision: R2 scores a rebuild from ordinary transcript lines against these records. Primary metric: digest-exact rate per session. Tokens per block come only from usage deltas between consecutive requests; any other split is labelled `inferred`. One L4 session calibrates the records against raw bodies before M4 exits. The M4 learning gate (unit 7) is recorded as passed on Asmit's statement of 2026-11-02, as in ADR-023.
 Consequence: R2 needs no new capture to start, and a digest match is a proof of exact reconstruction. Coverage is only what the records cover: no subagent requests and no side calls such as title generation (OTel shows those). Truth and rebuild come from one client-written file (threat T-R2-1), so the L4 calibration is required for the exit.
 
+## ADR-027 · 2026-11-02 · accepted · D11: a request record that disagrees with itself is a capture-integrity finding
+Context: request records can be checked against their own hashes (ADR-026). A complete request whose rebuilt body misses its digest, or a blob or shape whose content misses its key, means the file was altered or the format changed, not that a message is merely missing.
+Decision: D11 (warn, captureIntegrity) fires on broken seals and on failing blobs or shapes, with their offsets. Unresolved requests are not findings; the validity card's `requests` block counts them (records, sealed, broken, unresolved, no-shape, blobs failing, messages without a blob). `assay requests <path>` prints the seal per request and exits 2 on a broken seal or failing key. Request-record lines are kept as unknown lines with `parsedAs: 'request-record'` and leave the unparsed-telemetry count.
+Consequence: on the real corpus (21 sessions, 3,074 records) D11 fires on none. Fineness rises for every 2.1.299+ run, because blobs and shapes are now parsed; site data and results must be regenerated.
+
 ## Proposed (not yet accepted)
 - ADR-P1 Interop with context-analyzer (decide after M0 source read).
 - ADR-P2 Upstream OTel proposal for compaction and skill entities (decide after M0 repo check).
