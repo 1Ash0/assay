@@ -86,7 +86,7 @@ Threats carried into the preregistration:
 5. **Provenance: exact literals,** with the minimum length and exclusions preregistered and R5-validated. Copy never claims cause.
 6. **Run Diff:** exact tool-sequence alignment, T3 stability from scripted perturbations, and twin runs for real data.
 7. **The catalogue moves to 2.1.316** first. `tools-used` is set aside; the request-record types become parsed in P1.
-   - `cost-state` is **not** metadata. It holds the client's own cumulative per-model usage and cost, so it becomes a new cross-check in P1 (our totals against the client's), not a set-aside type.
+   - `cost-state` is **not** metadata: it holds the client's own cumulative usage. It is already parsed (`run.costStates`) and checked by D-cost, so it stays out of the catalogue. (Rev 2 called it a new cross-check; it was not.)
 8. **Gate (unit 7)** recorded as passed on Asmit's statement, 2026-11-02.
 
 ## 4. Design — the assay of a request
@@ -165,6 +165,23 @@ Each item that changes a published number gets an ADR, a CHANGES.md line and a n
 | P4 | Provenance literals; `spine.provenance`; R5 validation | ~250 | streak lines in Replay |
 | P5 | T3 perturbation set; twin-run protocol; full Run Diff | ~250 | twin lanes and dotplot |
 | P6 | L4 calibration (needs your one session); R4 audit sheet; notebook; ROADMAP | docs | M4 exit |
+
+## 5a. P1 status (2026-11-02)
+Done:
+- **Request-record reader:** `run.requests`, with seals; `assay requests`; D11; the requests block on the card (ADR-026/027).
+  - On the corpus: 75 sealed, 0 broken, 2,999 unresolved, with 5,817 messages lacking a blob.
+  - It found two bugs: `api-request` lines were dropped (Rule 4), and the digest needs block form.
+- **Rule 7 enforced:** declared support, D0, the census and `assay catalogue check` (ADR-028).
+- **Capture-quality counters** (ADR-029).
+
+Left in P1:
+- **Local canary (2d).**
+- **Cross-channel first disagreement linked on both sides (item 5).**
+- **D10 by exact id.** The census showed `api-request` records carry `requestId` and `uuid` from 2.1.309, so request records can be joined to transcript requests exactly instead of by count.
+
+Leads for P2, from the census:
+- `wireToolInputs` on assistant lines (2.1.299+) may record the tool inputs as re-sent, including the client-filled defaults the L4 calibration found.
+- `atis-latch` is now the type bounding fineness on most runs; read it before cataloguing it.
 
 ## 6. Needs Asmit
 1. ~~One L4 calibration session~~ Done 2026-11-02 (§1a). A second on a later version would test T-R2-3.

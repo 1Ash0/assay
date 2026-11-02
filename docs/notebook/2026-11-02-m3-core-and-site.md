@@ -42,3 +42,16 @@ What would change my mind: a Claude Code version where sidechain lines also appe
 - **What I believe now:** for the main thread, the transcript record is the better context ground truth than L4: L4 is delta-encoded and redacted, and the record is neither. L4 remains the only view of side calls and of client-filled defaults.
 - **Side-session quality list triaged** (M4_PLAN §4a). Most counters go into P1. D-fork-dup is deferred because no fork session exists on this machine; building it from an issue summary would be a detector without a real fixture.
 - **What would change my mind:** a second calibration (another version, or a session with subagents) where record and wire disagree beyond the four named differences.
+
+## Late: M4 P1, request records in core
+
+- **Two bugs found by checking real bytes.**
+  - `api-request` lines were counted and then dropped, never kept (Rule 4). They are now kept and read.
+  - The digest is taken after string content becomes a text block. Without that, 19 of 75 complete real requests showed as broken; with it, all 75 seal.
+  - The scripted fixture had been built on the same wrong rule, so it could not catch it. It now starts with string content.
+- **Corpus:** 21 sessions, 3,074 records; 75 sealed, 0 broken, 2,999 unresolved; 0 blobs or shapes fail their own key.
+- **Rule 7 was never enforced in code.** Now: declared support (2.1.165–2.1.316, ten checked versions), D0, and `assay catalogue check` with a cumulative census.
+  - The census shows `requestId` and `uuid` on `api-request` from 2.1.309. D10's "cannot link" premise holds only for older versions.
+- **Counters:** `c3170ecf` writes 232 records twice, identical. Measured: no entity or edge is duplicated by it. Child-before-parent is a few milliseconds around compaction summaries.
+- Fineness rose on every 2.1.299+ run (now 902–996 for most), bounded by `atis-latch`.
+- **What would change my mind:** a version where a complete request breaks its seal (D11 would fire). That would mean the hash rule moved, and every seal from that version needs re-reading.
