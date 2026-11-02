@@ -148,15 +148,35 @@ export function buildRunView(run: Run, report: HealthReport, opts: ViewOptions =
 export type RunView = ReturnType<typeof buildRunView>
 
 // Tool-call literals are raw paths and commands (Rule 8). On the way out a path
-// keeps only its last segment, as everywhere else; any other literal becomes a
-// redaction marker with its length. Positions are kept, so the site can still
-// draw where each literal first appeared.
+// shows only a plain file name (letters, digits, `._-`, with an extension);
+// anything else becomes a length marker. Each call keeps its counts and at
+// most three example literals, which keeps the site data inside its budget.
 const PATHISH = /[\\/]/
-function redactSpine(spine: ReturnType<typeof buildSpine>): ReturnType<typeof buildSpine> {
-  for (const st of spine.steps) {
-    for (const p of st.provenance ?? []) {
-      p.literals = p.literals.map(l => ({ ...l, text: PATHISH.test(l.text) && !/\s/.test(l.text) ? basename(l.text) : `‹redacted · ${l.text.length} chars›` }))
-    }
-  }
-  return spine
+const FILE_NAME = /^[\w.-]+\.[A-Za-z0-9]{1,8}$/
+const EXAMPLES = 3
+function shown(text: string): string {
+  const b = PATHISH.test(text) && !/\s/.test(text) ? basename(text) : ''
+  return FILE_NAME.test(b) ? b : `‹redacted · ${text.length} chars›`
+}
+// Compact on the way out, too: the not-separable notes once per spine, category
+// tokens as [category, measured, inferred], a literal as [shown, where] with
+// where "s3" (system block 3), "t2" (tool 2), "m4.1" (message 4, block 1),
+// "l120" (transcript line 120) or null (unsourced).
+const whereOf = (p: { source: string }, at: { part: string; index: number; block: number } | null) =>
+  at === null ? null : p.source === 'l1-lines' ? `l${at.index}` : at.part === 'message' ? `m${at.index}.${at.block}` : `${at.part[0]}${at.index}`
+function redactSpine(spine: ReturnType<typeof buildSpine>) {
+  let notSeparable: Record<string, string> | null = null
+  const steps = spine.steps.map(st => {
+    const context = st.context && (() => {
+      notSeparable ??= st.context!.notSeparable
+      return { line: st.context!.recordLine, total: st.context!.total, deltaMeasured: st.context!.deltaMeasured, parts: st.context!.parts.map(p => [p.category, p.measured, p.inferred] as const) }
+    })()
+    // `tool` is the index into this step's `tools`, which already holds the id.
+    const provenance = st.provenance && st.provenance.map(p => ({
+      tool: st.tools.findIndex(t => t.id === p.toolUseId), source: p.source, count: p.literals.length, sourced: p.literals.filter(l => l.at).length,
+      examples: p.literals.slice(0, EXAMPLES).map(l => [shown(l.text), whereOf(p, l.at)] as const),
+    }))
+    return { ...st, context, provenance }
+  })
+  return { ...spine, steps, notSeparable }
 }

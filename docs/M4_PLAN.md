@@ -174,7 +174,7 @@ Done:
 - **Rule 7 enforced:** declared support, D0, the census and `assay catalogue check` (ADR-028).
 - **Capture-quality counters** (ADR-029).
 
-Left in P1:
+Left in P1 (done later the same day: canary, cross-channel first disagreement, D10 by requestRef; ADR-030):
 - **Local canary (2d).**
 - **Cross-channel first disagreement linked on both sides (item 5).**
 - **D10 by exact id.** The census showed `api-request` records carry `requestId` and `uuid` from 2.1.309, so request records can be joined to transcript requests exactly instead of by count.

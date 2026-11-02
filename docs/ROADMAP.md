@@ -47,7 +47,17 @@ assay-stage renderer (instanced beads, LoD, GPU picking); Run Card (Health first
 R2 reconstruction fidelity; exact-match provenance and unsourced-literal reporting; Run Diff with first divergence; R4 second audit pass and agreement report.
 **Exit:** R2 number with threats; provenance validated against R5; Run Diff alignment stability from T3; gate passed.
 
-**M4 status (2026-11-02):** P0 done (plan rev 2, ADR-026, R2 preregistered with a held-out split, catalogue to 2.1.316). L4 calibration done on `cae68025` (M4_PLAN §1a). P1 mostly done (ADR-027..029; M4_PLAN §5a). Gate unit 7 recorded as passed on Asmit's statement (ADR-026).
+**M4 status (2026-11-02):** P0 done (plan rev 2, ADR-026, R2 preregistered with a held-out split, catalogue to 2.1.316). L4 calibration done on `cae68025` (M4_PLAN §1a). P1 done (ADR-027..030). P2–P5 built and scored (ADR-031..034):
+- **R2 primary (lines only) 0.000.** The opening request holds content no line has. Blobs plus rebuild seal 0.997 of held-out requests.
+- **P4 provenance agreement 0.974.** Raw-file search over-claims.
+- **T3 stability 60/60, detection 16/17.**
+
+Open for exit:
+- P6, drawing the Charge, the Core box, streak lines and twin lanes on the site; site data is at 7.9 of 8 MB, so P6 must move per-step detail out of `data.js`;
+- R4 audit passes;
+- real twin runs;
+- a second L4 calibration;
+- the gate. Gate unit 7 recorded as passed on Asmit's statement (ADR-026).
 
 ## M5 — Ship
 CLI polish; trace assertions + CI Action; judge-plane interface and Jev calibration study if access verified; docs; write-up of R1/R2 findings; upstream issue drafts (OTel GenAI: compaction/skill entities) if gaps confirmed.

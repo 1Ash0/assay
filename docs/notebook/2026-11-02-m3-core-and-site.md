@@ -55,3 +55,23 @@ What would change my mind: a Claude Code version where sidechain lines also appe
 - **Counters:** `c3170ecf` writes 232 records twice, identical. Measured: no entity or edge is duplicated by it. Child-before-parent is a few milliseconds around compaction summaries.
 - Fineness rose on every 2.1.299+ run (now 902–996 for most), bounded by `atis-latch`.
 - **What would change my mind:** a version where a complete request breaks its seal (D11 would fire). That would mean the hash rule moved, and every seal from that version needs re-reading.
+
+## Night: M4 P2–P5, each preregistered and scored once
+
+- **P2 (R2).** Hash-gated rebuild: a candidate message counts only if it reproduces a hash a record names. On dev, lines rebuild 1,897 of 2,104 messages.
+  - **Held-out primary, lines alone: 0.000.** Opening requests carry an environment system message and `tool_addition` tool definitions that no line holds, so nothing after them can seal from lines.
+  - **Blobs plus rebuild: 0.997** (2,048 of 2,049); blobs alone 0.212.
+  - The reported negative is the honest one; the combined number is the product.
+- **P3.** Categories by literal markers from real attachments.
+  - Held-out uncategorised: 0.09%.
+  - Delta-measured token share: held-out 7.7%, dev 29.7%. I first wrote "chain breaks" as the cause, then measured: only 2 of 2,016 requests drop messages. The real causes are the unmeasurable opening request, and records with no usage link restarting the chain. Corrected in the result file.
+- **P4.** Provenance agreement with an independent raw-file search: 0.974.
+  - The disagreements matter more than the rate: the transcript holds text the model never received (`toolUseResult`, cleared thinking, bookkeeping lines).
+  - So searching the raw file over-claims, and the `l1-lines` fallback is an upper bound.
+- **P5 (T3).** The tool-name multiset key is stable under reorder, rename and rewrite: 60 of 60, and each perturbation was checked to have changed the input.
+  - Detection 16 of 17. The miss is a run of identical steps, so the view must say "at or after".
+- **Mistakes caught on the way:**
+  - A slice edit deleted D0/D11 and later `census`; the typecheck caught both.
+  - Heredocs ate regex backslashes twice; fixed with the Edit tool.
+  - web-check caught a path tail that looked like an email, and an over-budget `data.js`. Both were fixed by stricter redaction and a compact view, not by loosening the checks.
+- **What would change my mind:** a second L4 calibration on a later version showing the request record and the wire differ beyond the four named differences.
