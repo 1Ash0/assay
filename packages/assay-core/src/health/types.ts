@@ -121,6 +121,11 @@ export interface ValidityCard {
     blobsFailed: number
     shapesFailed: number
     messagesWithoutBlob: number
+    // Exact join on assistant.requestRef = record id (D10); refs exist from 2.1.301.
+    requestsWithRef: number
+    linked: number
+    refWithoutRecord: number
+    recordWithoutRef: number
   } | null
 
   // Cross-channel check against OTel (ADR-025); null when no OTLP capture is
@@ -136,6 +141,8 @@ export interface ValidityCard {
     otelOnlyBySource: Record<string, number>
     // Transcript requests whose requestRef never appears in OTel.
     transcriptOnly: number
+    firstOtelOnly: Offset[]
+    firstTranscriptOnly: Offset[]
   } | null
 
   // Hallmark fineness (ADR-022): floor(1000 x the lowest of three rates),

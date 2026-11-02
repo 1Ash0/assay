@@ -123,6 +123,9 @@ describe('OTLP importer (ADR-025)', () => {
   it('joins by exact request_id and reports OTel-only and transcript-only requests', async () => {
     const v = runHealth(await withOtel()).validity
     expect(v.otel).toMatchObject({ apiRequests: 2, inTranscript: 1, otelOnly: 1, otelOnlyInputTokens: 1342, otelOnlyOutputTokens: 248, transcriptOnly: 1 })
+    expect(v.otel!.firstOtelOnly).toHaveLength(1)
+    expect(v.otel!.firstTranscriptOnly).toHaveLength(1)
+    expect(v.otel!.firstOtelOnly[0]!.file).toMatch(/otlp/)
     expect(v.otel!.otelOnlyBySource).toEqual({ generate_session_title: 1 })
     expect(v.caveats.some(c => c.includes('appear only in OTel'))).toBe(true)
   })

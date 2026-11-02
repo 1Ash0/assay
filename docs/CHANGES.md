@@ -66,3 +66,4 @@ Thesis, truth ladder, validity-lab structure (R1-R5, T1, T3, T5), exact-match pr
 - **compact_boundary absent in older RL sessions** (isCompactSummary present without matching compact_boundary markers).
 - **api-request / api-request-blob absent from E--RL Desktop sessions** despite 2.1.299; VS Code 2.1.301 (e--m26) has them. Entrypoint or per-session setting difference. `[unverified]`
 - Corpus extended to 9 sessions across 4 projects: added E--RL (2 Desktop sessions, 2.1.165–2.1.299) and e--m26-mp2 (2 VS Code sessions, 2.1.301).
+- 2026-11-02 (M4 P1): `api-request` lines are kept and read (they were dropped); request-record lines count as parsed, so fineness rises for 2.1.299+ runs (ADR-026/027). D0 version warning on runs outside 2.1.165–2.1.316 or without a version (ADR-028). D10 is an exact join on requestRef where refs exist (ADR-030). Canary hashes first recorded the same day; any later move needs a line here.

@@ -127,6 +127,15 @@ Context: the side-session list (M4_PLAN §4a, item 3) asked for deterministic co
 Decision: `validity.captureQuality` counts, each with up to 5 first offsets and a "how this can mislead" line: duplicate uuids, duplicate requestId across files, sessionId different from the main transcript's name (subagent files carry the parent's id, so they are compared with it), child timestamped before its parent, parents that point nowhere (a parent kept as an unknown line counts as present), and uncatalogued record types by name. Counters only: no verdict changes, no findings.
 Consequence: on the real corpus, `c3170ecf` has 232 duplicate uuids, which are identical records written again later in the file. Measured: no tool result, tool call, message, request or edge is duplicated by them, so no number is inflated; events keep both copies (Rule 4). Child-before-parent occurs 2–18 times in 9 sessions, by a few milliseconds around compaction summaries (harness ordering, not loss). Orphan parents agree with D3: zero everywhere. Offsets are 0-based; `assay requests` now prints 1-based line numbers.
 
+## ADR-030 · 2026-11-02 · accepted · D10 joins by requestRef; cross-channel first disagreements; version canaries
+Context: D10 compared counts because "api-request ids cannot be linked" (ADR-014). The census showed that assistant lines carry `requestRef` from 2.1.301, naming the `api-request` record written for them: an explicit id link.
+Decision:
+- **D10 joins exactly where refs exist.** It reports transcript requests whose record was never written, with offsets, and falls back to counts only for versions without refs. The requests block gains `requestsWithRef`, `linked`, `refWithoutRecord` and `recordWithoutRef`.
+- **The OTel summary gains the first disagreements**, `firstOtelOnly` and `firstTranscriptOnly`, each at its own raw bytes.
+- **Version canaries:** `tests/canary.test.ts` hashes the importer and Health output for one frozen real session per version. Only hashes are committed. The test fails when a change moves them, and skips without the corpus.
+
+Consequence: on `17f6f5b7`, 13 of 20 requests name records that were never written, all before 10:17, so records cover only the later part of that session. That was invisible to the count rule. 4a153124's 170 records with no ref are all built on by later requests (interrupted or retried calls), so they are counted, not flagged. LlmRequest.requestRef's comment now says what it holds (the API request id), since the transcript's own `requestRef` field means something else.
+
 ## Proposed (not yet accepted)
 - ADR-P1 Interop with context-analyzer (decide after M0 source read).
 - ADR-P2 Upstream OTel proposal for compaction and skill entities (decide after M0 repo check).

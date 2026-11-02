@@ -441,30 +441,56 @@ export function d9TimestampReversal(run: Run): Finding[] {
   return findings
 }
 
-// D10 — api-request count vs LlmRequest count
-// The api-request ID namespace (UUID) is disjoint from assistant.requestId (req_…),
-// so D10 cannot link individual records. Instead it compares counts.
-// A large mismatch suggests either capture gaps or internal routing calls (e.g. for
-// OTel spans, tool-routing, or background requests) that never appear as conversation
-// turns. A small discrepancy (≤2) is noise tolerance for session-start/end bookkeeping.
-//
-// Why count-based and not link-based: see ADR-014.
-export function d10ApiRequestCount(run: Run): Finding[] {
-  const findings: Finding[] = []
-  if (run.rawApiRequestCount === 0) return findings // pre-v2.1.308 or no api-request records
-
-  const diff = Math.abs(run.rawApiRequestCount - run.llmRequests.length)
-  if (diff > 2) {
-    findings.push({
-      detectorId: 'D10',
-      severity: 'info',
-      message: `api-request record count (${run.rawApiRequestCount}) differs from LlmRequest count (${run.llmRequests.length}) by ${diff} — possible capture gap or internal routing calls not reflected in conversation turns`,
-      evidence: [],
-      captureIntegrity: true,
-    })
+// D10 — transcript requests against request records
+// From 2.1.301 an assistant line carries `requestRef`, the id of the
+// `api-request` record written for it: an explicit id link (observed). Where
+// refs exist, D10 joins on them exactly and reports transcript requests whose
+// record was never written, with offsets. Without refs (older versions) it
+// falls back to comparing counts, as before (ADR-014).
+// A record that no assistant line points to is counted, not flagged: on the
+// corpus every one is built on by a later request (an interrupted or retried
+// call whose response line carries no ref).
+export function requestLinks(run: Run) {
+  const records = new Set(run.requests?.records.map(r => r.id) ?? [])
+  const refByMessage = new Map<string, { ref: string; offset: Run['events'][number]['offset'] }>()
+  for (const e of run.events) {
+    if (e.kind !== 'assistant') continue
+    const ref = (e.raw as Record<string, unknown>)['requestRef']
+    const mid = ((e.raw as Record<string, unknown>)['message'] as Record<string, unknown> | undefined)?.['id']
+    if (typeof ref === 'string' && typeof mid === 'string' && !refByMessage.has(mid)) refByMessage.set(mid, { ref, offset: e.offset })
   }
+  const withRef = run.llmRequests.filter(q => refByMessage.has(q.messageId)).map(q => refByMessage.get(q.messageId)!)
+  const missing = withRef.filter(x => !records.has(x.ref))
+  const pointed = new Set(withRef.map(x => x.ref))
+  const unpointed = run.requests?.records.filter(r => !pointed.has(r.id)) ?? []
+  return {
+    requestsWithRef: withRef.length,
+    linked: withRef.length - missing.length,
+    refWithoutRecord: missing.length,
+    recordWithoutRef: unpointed.length,
+    firstRefWithoutRecord: missing.slice(0, 5).map(x => x.offset),
+    firstRecordWithoutRef: unpointed.slice(0, 5).map(r => r.offset),
+  }
+}
 
-  return findings
+export function d10ApiRequestCount(run: Run): Finding[] {
+  const links = requestLinks(run)
+  if (links.requestsWithRef > 0) {
+    if (links.refWithoutRecord === 0) return []
+    return [{
+      detectorId: 'D10', severity: 'info',
+      message: `${links.refWithoutRecord} of ${links.requestsWithRef} transcript requests name a request record that was never written; request records cover only part of this session`,
+      evidence: links.firstRefWithoutRecord, captureIntegrity: true,
+    }]
+  }
+  if (run.rawApiRequestCount === 0) return []
+  const diff = Math.abs(run.rawApiRequestCount - run.llmRequests.length)
+  if (diff <= 2) return []
+  return [{
+    detectorId: 'D10', severity: 'info',
+    message: `api-request record count (${run.rawApiRequestCount}) differs from LlmRequest count (${run.llmRequests.length}) by ${diff}; this version writes no requestRef, so records cannot be linked one by one`,
+    evidence: [], captureIntegrity: true,
+  }]
 }
 
 // D0 — harness version outside the importer's declared support (Rule 7)

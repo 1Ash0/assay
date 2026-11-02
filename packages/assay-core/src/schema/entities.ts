@@ -48,7 +48,8 @@ export const LlmRequestSchema = z.object({
   ...WithEvidence,
   messageId: z.string(),
   usage: UsageSchema,
-  // requestRef resolves to a request id in the session directory (D10)
+  // The API's request id (assistant `requestId`, `req_…`). Not the transcript's
+  // own `requestRef` field, which names an api-request record (D10).
   requestRef: z.string().optional(),
 })
 
