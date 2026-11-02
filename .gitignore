@@ -26,3 +26,11 @@ web/prototype/runs/
 
 # TRAIL dataset (public, third-party; large; used locally by the judge calibration study)
 TRAIL/
+
+# Personal: profile and gate records stay local (scripts/public-check.mjs)
+MASTER_PROMPT.md
+learn/*/answers.md
+learn/*/gate.md
+learn/*/attempt.md
+.claude/
+.env*

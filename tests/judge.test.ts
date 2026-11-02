@@ -29,9 +29,12 @@ describe('calibration maths', () => {
 
 describe('judge redaction (Rule 6)', () => {
   it('drops identity fields and masks emails, keys and home paths', () => {
+    // A fake key in a real key's shape, assembled at runtime so no key-shaped
+    // string sits in the public source (scripts/public-check.mjs).
+    const fakeKey = ['gsk', 'abcdefghijklmnopqrstuv'].join('_')
     const out = redactForJudge({
       resource_attributes: { 'pat.account.id': 'x' },
-      span_attributes: { 'pat.account.id': 'a', text: 'mail me@x.com key ‹fake-key› at C:\\Users\\bob\\f.txt' },
+      span_attributes: { 'pat.account.id': 'a', text: `mail me@x.com key ${fakeKey} at C:\\Users\\bob\\f.txt` },
     }) as { span_attributes: Record<string, string> }
     expect(out).not.toHaveProperty('resource_attributes')
     expect(out.span_attributes).not.toHaveProperty('pat.account.id')

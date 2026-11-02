@@ -16,6 +16,7 @@ jobs:
       - run: pnpm install --frozen-lockfile
       # Typecheck, tests (real-corpus tests skip: the corpus is never in the repo) and schema drift.
       - run: pnpm check
+      # pnpm check includes public-check: nothing personal or private is tracked.
   assert-fixture:
     runs-on: ubuntu-latest
     steps:
