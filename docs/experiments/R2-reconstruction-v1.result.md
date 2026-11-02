@@ -50,6 +50,9 @@ Computed by the same scorer run from the same frozen rebuild, with category mark
 | Share of input tokens measured by a usage delta | **7.7%** [3.4%, 13.1%] | 29.7% [17.8%, 44.3%] |
 
 - **Uncategorised is small on held-out data**, so the markers, taken from dev attachments, carry over. 'You' is assigned by exclusion and is an upper bound on the user's own text (one skill body without a standard opening is known to land there).
-- **Measured tokens are a small share, and the dev/held-out gap is large.** A delta is measured only along an unbroken append chain. Held-out sessions break the chain more often (requests that drop earlier messages), so most of their category tokens are a characters split, drawn as inferred.
+- **Measured tokens are a small share, and the dev/held-out gap is large.** Measured after the first write-up, which had guessed "chain breaks" and was wrong: held-out, only 2 of 2,016 requests drop messages and 3 change shape; 1,562 are unbroken appends. The two real causes:
+  - the opening request (system prompt plus tool definitions, typically 50–75% of every later request) can never be delta-measured;
+  - 449 held-out requests have no usage link (a record no transcript request names, D10), and each one restarts the chain as a characters split.
+
 - **Within a measured delta, the split across categories is still by characters**, because nearly every addition mixes an assistant message with tool results. No category total is "measured" except where an addition was one category.
 - **The preregistered "block-exact rate per category" is reported at message level** (the rebuild is hash-gated per message; 1,897 of 2,104 distinct dev messages), because a block cannot be checked on its own: only a whole message has a hash.

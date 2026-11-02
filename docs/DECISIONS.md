@@ -164,7 +164,7 @@ Decision:
 - **Tokens are measured only by usage deltas.** Along an unbroken append chain (same shape, every base message kept), total input minus the base's total is the exact cost of what was added. Its split across categories is by characters unless the addition is one category. Everything else is a characters split, labelled inferred.
 - **`spine.context` carries** the total, the delta-measured amount and per-category measured and inferred tokens.
 
-Consequence: R2 secondary results, held-out: uncategorised 0.09%, delta-measured token share 7.7% (dev 29.7%). The Core can show categories for 2.1.299+ sessions; most of the split is drawn stippled, as inferred.
+Consequence: R2 secondary results, held-out: uncategorised 0.09%, delta-measured token share 7.7% (dev 29.7%). The share is low because the opening request, mostly system prompt and tools, is never delta-measured, and records without a usage link restart the chain; dropped messages are rare (2 of 2,016). The Core can show categories for 2.1.299+ sessions; most of the split is drawn stippled, as inferred.
 
 ## Proposed (not yet accepted)
 - ADR-P1 Interop with context-analyzer (decide after M0 source read).
