@@ -97,6 +97,11 @@ Context: `learn/M3/` had no `attempt.md`, and Rule 11 blocks moving past an unpa
 Decision: record the gate as passed on Asmit's statement. The primer is revised to match ADR-017..022 so the material stays current; because `answers.md` was opened during an audit, its questions are replaced.
 Consequence: M3 core work proceeds. The M4 gate follows the normal protocol.
 
+## ADR-024 · 2026-11-02 · accepted · Subagent transcripts are derived; parents' agent references are read
+Context: every line in a subagent transcript carries `isSidechain: true`, and the deriver skipped sidechain events, so subagent files were parsed and then ignored: their usage never reached any total (on real sessions, 28 requests and ~1.1M context tokens in `ef28c299`, 16 and ~711k in `453b573b`). Separately, a parent records the subagent it ran in `toolUseResult.agentId`, which the deriver never read, so no Agent entity existed for these sessions and D1 could not fire. This is why ADR-011 found zero real D1 coverage: `corpus/frozen/E--RL-d1-trigger` (a real session copied without its `subagents/` folder) should have fired and didn't.
+Decision: sidechain events are derived like any other; message.id dedup prevents an inline copy and its file copy from counting twice. `toolUseResult.agentId` creates an Agent (observed reference); the file importer stamps `transcriptFile` when the matching file exists. Main-chain turn numbering ignores sidechain turns.
+Consequence: token totals for runs with subagents rise to include them. D1 now fires on a real session (`d1-trigger`). Every result and the site data must be regenerated.
+
 ## Proposed (not yet accepted)
 - ADR-P1 Interop with context-analyzer (decide after M0 source read).
 - ADR-P2 Upstream OTel proposal for compaction and skill entities (decide after M0 repo check).

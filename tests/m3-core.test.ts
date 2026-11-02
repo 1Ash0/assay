@@ -73,3 +73,31 @@ describe('fs-free import (ADR-019)', () => {
     }
   })
 })
+
+describe('subagent transcripts (ADR-024)', () => {
+  const WITH = resolve('fixtures/scripted/subagent/sess-sub.jsonl')
+  const WITHOUT = resolve('fixtures/scripted/subagent-missing/sess-sub.jsonl')
+
+  it('counts usage from the subagent file', () => {
+    const run = importClaudeCodeDir(WITH, { truth: 'scripted' })
+    expect(run.llmRequests.map(r => r.messageId).sort()).toEqual(['msg_p_a1', 'msg_p_a2', 'msg_s_a1'])
+    expect(runHealth(run).validity.totalInputTokens).toBe(1030)
+  })
+
+  it('links the parent reference to the transcript file; D1 stays quiet', () => {
+    const run = importClaudeCodeDir(WITH)
+    expect(run.agents.map(a => [a.agentId, Boolean(a.transcriptFile)])).toEqual([['abc123def', true]])
+    expect(runHealth(run).findings.filter(f => f.detectorId === 'D1')).toEqual([])
+  })
+
+  it('D1 fires when the parent names a subagent whose file is missing', () => {
+    const d1 = runHealth(importClaudeCodeDir(WITHOUT)).findings.filter(f => f.detectorId === 'D1')
+    expect(d1.length).toBe(1)
+    expect(d1[0]!.evidence[0]!.line).toBe(2)
+  })
+
+  it('subagent turns do not shift main-chain turn numbering', () => {
+    const run = importClaudeCodeDir(WITH)
+    expect(run.messages.filter(m => m.role === 'assistant').length).toBe(3)
+  })
+})

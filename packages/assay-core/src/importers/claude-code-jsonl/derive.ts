@@ -61,8 +61,11 @@ export function deriveEntities(events: Event[]): DerivedEntities {
     // but produce no derived entity — they're not conversation turns.
     if (ev.kind !== 'user' && ev.kind !== 'assistant') continue
 
-    // Skip sidechain events — they belong to subagent files
-    if (obj['isSidechain'] === true) continue
+    // Sidechain events are subagent turns (ADR-024). They used to be skipped,
+    // which dropped every subagent file's usage from all totals. They are now
+    // derived like any other event; message.id dedup keeps an inline copy and
+    // its subagent-file copy from counting twice.
+    const sidechain = obj['isSidechain'] === true
 
     const messageId = typeof obj['message'] === 'object' && obj['message'] !== null
       ? (obj['message'] as Record<string, unknown>)['id'] as string | undefined
@@ -118,9 +121,10 @@ export function deriveEntities(events: Event[]): DerivedEntities {
       }
     }
 
+    // turnIndex counts main-chain turns only, so compaction positions are unchanged.
     if (ev.kind === 'assistant' && !seenMsgIds.has(msgId)) {
       seenMsgIds.add(msgId)
-      turnIndex++
+      if (!sidechain) turnIndex++
     }
 
     // ToolCalls: collect from ALL occurrences of a message.id.
@@ -201,6 +205,14 @@ export function deriveEntities(events: Event[]): DerivedEntities {
             }
           }
         }
+      }
+
+      // A parent records the subagent it ran in toolUseResult.agentId (observed
+      // reference). This is what lets D1 see a subagent whose file is missing.
+      const tur = obj['toolUseResult'] as Record<string, unknown> | undefined
+      const refId = tur && typeof tur['agentId'] === 'string' ? tur['agentId'] : undefined
+      if (refId && !agents.has(refId)) {
+        agents.set(refId, { evidence: [evOffset], agentId: refId, parentAgentId: ev.agentId, type: 'subagent' })
       }
 
       // Agent references from agentId field
