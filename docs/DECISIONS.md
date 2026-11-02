@@ -166,6 +166,15 @@ Decision:
 
 Consequence: R2 secondary results, held-out: uncategorised 0.09%, delta-measured token share 7.7% (dev 29.7%). The share is low because the opening request, mostly system prompt and tools, is never delta-measured, and records without a usage link restart the chain; dropped messages are rare (2 of 2,016). The Core can show categories for 2.1.299+ sessions; most of the split is drawn stippled, as inferred.
 
+## ADR-033 · 2026-11-02 · accepted · Provenance of tool-call literals: request-based, with a labelled line fallback
+Context: M4 needs exact-match provenance and unsourced-literal reporting, validated against R5 (P4 preregistration).
+Decision: literals are string values of at least 8 characters plus path-like tokens, excluding `description` values and numbers.
+- **For a call whose request is sealed,** each literal is looked up in exactly that request body (system, tools, messages), and the earliest occurrence becomes a `matched` edge.
+- **Otherwise it is looked up in earlier transcript lines** (message content and rendered attachments only), labelled `l1-lines`.
+- **`spine.provenance` carries both.** In the view, a path keeps only its last segment and any other literal becomes a length marker.
+
+Consequence: held-out agreement with an independent raw-file search is 0.974. The disagreements show that the transcript file holds text the model never received (`toolUseResult`, cleared thinking, bookkeeping), so raw-file provenance over-claims and `l1-lines` is an upper bound. The site must label `l1-lines` provenance as such.
+
 ## Proposed (not yet accepted)
 - ADR-P1 Interop with context-analyzer (decide after M0 source read).
 - ADR-P2 Upstream OTel proposal for compaction and skill entities (decide after M0 repo check).
