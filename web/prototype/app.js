@@ -494,7 +494,7 @@ function renderShelf() {
   const max = Math.max(3.6, ...pts.map(p => p.v)), Wd = 1000, Hd = 90, x = v => 30 + (v - 1) / (max - 1) * (Wd - 60);
   let s = `<line x1="30" x2="${Wd - 30}" y1="56" y2="56" stroke="var(--rule)"/>`;
   for (let t = 1; t <= max; t += 0.5) s += `<line x1="${x(t)}" x2="${x(t)}" y1="52" y2="60" stroke="var(--rule)"/><text x="${x(t)}" y="78" text-anchor="middle" font-family="IBM Plex Mono" font-size="11" fill="var(--mute)">×${t.toFixed(1)}</text>`;
-  pts.sort((a, b) => a.v - b.v).forEach((p, i) => { const cx = x(p.v), cy = 56 - (i % 3) * 14 - 6; s += `<g class="dot" data-run="${esc(p.r.id)}" data-open="1" style="cursor:pointer"><line x1="${cx}" x2="${cx}" y1="${cy}" y2="56" stroke="var(--rule)"/><circle cx="${cx}" cy="${cy}" r="6" fill="var(--verm)" stroke="var(--paper)" stroke-width="2"><title>${esc(p.r.id)}: ×${p.v.toFixed(2)} (${full(p.r.naive[3])} vs ${full(p.r.dedup[3])})</title></circle></g>`; });
+  pts.sort((a, b) => a.v - b.v).forEach((p, i) => { const cx = x(p.v), cy = 56 - (i % 3) * 14 - 6; s += `<g class="dot" data-run="${esc(p.r.id)}" data-open="1" tabindex="0" role="button" aria-label="Open ${esc(p.r.id)}, overcount ×${p.v.toFixed(2)}" style="cursor:pointer"><line x1="${cx}" x2="${cx}" y1="${cy}" y2="56" stroke="var(--rule)"/><circle cx="${cx}" cy="${cy}" r="6" fill="var(--verm)" stroke="var(--paper)" stroke-width="2"><title>${esc(p.r.id)}: ×${p.v.toFixed(2)} (${full(p.r.naive[3])} vs ${full(p.r.dedup[3])})</title></circle></g>`; });
   
   const svg = $('#dots'); svg.setAttribute('viewBox', `0 0 ${Wd} ${Hd}`); svg.innerHTML = s;
 }

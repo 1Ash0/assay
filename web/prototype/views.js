@@ -49,7 +49,7 @@ function traverse(r) {
         if (t.ms != null) path += `<line x1="${px}" y1="${ty}" x2="${Math.max(px + 2, x(s.ts + Math.max(0, t.ms)))}" y2="${ty}" stroke="${colour}" stroke-width="4" stroke-linecap="round"><title>${esc(t.name)} · ${ms(t.ms)} observed</title></line>`;
         else path += `<path d="M${px + 6} ${ty - 7} h-5 v14 h5" fill="none" stroke="var(--ochre)" stroke-width="1.5"><title>${esc(t.name)} · ${t.resultLine == null ? 'no result captured (open)' : 'no timestamp on one side'}</title></path>`;
       });
-      svg += `<circle data-step="${s.i}" cx="${px}" cy="${py}" r="${s.i === V.step ? 6 : 3}" fill="${s.findings.length ? 'var(--ochre)' : colour}" stroke="var(--paper)" style="cursor:pointer"><title>step ${s.i + 1} · ${esc(s.agent)} · ${s.findings.join(' ') || 'no findings'}</title></circle>`;
+      svg += `<circle data-step="${s.i}" tabindex="0" role="button" aria-label="Replay step ${s.i + 1}${s.findings.length ? ', findings ' + s.findings.join(' ') : ''}" cx="${px}" cy="${py}" r="${s.i === V.step ? 6 : 3}" fill="${s.findings.length ? 'var(--ochre)' : colour}" stroke="var(--paper)" style="cursor:pointer"><title>step ${s.i + 1} · ${esc(s.agent)} · ${s.findings.join(' ') || 'no findings'}</title></circle>`;
     });
     svg = path + svg;
   });
@@ -165,6 +165,11 @@ document.addEventListener('input', e => {
 document.addEventListener('change', e => {
   if (e.target.id === 'dA') { V.diffA = e.target.value; render('diff'); }
   if (e.target.id === 'dB') { V.diffB = e.target.value; render('diff'); }
+});
+// SVG marks that act as buttons answer Enter and Space like buttons do.
+document.addEventListener('keydown', e => {
+  const t = e.target;
+  if ((e.key === 'Enter' || e.key === ' ') && t instanceof SVGElement && t.getAttribute('role') === 'button') { e.preventDefault(); t.dispatchEvent(new MouseEvent('click', { bubbles: true })); }
 });
 document.addEventListener('keydown', e => {
   if (A.view() !== 'replay' || e.target.closest('input, select, textarea')) return;
