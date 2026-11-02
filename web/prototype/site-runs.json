@@ -80,6 +80,12 @@
    "otlp": "corpus/frozen/otel/r1-2026-10-31.otlp.jsonl"
   },
   {
+   "id": "ef76e3fc",
+   "path": "corpus/frozen/E--assay/ef76e3fc-3d50-4f52-b5c6-00596db08ce6.jsonl",
+   "truth": "real",
+   "otlp": "corpus/frozen/otel/2026-11-02.otlp.jsonl"
+  },
+  {
    "id": "d013da8e",
    "path": "corpus/frozen/E--assay/d013da8e-30c0-4ec9-9a53-4be223411dbf.jsonl",
    "truth": "real"
