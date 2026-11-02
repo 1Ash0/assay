@@ -111,6 +111,7 @@ export function buildValidityCard(run: Run, findings: Finding[], overall: Metric
   const importerCoverage = { totalLines, eventLines, unknownLines, unknownRatio, cataloguedLines, unparsedTelemetryRatio }
 
   const inputTokenRange = inputTokenRangeOf(run, totalInputTokens)
+  const otel = otelSummary(run)
   const fineness = finenessOf({
     'usage coverage': usageCoverageRate,
     'parsed telemetry': totalLines > 0 ? 1 - unparsedTelemetryRatio : null,
@@ -269,6 +270,8 @@ export function buildValidityCard(run: Run, findings: Finding[], overall: Metric
     caveats.push(`Model identified for only ${Math.round(modelIdentificationRate * 100)}% of LlmRequests — context-limit checks were skipped for most requests`)
   if (unknownRatio > 0.2)
     caveats.push(`${Math.round(unknownRatio * 100)}% of JSONL lines were not recognized by the importer — coverage metrics may be incomplete`)
+  if (otel && otel.otelOnly > 0)
+    caveats.push(`${otel.otelOnly} API request(s) appear only in OTel (${Object.entries(otel.otelOnlyBySource).map(([k, v]) => `${k} ×${v}`).join(', ')}): ${otel.otelOnlyInputTokens} input and ${otel.otelOnlyOutputTokens} output tokens the transcript never recorded`)
   if (run.capture.level < 3)
     caveats.push(`Capture Level ${run.capture.level}: internal non-conversation API calls (e.g. tool-routing requests) not captured — token totals understate full API spend; OTel (L3+) required for complete cost accounting`)
   if (run.capture.level < 2)
@@ -285,6 +288,7 @@ export function buildValidityCard(run: Run, findings: Finding[], overall: Metric
     cacheHitRate,
     importerCoverage,
     inputTokenRange,
+    otel,
     fineness,
     observability,
     runtimeCostUSD,
@@ -367,4 +371,23 @@ function finenessOf(rates: Record<FinenessRate, number | null>): ValidityCard['f
   }
   const value = bound === null ? null : Math.floor(1000 * (rates[bound] as number))
   return { value, bound, rates }
+}
+
+// ADR-025. Exact request_id equality only; nothing is matched by time or size.
+function otelSummary(run: Run): ValidityCard['otel'] {
+  if (!run.otel) return null
+  const only = run.otel.apiRequests.filter(q => !q.inTranscript)
+  const bySource: Record<string, number> = {}
+  for (const q of only) bySource[q.querySource || 'unknown'] = (bySource[q.querySource || 'unknown'] ?? 0) + 1
+  const otelIds = new Set(run.otel.apiRequests.map(q => q.requestId))
+  return {
+    apiRequests: run.otel.apiRequests.length,
+    inTranscript: run.otel.apiRequests.length - only.length,
+    otelOnly: only.length,
+    otelOnlyInputTokens: only.reduce((s, q) => s + q.inputTokens, 0),
+    otelOnlyOutputTokens: only.reduce((s, q) => s + q.outputTokens, 0),
+    otelOnlyCostUSD: only.reduce((s, q) => s + q.costUSD, 0),
+    otelOnlyBySource: bySource,
+    transcriptOnly: run.llmRequests.filter(r => r.requestRef && !otelIds.has(r.requestRef)).length,
+  }
 }

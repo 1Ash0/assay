@@ -97,6 +97,21 @@ export interface ValidityCard {
   // the largest (the importer's choice). A point total only when min === max.
   inputTokenRange: { min: number; max: number }
 
+  // Cross-channel check against OTel (ADR-025); null when no OTLP capture is
+  // attached. otelOnly = api_request records with no transcript request of the
+  // same request_id: internal calls the JSONL never wrote (R1-F2).
+  otel: {
+    apiRequests: number
+    inTranscript: number
+    otelOnly: number
+    otelOnlyInputTokens: number
+    otelOnlyOutputTokens: number
+    otelOnlyCostUSD: number
+    otelOnlyBySource: Record<string, number>
+    // Transcript requests whose requestRef never appears in OTel.
+    transcriptOnly: number
+  } | null
+
   // Hallmark fineness (ADR-022): floor(1000 x the lowest of three rates),
   // marked to the lowest standard. `bound` names the rate that set it.
   fineness: {

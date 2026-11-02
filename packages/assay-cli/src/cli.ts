@@ -1,6 +1,6 @@
 #!/usr/bin/env node
-import { buildRunView, importClaudeCodeDir, runHealth, Truth } from '@assay/core'
-import { writeFileSync } from 'fs'
+import { attachOtlp, buildRunView, importClaudeCodeDir, Run, runHealth, Truth } from '@assay/core'
+import { readFileSync, writeFileSync } from 'fs'
 import { resolve } from 'path'
 
 const [, , command, ...args] = process.argv
@@ -10,7 +10,7 @@ function usage(): never {
 assay <command> [options]
 
 Commands:
-  import <path>        Import a Claude Code session directory or JSONL file
+  import <path>        Import a Claude Code session directory or JSONL file [--otlp file]
   health <run.json>    Run Health detectors on an imported run
   export-view <path>   Redacted view model of one session [--truth t] [--id x]
   export-site <runs.json> --out <data.js> [--results dir]
@@ -46,7 +46,7 @@ if (command === 'import') {
   const path = args[0]
   if (!path) { console.error('import requires a path'); process.exit(1) }
   try {
-    const run = importClaudeCodeDir(resolve(path))
+    const run = withOtlp(importClaudeCodeDir(resolve(path)), flag('--otlp'))
     console.error(
       `imported  L${run.capture.level}  ${run.events.length} events  ` +
       `${run.unknowns.length} unknowns  ${run.compactions.length} compactions  ` +
@@ -61,7 +61,6 @@ if (command === 'import') {
   const runFile = args[0]
   if (!runFile) { console.error('health requires a run JSON file'); process.exit(1) }
   try {
-    const { readFileSync } = await import('fs')
     const run = JSON.parse(readFileSync(resolve(runFile), 'utf-8'))
     const report = runHealth(run)
     console.error(`health  overall=${report.overall}  findings=${report.findings.length}`)
@@ -75,7 +74,7 @@ if (command === 'import') {
   const path = args[0]
   if (!path) { console.error('export-view requires a session path'); process.exit(1) }
   const truth = flag('--truth') as Truth | undefined
-  const run = importClaudeCodeDir(resolve(path), truth ? { truth } : {})
+  const run = withOtlp(importClaudeCodeDir(resolve(path), truth ? { truth } : {}), flag('--otlp'))
   const id = flag('--id')
   writeOutput(buildRunView(run, runHealth(run), { ...(id ? { id } : {}), ...(truth ? { truth } : {}) }))
 } else if (command === 'export-site') {
@@ -83,12 +82,12 @@ if (command === 'import') {
   // with the right truth label (M3_PLAN §7.6). Paths in the list are local corpus files.
   const list = args[0]
   if (!list || !outFile) { console.error('export-site requires <runs.json> --out <data.js>'); process.exit(1) }
-  const { readFileSync, mkdirSync } = await import('fs')
-  const spec = JSON.parse(readFileSync(resolve(list), 'utf-8')) as { runs: Array<{ id: string; path: string; truth: Truth }> }
+  const { mkdirSync } = await import('fs')
+  const spec = JSON.parse(readFileSync(resolve(list), 'utf-8')) as { runs: Array<{ id: string; path: string; truth: Truth; otlp?: string }> }
   const resultsDir = flag('--results')
   if (resultsDir) mkdirSync(resolve(resultsDir), { recursive: true })
   const runs = spec.runs.map(r => {
-    const run = importClaudeCodeDir(resolve(r.path), { truth: r.truth })
+    const run = withOtlp(importClaudeCodeDir(resolve(r.path), { truth: r.truth }), r.otlp)
     const report = runHealth(run)
     if (resultsDir) writeFileSync(resolve(resultsDir, `${r.id}.health.json`), JSON.stringify({ truth: run.truth, ...report }, null, 2))
     console.error(`  ${r.id.padEnd(16)} ${run.truth.padEnd(15)} fineness ${report.validity.fineness.value ?? '–'} (${report.validity.fineness.bound ?? '–'})`)
@@ -100,6 +99,12 @@ if (command === 'import') {
   console.error(`wrote ${outFile} (${Math.round(js.length / 1024)} KB, ${runs.length} runs)`)
 } else {
   usage()
+}
+
+// ADR-025: an OTLP file-exporter capture joined by session.id and request_id.
+function withOtlp(run: Run, path: string | undefined): Run {
+  if (!path) return run
+  return attachOtlp(run, [{ path: resolve(path), bytes: new Uint8Array(readFileSync(resolve(path))) }])
 }
 
 function flag(name: string): string | undefined {

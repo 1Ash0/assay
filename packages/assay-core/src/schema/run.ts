@@ -1,6 +1,7 @@
 import { z } from 'zod'
 import { CaptureLevelSchema } from './capture.js'
 import { EventSchema, UnknownLineSchema } from './event.js'
+import { OffsetSchema } from './offset.js'
 import {
   AgentSchema,
   CompactionSchema,
@@ -25,6 +26,23 @@ export const SourceSchema = z.object({
 })
 
 export type Source = z.infer<typeof SourceSchema>
+
+// One api_request log record from OTel (L3), Claude Code profile (ADR-025).
+export const OtelApiRequestSchema = z.object({
+  evidence: z.array(OffsetSchema),
+  requestId: z.string(),
+  model: z.string(),
+  inputTokens: z.number(),
+  outputTokens: z.number(),
+  cacheReadTokens: z.number(),
+  cacheWriteTokens: z.number(),
+  costUSD: z.number(),
+  durationMs: z.number(),
+  querySource: z.string(),
+  // request_id equals a transcript LlmRequest's requestRef (exact match).
+  inTranscript: z.boolean(),
+})
+export type OtelApiRequest = z.infer<typeof OtelApiRequestSchema>
 
 export const RunSchema = z.object({
   id: z.string(),
@@ -61,6 +79,14 @@ export const RunSchema = z.object({
   // Used by D10 to check whether captured API-request records roughly match LlmRequests.
   // api-request IDs use a different namespace from assistant.requestId; linkage is not possible.
   rawApiRequestCount: z.number().int().nonnegative(),
+
+  // Present only when an OTLP capture was attached (L3).
+  otel: z.object({
+    apiRequests: z.array(OtelApiRequestSchema),
+    logRecords: z.number().int().nonnegative(),
+    spans: z.number().int().nonnegative(),
+    otherSessionRecords: z.number().int().nonnegative(),
+  }).optional(),
 })
 
 export type Run = z.infer<typeof RunSchema>

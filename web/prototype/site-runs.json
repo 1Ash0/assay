@@ -54,7 +54,8 @@
   {
    "id": "2b152411",
    "path": "corpus/frozen/E--assay/2b152411-20f3-4422-9a7e-3914a988e040.jsonl",
-   "truth": "real"
+   "truth": "real",
+   "otlp": "corpus/frozen/otel/r1-2026-10-31.otlp.jsonl"
   },
   {
    "id": "334cd181",
@@ -69,16 +70,58 @@
   {
    "id": "6973b17c",
    "path": "corpus/frozen/E--assay/6973b17c-2043-40dd-9ddd-5a5e95d7727a.jsonl",
-   "truth": "real"
+   "truth": "real",
+   "otlp": "corpus/frozen/otel/r1-2026-10-31.otlp.jsonl"
   },
   {
    "id": "93de073c",
    "path": "corpus/frozen/E--assay/93de073c-a732-4a12-8903-599cc0e931e4.jsonl",
-   "truth": "real"
+   "truth": "real",
+   "otlp": "corpus/frozen/otel/r1-2026-10-31.otlp.jsonl"
   },
   {
    "id": "d013da8e",
    "path": "corpus/frozen/E--assay/d013da8e-30c0-4ec9-9a53-4be223411dbf.jsonl",
+   "truth": "real"
+  },
+  {
+   "id": "ef28c299",
+   "path": "corpus/frozen/E--RIP/ef28c299-fddb-4f8d-a364-8b9cfd5b1815.jsonl",
+   "truth": "real"
+  },
+  {
+   "id": "dc47743b",
+   "path": "corpus/frozen/E--SPARK/dc47743b-7c35-402c-98ac-3d0057537c05.jsonl",
+   "truth": "real"
+  },
+  {
+   "id": "2ac7ce78",
+   "path": "corpus/frozen/E--assay/2ac7ce78-9443-4f10-8e31-9c574db723b9.jsonl",
+   "truth": "real"
+  },
+  {
+   "id": "48ad08c2",
+   "path": "corpus/frozen/E--assay/48ad08c2-9e54-45df-91b3-9e81e3ebe8b6.jsonl",
+   "truth": "real"
+  },
+  {
+   "id": "c438a9b3",
+   "path": "corpus/frozen/E--assay/c438a9b3-bb22-41cb-8d8b-bcbac9425d0c.jsonl",
+   "truth": "real"
+  },
+  {
+   "id": "17f6f5b7",
+   "path": "corpus/frozen/E--assay/17f6f5b7-8da3-43c8-b538-165f9ec7d82e.jsonl",
+   "truth": "real"
+  },
+  {
+   "id": "c99e5c98",
+   "path": "corpus/frozen/E--assay/c99e5c98-aa62-4472-ab65-15f0fc0fa29f.jsonl",
+   "truth": "real"
+  },
+  {
+   "id": "2825791a",
+   "path": "corpus/frozen/E--assay/2825791a-7864-4633-8117-1aefe7dd192f.jsonl",
    "truth": "real"
   },
   {

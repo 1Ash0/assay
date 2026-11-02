@@ -101,3 +101,35 @@ describe('subagent transcripts (ADR-024)', () => {
     expect(run.messages.filter(m => m.role === 'assistant').length).toBe(3)
   })
 })
+
+describe('OTLP importer (ADR-025)', () => {
+  const J = resolve('fixtures/scripted/otlp/sc-otel.jsonl')
+  const O = resolve('fixtures/scripted/otlp/sc-otel.otlp.jsonl')
+  const withOtel = async () => {
+    const { readFileSync } = await import('fs')
+    const { attachOtlp } = await import('../packages/assay-core/src/index.js')
+    return attachOtlp(importClaudeCodeDir(J, { truth: 'scripted' }), [{ path: O, bytes: new Uint8Array(readFileSync(O)) }])
+  }
+
+  it('raises capture to L3 and keeps only this session\'s records', async () => {
+    const run = await withOtel()
+    expect(run.capture.level).toBe(3)
+    expect(run.otel!.apiRequests.map(q => q.requestId)).toEqual(['req_A', 'req_T'])
+    expect(run.otel!.otherSessionRecords).toBe(1)
+    expect(run.otel!.spans).toBe(1)
+    expect(run.sources.map(s => s.kind)).toEqual(['jsonl', 'otlp'])
+  })
+
+  it('joins by exact request_id and reports OTel-only and transcript-only requests', async () => {
+    const v = runHealth(await withOtel()).validity
+    expect(v.otel).toMatchObject({ apiRequests: 2, inTranscript: 1, otelOnly: 1, otelOnlyInputTokens: 1342, otelOnlyOutputTokens: 248, transcriptOnly: 1 })
+    expect(v.otel!.otelOnlyBySource).toEqual({ generate_session_title: 1 })
+    expect(v.caveats.some(c => c.includes('appear only in OTel'))).toBe(true)
+  })
+
+  it('without OTel the card says so and keeps the L1 caveat', () => {
+    const v = runHealth(importClaudeCodeDir(J)).validity
+    expect(v.otel).toBeNull()
+    expect(v.caveats.some(c => c.includes('OTel (L3+) required'))).toBe(true)
+  })
+})

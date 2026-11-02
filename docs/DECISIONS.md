@@ -102,6 +102,11 @@ Context: every line in a subagent transcript carries `isSidechain: true`, and th
 Decision: sidechain events are derived like any other; message.id dedup prevents an inline copy and its file copy from counting twice. `toolUseResult.agentId` creates an Agent (observed reference); the file importer stamps `transcriptFile` when the matching file exists. Main-chain turn numbering ignores sidechain turns.
 Consequence: token totals for runs with subagents rise to include them. D1 now fires on a real session (`d1-trigger`). Every result and the site data must be regenerated.
 
+## ADR-025 · 2026-11-02 · accepted · OTLP importer (Claude Code profile); OTel raises a run to L3
+Context: M1 listed an OTLP importer that was never built, so every run stamped L1 and R1-F2 (internal API calls the transcript never writes) was only a notebook finding.
+Decision: `attachOtlp(run, files)` reads OTLP JSON file-exporter output (logs and spans), keeps records whose `session.id` equals the run id, and turns `api_request` log records into `run.otel.apiRequests`. They are joined to transcript requests only by exact `request_id` = `requestRef` equality (Rule 5). Any OTel record for the session raises capture to L3. The ValidityCard gains `otel` (matched, OTel-only with tokens, cost and query source, transcript-only), and a caveat names the OTel-only requests. fs-free, like the JSONL importer. Personal OTel attributes (email, account ids) are never copied into the run or the view.
+Consequence: on the real R1 capture, `93de073c` stamps L3 and shows one OTel-only `generate_session_title` request (1,342 in / 248 out); `2b152411` matches 3 of 3. CLI: `--otlp <file>` on import and export-view, `otlp` per run in the site list.
+
 ## Proposed (not yet accepted)
 - ADR-P1 Interop with context-analyzer (decide after M0 source read).
 - ADR-P2 Upstream OTel proposal for compaction and skill entities (decide after M0 repo check).
