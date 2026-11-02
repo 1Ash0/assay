@@ -1,0 +1,29 @@
+# EXP-P4 Provenance of tool-call literals v1 (preregistration, 2026-11-02, before any provenance code)
+- **Question:** For each literal in a tool call's input, does it appear earlier in what the model had? Where first, and which literals appear nowhere earlier ("unsourced")? assay claims only "appeared earlier at X", never "came from X" (M4_PLAN §2).
+- **Truth badge of data used:** `real`; the real-perturbed copies are excluded.
+- **Sessions / n:** the same 20 sessions and the same dev / held-out split as R2 (`R2-reconstruction-v1.md`):
+  - 6 dev sessions, on which literal extraction may be developed;
+  - 14 held-out sessions, scored once.
+- **Unit of analysis:** the session. A literal is not the unit, and neither is a tool call.
+- **Literal (fixed now):**
+  - every string value anywhere in a `tool_use` input that is at least **8 characters** and contains no newline;
+  - plus every path-like token inside any string value, matching `/(?:[A-Za-z]:[\\/]|\/)?(?:[\w.-]+[\\/])+[\w.-]+/`, at least 8 characters.
+  - **Excluded:** pure numbers, and the values of the `description` key (free prose, not a literal the model copied).
+- **Source (what the model had):** for a tool call in an assistant message whose request record is sealed, the whole sealed request body (system, tools, earlier messages), searched in order. For any other tool call, the transcript lines before the assistant line, labelled `l1-lines`.
+- **Provenance claim:** the earliest exact occurrence (byte-for-byte substring) in the source. It is reported with its position (system / tools / message index and block), and becomes a `matched` edge (Rule 5). No occurrence means **unsourced**, reported as a count, never as an error.
+- **Independent check (truth for this experiment):** a separate implementation, a raw substring search over the session's JSONL file bytes before the assistant line's byte offset, with the JSON string escaping undone by a second search for the JSON-escaped form.
+- **Primary metric (fixed now):** agreement rate between the provenance claim (found / unsourced) and the independent check, per session, averaged over held-out sessions. 95% CI by bootstrap over sessions (10,000, seed 26).
+- **Secondary metrics:**
+  - unsourced share of literals per session;
+  - the disagreements, classified by direction:
+    - found in the request but not in the file: text only the request holds, such as the system prompt or tool definitions;
+    - found in the file but not in the request: text the model never received, such as UI-only lines or a later-dropped region;
+  - share of tool calls whose source was a sealed request versus `l1-lines`.
+- **Stopping rule:** one scoring run on the held-out set after extraction is frozen at a recorded commit.
+- **Threats:**
+  - **The 8-character minimum and the regex are choices.** Shorter literals would match spuriously, and longer ones would miss ids.
+  - **Agreement can be high for a trivial reason.** If most literals are file paths echoed from earlier tool results, both methods find them. The disagreement classes, not the rate, carry the information.
+  - **"Unsourced" does not mean invented.** `npm install` needs no source.
+  - The threats from R2 apply: one user, 2.1.301–2.1.316.
+- **What would change my mind:** many found-in-file-not-in-request disagreements. They would mean the file holds text the model never saw, which would make L1-only provenance unsafe.
+- **Result artifact path:** `results/P4-provenance-v1.json` (gitignored), summarised in `P4-provenance-v1.result.md`.
