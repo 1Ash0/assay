@@ -183,6 +183,20 @@ Leads for P2, from the census:
 - `wireToolInputs` on assistant lines (2.1.299+) may record the tool inputs as re-sent, including the client-filled defaults the L4 calibration found.
 - `atis-latch` is now the type bounding fineness on most runs; read it before cataloguing it.
 
+## 5b. Capture protocols for the next sessions (what Asmit runs)
+
+### Twin runs (real data for Run Diff)
+1. Pick a small, self-contained task in a repo with a clean working tree, for example "add a test for X and make it pass".
+2. Note the commit: `git rev-parse HEAD`.
+3. In a new terminal, start `claude` with the L4 environment below, paste the task as the first message, and let it run to the end without steering. Then `/exit`.
+4. Reset the repo to the same commit: `git stash -u` or `git checkout .` plus removing new files. Then repeat step 3 with **exactly the same first message**.
+5. Tell Claude the two session ids. They are frozen as a twin pair, with the commit and the prompt hash in `MANIFEST.json`.
+
+Only pairs recorded this way are shown as twins in Run Diff.
+
+### Second L4 calibration (tests T-R2-3, and covers subagents)
+Use the same collector setup as before. In the task, ask for at least one subagent, for example "use an Explore subagent to find …". That shows whether subagent requests appear in the raw bodies when the transcript records none.
+
 ## 6. Needs Asmit
 1. ~~One L4 calibration session~~ Done 2026-11-02 (§1a). A second on a later version would test T-R2-3.
 2. Two twin runs (the same prompt twice) when convenient, for the real Diff.

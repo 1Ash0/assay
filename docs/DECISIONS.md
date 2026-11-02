@@ -175,6 +175,11 @@ Decision: literals are string values of at least 8 characters plus path-like tok
 
 Consequence: held-out agreement with an independent raw-file search is 0.974. The disagreements show that the transcript file holds text the model never received (`toolUseResult`, cleared thinking, bookkeeping), so raw-file provenance over-claims and `l1-lines` is an upper bound. The site must label `l1-lines` provenance as such.
 
+## ADR-034 · 2026-11-02 · accepted · Run Diff aligns steps by tool-name multisets (LCS, exact keys)
+Context: M3's diff key was the flat tool-name sequence, so reordering two parallel calls would read as a divergence.
+Decision: a step's key is the sorted multiset of its tool names. Runs are aligned by LCS over keys with exact equality (Rule 5) and report pairs, one-sided steps and the first divergence. `align` and `stepKey` are in core and in the browser bundle.
+Consequence: T3 stability is 60 of 60 and detection 16 of 17. The miss is a run of identical steps, so the view shows the first divergence as "at or after" when neighbours share a key, and states that keys ignore inputs.
+
 ## Proposed (not yet accepted)
 - ADR-P1 Interop with context-analyzer (decide after M0 source read).
 - ADR-P2 Upstream OTel proposal for compaction and skill entities (decide after M0 repo check).
