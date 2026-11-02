@@ -34,7 +34,7 @@ export function importFromFiles(files: SourceFile[], opts: ImportOptions = {}, h
   const parsed: ParsedFile[] = files.map(f => parseJsonlBytes(f.path, f.bytes))
   const allEvents = parsed.flatMap(p => p.events)
   const allUnknowns = parsed.flatMap(p => p.unknowns)
-  const requests = readRequestRecords(allUnknowns)
+  const requests = readRequestRecords(allUnknowns, allEvents)
   for (const u of allUnknowns) if (REQUEST_RECORD_TYPES.has(u.reason.slice('unknown-type:'.length))) u.parsedAs = 'request-record'
   const rawApiRequestCount = parsed.reduce((s, p) => s + p.apiRequestCount, 0)
 

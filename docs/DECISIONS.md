@@ -136,6 +136,26 @@ Decision:
 
 Consequence: on `17f6f5b7`, 13 of 20 requests name records that were never written, all before 10:17, so records cover only the later part of that session. That was invisible to the count rule. 4a153124's 170 records with no ref are all built on by later requests (interrupted or retried calls), so they are counted, not flagged. LlmRequest.requestRef's comment now says what it holds (the API request id), since the transcript's own `requestRef` field means something else.
 
+## ADR-031 · 2026-11-02 · accepted · Hash-gated rebuild of request messages from transcript lines (R2 scorer frozen)
+Context: R2 asks whether the request Claude Code sent can be rebuilt from ordinary transcript lines. Request records name every message by hash, so any rebuild can be checked exactly.
+Decision: `reconstruct/rebuild.ts` turns lines into candidate messages, and a candidate is used only when its hash equals a hash a record names. The rules were found on the 6 R2 dev sessions only:
+- streamed assistant lines joined by message.id, optionally with `wireToolInputs`;
+- the tool results of one turn joined;
+- string tool results trimmed;
+- system-role rendered attachments appended to the last tool result;
+- a human turn's rendered attachments placed before the prompt;
+- a system-role attachment as its own unwrapped system message.
+
+Each record now has three seals: `sealFromBlobs` (stored blobs only), `sealFromLines` (lines only, the preregistered primary) and `seal` (both). Tail entries name their source, rule and the lines used.
+
+Frozen at the commit carrying this ADR; any rule change after the held-out score is a v2.
+
+Consequence, dev set only:
+- 1,897 of 2,104 distinct messages rebuild from lines.
+- Blobs plus rebuild seal 1,016 of 1,016 requests, where blobs alone seal 28.
+- Lines alone seal 0. A session's opening request carries an environment system message and `tool_addition` tool definitions that no ordinary line contains, and every later request keeps them.
+- So exact whole-request reconstruction from L1 lines is not possible on these versions, whatever the rules. The preregistered primary metric is expected near 0, and will be reported as measured.
+
 ## Proposed (not yet accepted)
 - ADR-P1 Interop with context-analyzer (decide after M0 source read).
 - ADR-P2 Upstream OTel proposal for compaction and skill entities (decide after M0 repo check).

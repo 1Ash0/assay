@@ -401,6 +401,9 @@ function requestSummary(run: Run): ValidityCard['requests'] {
     sealed: n('sealed'), broken: n('broken'), unresolved: n('unresolved'), noShape: n('no-shape'),
     blobs: q.blobs, blobsFailed: q.blobsFailed.length, shapesFailed: q.shapesFailed.length,
     messagesWithoutBlob: q.records.reduce((s, r) => s + r.tail.filter(t => !t.blob).length, 0),
+    sealedFromBlobs: q.records.filter(r => r.sealFromBlobs === 'sealed').length,
+    sealedFromLines: q.records.filter(r => r.sealFromLines === 'sealed').length,
+    messagesRebuilt: q.records.reduce((s, r) => s + r.tail.filter(t => t.source === 'rebuilt').length, 0),
     ...(({ requestsWithRef, linked, refWithoutRecord, recordWithoutRef }) => ({ requestsWithRef, linked, refWithoutRecord, recordWithoutRef }))(requestLinks(run)),
   }
 }

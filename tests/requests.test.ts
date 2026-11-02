@@ -70,6 +70,11 @@ describe.skipIf(!existsSync(REAL))('request records on a real 2.1.316 session (l
     expect(q.blobsFailed).toHaveLength(0)
     expect(q.shapesFailed).toHaveLength(0)
     expect(q.records.filter(r => r.seal === 'broken')).toHaveLength(0)
-    expect(q.records.filter(r => r.seal === 'sealed')).toHaveLength(2)
+    // Stored blobs alone seal 2 of 7; with hash-matched rebuilds from transcript
+    // lines all 7 seal. From lines alone none does: the opening system message's
+    // tool definitions exist only in blobs (ADR-031).
+    expect(q.records.filter(r => r.sealFromBlobs === 'sealed')).toHaveLength(2)
+    expect(q.records.filter(r => r.seal === 'sealed')).toHaveLength(7)
+    expect(q.records.filter(r => r.sealFromLines === 'sealed')).toHaveLength(0)
   })
 })

@@ -11,6 +11,11 @@ export const RequestTailSchema = z.object({
   hash: z.string(),
   // Offset of the blob line, or null when no blob with this hash was written.
   blob: OffsetSchema.nullable(),
+  // Where the message came from: a stored blob, a rebuild from ordinary
+  // transcript lines whose hash matched (ADR-031), or nowhere.
+  source: z.enum(['blob', 'rebuilt']).nullable(),
+  rule: z.string().optional(),
+  from: z.array(OffsetSchema).optional(),
 })
 
 // sealed: the rebuilt body hashes to requestDigest (exact, byte for byte).
@@ -32,8 +37,15 @@ export const RequestRecordSchema = z.object({
   tail: z.array(RequestTailSchema),
   // Messages in the full chain (kept from the base plus this tail).
   messageCount: z.number().int().nonnegative(),
-  // Chain messages with no verified blob behind them.
+  // Chain messages with neither a verified blob nor a hash-matched rebuild.
   missingMessages: z.number().int().nonnegative(),
+  // Chain messages filled by a hash-matched rebuild (counted in neither above).
+  rebuiltMessages: z.number().int().nonnegative(),
+  // The seal from stored blobs alone, before any rebuild: R2's baseline.
+  sealFromBlobs: z.enum(['sealed', 'broken', 'unresolved', 'no-shape']),
+  // The seal from ordinary transcript lines alone, no blobs: what any version
+  // without request records could reach. R2's primary metric (ADR-031).
+  sealFromLines: z.enum(['sealed', 'broken', 'unresolved', 'no-shape']),
   seal: SealSchema,
 })
 

@@ -121,6 +121,11 @@ export interface ValidityCard {
     blobsFailed: number
     shapesFailed: number
     messagesWithoutBlob: number
+    // R2 (ADR-031): seals from stored blobs alone and from transcript lines
+    // alone; `sealed` above uses both. Tail messages filled by a rebuild.
+    sealedFromBlobs: number
+    sealedFromLines: number
+    messagesRebuilt: number
     // Exact join on assistant.requestRef = record id (D10); refs exist from 2.1.301.
     requestsWithRef: number
     linked: number

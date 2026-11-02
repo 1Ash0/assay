@@ -976,11 +976,59 @@
                               "type": "null"
                             }
                           ]
+                        },
+                        "source": {
+                          "anyOf": [
+                            {
+                              "type": "string",
+                              "enum": [
+                                "blob",
+                                "rebuilt"
+                              ]
+                            },
+                            {
+                              "type": "null"
+                            }
+                          ]
+                        },
+                        "rule": {
+                          "type": "string"
+                        },
+                        "from": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "file": {
+                                "type": "string"
+                              },
+                              "line": {
+                                "type": "integer",
+                                "minimum": 0
+                              },
+                              "byteStart": {
+                                "type": "integer",
+                                "minimum": 0
+                              },
+                              "byteEnd": {
+                                "type": "integer",
+                                "minimum": 0
+                              }
+                            },
+                            "required": [
+                              "file",
+                              "line",
+                              "byteStart",
+                              "byteEnd"
+                            ],
+                            "additionalProperties": false
+                          }
                         }
                       },
                       "required": [
                         "hash",
-                        "blob"
+                        "blob",
+                        "source"
                       ],
                       "additionalProperties": false
                     }
@@ -992,6 +1040,28 @@
                   "missingMessages": {
                     "type": "integer",
                     "minimum": 0
+                  },
+                  "rebuiltMessages": {
+                    "type": "integer",
+                    "minimum": 0
+                  },
+                  "sealFromBlobs": {
+                    "type": "string",
+                    "enum": [
+                      "sealed",
+                      "broken",
+                      "unresolved",
+                      "no-shape"
+                    ]
+                  },
+                  "sealFromLines": {
+                    "type": "string",
+                    "enum": [
+                      "sealed",
+                      "broken",
+                      "unresolved",
+                      "no-shape"
+                    ]
                   },
                   "seal": {
                     "type": "string",
@@ -1012,6 +1082,9 @@
                   "tail",
                   "messageCount",
                   "missingMessages",
+                  "rebuiltMessages",
+                  "sealFromBlobs",
+                  "sealFromLines",
                   "seal"
                 ],
                 "additionalProperties": false
