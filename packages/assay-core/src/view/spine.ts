@@ -3,6 +3,8 @@ import { Run } from '../schema/index.js'
 import { basename } from './redact.js'
 import { NOT_SEPARABLE } from '../reconstruct/categories.js'
 import { attributeTokens, CategoryTokens } from '../reconstruct/tokens.js'
+import { ToolProvenance } from '../reconstruct/provenance.js'
+import { runProvenance } from '../reconstruct/run-provenance.js'
 
 // The spine (M3_PLAN §5): one step per LlmRequest in transcript order. Traverse,
 // Replay and Run Diff are all readings of it, so a selected step carries
@@ -11,7 +13,8 @@ import { attributeTokens, CategoryTokens } from '../reconstruct/tokens.js'
 //
 // `context` and `provenance` are the M4 slots. `context` is filled for steps
 // whose request record is sealed (ADR-032) and null otherwise, which the site
-// draws as "not reconstructed". `provenance` is filled by P4.
+// draws as "not reconstructed". `provenance` lists each tool call's literals
+// with their earliest exact occurrence (ADR-033).
 
 export interface SpineTool {
   name: string
@@ -42,7 +45,8 @@ export interface SpineStep {
   // record is sealed. Tokens per category; `deltaMeasured` of `total` are
   // measured by usage deltas, the rest split by characters (inferred).
   context: StepContext | null
-  provenance: null
+  // Literals in this step's tool calls and where each first appeared (ADR-033).
+  provenance: ToolProvenance[] | null
 }
 
 export interface StepContext {
@@ -56,6 +60,7 @@ export interface StepContext {
 export function buildSpine(run: Run, report: HealthReport) {
   const tokensByMessage = new Map(attributeTokens(run).filter(t => t.messageId).map(t => [t.messageId!, t]))
   const recordLine = new Map((run.requests?.records ?? []).map(r => [r.id, r.offset.line]))
+  const prov = runProvenance(run)
   const tsByLine = new Map<string, number>()
   const agentByLine = new Map<string, string>()
   const key = (file: string, line: number) => `${file}\u0000${line}`
@@ -121,7 +126,10 @@ export function buildSpine(run: Run, report: HealthReport) {
           parts: t.parts, notSeparable: NOT_SEPARABLE as Record<string, string>,
         }
       })(),
-      provenance: null,
+      provenance: (() => {
+        const ps = (toolsByMsg.get(q.messageId) ?? []).map(t => prov.get(t.id)).filter((p): p is ToolProvenance => Boolean(p))
+        return ps.length ? ps : null
+      })(),
     }
   })
 

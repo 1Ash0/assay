@@ -1135,6 +1135,77 @@
                         "type": "null"
                       }
                     ]
+                  },
+                  "provenance": {
+                    "anyOf": [
+                      {
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "properties": {
+                            "toolUseId": {
+                              "type": "string"
+                            },
+                            "literals": {
+                              "type": "array",
+                              "items": {
+                                "type": "object",
+                                "properties": {
+                                  "text": {
+                                    "type": "string"
+                                  },
+                                  "at": {
+                                    "anyOf": [
+                                      {
+                                        "type": "object",
+                                        "properties": {
+                                          "part": {
+                                            "type": "string",
+                                            "enum": [
+                                              "system",
+                                              "tools",
+                                              "message"
+                                            ]
+                                          },
+                                          "index": {
+                                            "type": "integer"
+                                          },
+                                          "block": {
+                                            "type": "integer"
+                                          }
+                                        },
+                                        "required": [
+                                          "part",
+                                          "index",
+                                          "block"
+                                        ],
+                                        "additionalProperties": false
+                                      },
+                                      {
+                                        "type": "null"
+                                      }
+                                    ]
+                                  }
+                                },
+                                "required": [
+                                  "text",
+                                  "at"
+                                ],
+                                "additionalProperties": false
+                              }
+                            }
+                          },
+                          "required": [
+                            "toolUseId",
+                            "literals"
+                          ],
+                          "additionalProperties": false
+                        }
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
                   }
                 },
                 "required": [
@@ -1151,7 +1222,8 @@
                   "sealFromLines",
                   "seal",
                   "composition",
-                  "tailComposition"
+                  "tailComposition",
+                  "provenance"
                 ],
                 "additionalProperties": false
               }

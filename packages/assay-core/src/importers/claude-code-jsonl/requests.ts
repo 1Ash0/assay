@@ -1,4 +1,5 @@
 import { compose, messageParts, Part } from '../../reconstruct/categories.js'
+import { extractLiterals, locate } from '../../reconstruct/provenance.js'
 import { Candidate, candidates, Line } from '../../reconstruct/rebuild.js'
 import { Event, Offset, RequestRecord, RequestRecords, Seal, UnknownLine } from '../../schema/index.js'
 import { sha256Hex } from './sha256.js'
@@ -67,6 +68,21 @@ export function readRequestRecords(unknowns: UnknownLine[], events: Event[] = []
   }
   if (reqs.length === 0 && blobCount === 0 && shapeCount === 0) return undefined
 
+  // record id -> tool calls in the assistant response that names it (requestRef)
+  const responses = new Map<string, { id: string; input: Json }[]>()
+  for (const e of events) {
+    if (e.kind !== 'assistant') continue
+    const ref = e.raw['requestRef']
+    const content = (e.raw['message'] as Record<string, Json> | undefined)?.['content']
+    if (typeof ref !== 'string' || !Array.isArray(content)) continue
+    for (const b of content as Record<string, Json>[]) {
+      if (b['type'] !== 'tool_use') continue
+      const list = responses.get(ref) ?? []
+      if (!list.some(x => x.id === b['id'])) list.push({ id: String(b['id']), input: b['input'] })
+      responses.set(ref, list)
+    }
+  }
+
   // Rebuilt candidates, keyed by the hash they produce; only hashes that some
   // record names are kept. The first rule to produce a hash is recorded.
   const named = new Set(reqs.flatMap(({ obj }) => (Array.isArray(obj['tail']) ? (obj['tail'] as Json[]).map(String) : [])))
@@ -132,6 +148,11 @@ export function readRequestRecords(unknowns: UnknownLine[], events: Event[] = []
     const msgs = chain.map(m => m?.message as Record<string, Json>)
     const composition = seal === 'sealed' && shape ? compose(shape['system'], shape['tools'], msgs) : null
     const tailComposition = seal === 'sealed' ? sumParts(messageParts(msgs.slice(keep), toolNamesOfAll(msgs))) : null
+    // Provenance (ADR-033): the tool calls in the response that names this
+    // record, checked against exactly this body.
+    const provenance = seal === 'sealed' && shape
+      ? (responses.get(id) ?? []).map(t => ({ toolUseId: t.id, literals: locate(extractLiterals(t.input), shape['system'], shape['tools'], msgs) }))
+      : null
 
     const ts = typeof obj['timestamp'] === 'string' ? Date.parse(obj['timestamp']) : NaN
     records.push({
@@ -157,6 +178,7 @@ export function readRequestRecords(unknowns: UnknownLine[], events: Event[] = []
       sealFromLines,
       composition,
       tailComposition,
+      provenance,
     })
   }
   return { records, blobs: blobCount, blobsFailed, shapes: shapeCount, shapesFailed }

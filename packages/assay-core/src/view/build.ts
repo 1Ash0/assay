@@ -139,10 +139,24 @@ export function buildRunView(run: Run, report: HealthReport, opts: ViewOptions =
     unknownReasons: counter(run.unknowns.map(u => u.reason), 8),
     unknownSample,
     rawApi: run.rawApiRequestCount,
-    spine: buildSpine(run, report),
+    spine: redactSpine(buildSpine(run, report)),
     // M4 fills these per run; null means not reconstructed / not traced yet.
     m4: { reconstruction: null, provenance: null },
   }
 }
 
 export type RunView = ReturnType<typeof buildRunView>
+
+// Tool-call literals are raw paths and commands (Rule 8). On the way out a path
+// keeps only its last segment, as everywhere else; any other literal becomes a
+// redaction marker with its length. Positions are kept, so the site can still
+// draw where each literal first appeared.
+const PATHISH = /[\\/]/
+function redactSpine(spine: ReturnType<typeof buildSpine>): ReturnType<typeof buildSpine> {
+  for (const st of spine.steps) {
+    for (const p of st.provenance ?? []) {
+      p.literals = p.literals.map(l => ({ ...l, text: PATHISH.test(l.text) && !/\s/.test(l.text) ? basename(l.text) : `‹redacted · ${l.text.length} chars›` }))
+    }
+  }
+  return spine
+}

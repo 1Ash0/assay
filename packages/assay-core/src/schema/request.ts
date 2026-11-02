@@ -58,6 +58,15 @@ export const RequestRecordSchema = z.object({
   // added. Tokens are attributed later, from usage deltas.
   composition: z.array(PartSchema).nullable(),
   tailComposition: z.array(PartSchema).nullable(),
+  // Provenance of the response's tool-call literals in this body (ADR-033),
+  // only when sealed. `at` is the earliest exact occurrence, or null (unsourced).
+  provenance: z.array(z.object({
+    toolUseId: z.string(),
+    literals: z.array(z.object({
+      text: z.string(),
+      at: z.object({ part: z.enum(['system', 'tools', 'message']), index: z.number().int(), block: z.number().int() }).nullable(),
+    })),
+  })).nullable(),
 })
 
 export const RequestRecordsSchema = z.object({
