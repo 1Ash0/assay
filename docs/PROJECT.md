@@ -5,7 +5,7 @@
 Everything else (graphs, replay, diff) is built on the answer, because a beautiful view of incomplete data is worse than no view.
 
 ## Why this exists (evidence, with levels; see PRIOR_ART.md)
-- A Harbor parser that read only the top-level Claude Code session file missed about 80% of prompt tokens on a real 4-subagent session, because newer Claude Code writes each subagent to a separate file. **[read-summary]** (harbor-framework PR #2247 as read in session; re-verify at source in M0.)
+- A Harbor parser that read only the top-level Claude Code session file missed about 80% of prompt tokens on a real 4-subagent session, because newer Claude Code writes each subagent to a separate file. **[read]** (harbor-framework PR #2247, read at source 2026-10-31 and re-fetched live 2026-11-02; author-reported on Claude Code 2.1.78: 2.61M vs 0.52M prompt tokens, 95 vs 25 steps; not independently reproduced by us, own-corpus reproduction tracked in PRIOR_ART.md.)
 - Claude Code's transcript format is barely documented and changes constantly: 2.1.300 added per-request system prompt, tools and parameters to local transcripts; a transcript GC (`CLAUDE_CODE_TRANSCRIPT_LOCAL_GC`, fixes in 2.1.296/2.1.304) can drop messages from the saved transcript; 2.1.299 stopped keeping PDF bytes. **[read]** (full changelog).
 - OTel traces for Claude Code are explicitly beta and off by default; content capture is off by default per flag. **[read-summary]** (docs monitoring page).
 - No tool found reports **capture level or data-quality** for these sources (context-analyzer's page does not state it). **[read-summary]**, "we believe" gap.

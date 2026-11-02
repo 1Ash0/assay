@@ -3,14 +3,17 @@
   "private": true,
   "version": "0.0.1",
   "scripts": {
-    "check": "pnpm -r typecheck && pnpm test && pnpm schema:check",
+    "check": "pnpm -r typecheck && pnpm test && pnpm schema:check && pnpm claims",
     "test": "vitest run",
     "build": "pnpm -r build",
     "build:web": "esbuild packages/assay-core/src/browser.ts --bundle --format=iife --global-name=AssayCore --target=es2020 --outfile=web/prototype/assay-core.js",
     "schema": "tsx scripts/emit-schema.ts",
     "schema:check": "tsx scripts/emit-schema.ts --check",
     "web": "pnpm --filter @assay/core build && pnpm --filter @assay/cli build && pnpm build:web && node packages/assay-cli/dist/cli.js export-site web/prototype/site-runs.json --out web/prototype/data.js --results results",
-    "web-check": "node scripts/web-check.mjs"
+    "web-check": "node scripts/web-check.mjs",
+    "contrast": "node scripts/contrast-check.mjs",
+    "results": "node scripts/results.mjs",
+    "claims": "node scripts/claims.mjs"
   },
   "devDependencies": {
     "@types/node": "^22.0.0",
