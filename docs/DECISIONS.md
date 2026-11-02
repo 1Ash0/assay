@@ -191,6 +191,18 @@ Decision:
 
 Consequence: the judge can be measured before it is trusted. The ROADMAP's "Jev calibration" becomes J1 on Groq. Asmit sets the keys in his own shell.
 
+## ADR-036 · 2026-11-03 · accepted · assay check, assay assert and the CI Action; one exit-code contract
+Context: M5 ships assay as a tool someone else runs. That needs one readable command, a rule gate for CI, and exit codes that mean the same thing everywhere.
+Decision:
+- **`assay check <session>`** prints one card, with Capture Level on the first line (Rule 1), then verdicts, fineness, tokens (context, plus uncached input or its range), seals and warn/error findings with 1-based lines. `--json` gives the full report.
+- **`assay assert <session> --rules f.json`** checks optional rules: `minCaptureLevel`, `versionSupport`, `forbidSeverity`, `forbidDetectors`, `overallNot`, `maxInputTokens`, `minSealedShare` and `maxUnparsedTelemetry`. An unknown rule name is an error.
+- **Exit codes:** 0 ok; 1 usage error or a failed rule; 2 do-not-trust or a broken seal.
+- **`action.yml`** is a composite action wrapping `assert`. Inputs pass through environment variables, never shell interpolation.
+- **`.github/workflows/check.yml`** runs `pnpm check`, and the action on a passing fixture and on a must-fail fixture.
+- **The "% of lines not recognized" caveat now uses unparsed telemetry,** not the raw unknown share, which counted understood catalogued and request-record lines.
+
+Consequence: CI sees scripted fixtures only (Rule 8), and a gate that cannot close fails the build.
+
 ## Proposed (not yet accepted)
 - ADR-P1 Interop with context-analyzer (decide after M0 source read).
 - ADR-P2 Upstream OTel proposal for compaction and skill entities (decide after M0 repo check).

@@ -1,0 +1,10 @@
+{
+  "$comment": "Rules for `assay assert`. Every rule is optional; an unknown rule name is an error.",
+  "minCaptureLevel": 1,
+  "versionSupport": ["checked", "in-range-unchecked"],
+  "forbidSeverity": ["error"],
+  "forbidDetectors": ["D11"],
+  "overallNot": ["do-not-trust"],
+  "minSealedShare": 0.95,
+  "maxUnparsedTelemetry": 0.1
+}

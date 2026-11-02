@@ -1,5 +1,6 @@
 #!/usr/bin/env node
 import { attachOtlp, buildRunView, census, diffCensus, IMPORTER_SUPPORT, importClaudeCodeDir, Run, runHealth, Truth } from '@assay/core'
+import { assertRules, card, checkExit, parseRules } from './check.js'
 import { corpusAdd, corpusAudit, corpusStats } from './corpus.js'
 import { existsSync, mkdirSync, readdirSync, readFileSync, statSync, writeFileSync } from 'fs'
 import { homedir } from 'os'
@@ -14,6 +15,9 @@ assay <command> [options]
 Commands:
   import <path>        Import a Claude Code session directory or JSONL file [--otlp file]
   health <run.json>    Run Health detectors on an imported run
+  check <path>         One card: Capture Level, verdicts, seals, findings [--otlp f] [--json]
+  assert <path> --rules <rules.json>
+                       Fail (exit 1) when a run breaks a rule; for CI [--otlp f]
   requests <path>      Seal of every request record in a session (ADR-026)
   corpus add <session.jsonl> [--project p] [--truth t]
                        Freeze a finished session (and its subagents) read-only
@@ -93,6 +97,25 @@ if (command === 'import') {
   const n = (s: string) => q.records.filter(r => r.seal === s).length
   console.error(`requests  ${q.records.length}  sealed ${n('sealed')}  broken ${n('broken')}  unresolved ${n('unresolved')}  no-shape ${n('no-shape')}  blobs failing their key ${q.blobsFailed.length}`)
   if (n('broken') > 0 || q.blobsFailed.length + q.shapesFailed.length > 0) process.exit(2)
+} else if (command === 'check' || command === 'assert') {
+  const path = args[0]
+  if (!path || path.startsWith('--')) usage()
+  let run: Run
+  try { run = withOtlp(importClaudeCodeDir(resolve(path)), flag('--otlp')) } catch (err) { console.error(`${command} failed: ${err instanceof Error ? err.message : err}`); process.exit(1) }
+  const report = runHealth(run)
+  if (command === 'check') {
+    if (args.includes('--json')) process.stdout.write(JSON.stringify(report, null, 2) + '\n')
+    else console.log(card(run, report))
+    process.exit(checkExit(report))
+  }
+  const rulesPath = flag('--rules')
+  if (!rulesPath) { console.error('assert requires --rules <rules.json>'); process.exit(1) }
+  let rules
+  try { rules = parseRules(readFileSync(resolve(rulesPath), 'utf-8')) } catch (err) { console.error(`bad rules file: ${err instanceof Error ? err.message : err}`); process.exit(1) }
+  const fails = assertRules(run, report, rules)
+  for (const f of fails) console.log(`FAIL ${f.rule.padEnd(20)} ${f.line ? `line ${f.line}  ` : ''}${f.detail}`)
+  console.log(fails.length ? `${fails.length} rule failure(s) in ${path}` : `all rules pass for ${path}`)
+  process.exit(fails.length ? 1 : 0)
 } else if (command === 'corpus') {
   const sub = args[0]
   if (sub === 'add' && args[1]) process.exit(corpusAdd(args[1], { ...(flag('--project') ? { project: flag('--project')! } : {}), ...(flag('--truth') ? { truth: flag('--truth')! } : {}) }))

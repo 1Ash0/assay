@@ -21,6 +21,7 @@ Working name. A trace-trust toolkit for coding-agent runs: it answers **"can you
 - `make check` lint + types + tests (offline) + JSON-Schema drift
 - `make test` offline, fixtures only
 - `assay import <path|otlp-file> --profile claude-code` then `assay health <run>`
+- `assay check <session> [--otlp f] [--json]` one card, Capture Level first; `assay assert <session> --rules f.json` for CI (exit 0 ok, 1 rule failed, 2 do-not-trust)
 - `assay requests <session>` seal per transcript request record (ADR-026/027)
 - `assay catalogue check [dir…] [--results results]` versions and record formats vs importer support (Rule 7; exit 1 outside range)
 - `assay corpus add|audit|stats` · `make web` · `make web-check`

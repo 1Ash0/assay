@@ -1,0 +1,43 @@
+name: assay assert
+description: Fail a job when an agent session's telemetry breaks your rules (Capture Level, version support, findings, seals).
+inputs:
+  paths:
+    description: Session .jsonl files or session folders, one per line.
+    required: true
+  rules:
+    description: Path to a rules JSON file (see assay.rules.example.json).
+    required: true
+  otlp:
+    description: Optional OTLP JSON capture to attach (raises the run to L3).
+    required: false
+    default: ''
+runs:
+  using: composite
+  steps:
+    - uses: pnpm/action-setup@v4
+      with:
+        version: 9
+    - uses: actions/setup-node@v4
+      with:
+        node-version: 22
+    - shell: bash
+      working-directory: ${{ github.action_path }}
+      run: pnpm install --frozen-lockfile && pnpm --filter @assay/core build && pnpm --filter @assay/cli build
+    - shell: bash
+      env:
+        ASSAY_PATHS: ${{ inputs.paths }}
+        ASSAY_RULES: ${{ inputs.rules }}
+        ASSAY_OTLP: ${{ inputs.otlp }}
+      # Inputs arrive as environment variables, never interpolated into the
+      # script, so a path cannot inject shell.
+      run: |
+        status=0
+        while IFS= read -r p; do
+          [ -z "$p" ] && continue
+          if [ -n "$ASSAY_OTLP" ]; then
+            node "${{ github.action_path }}/packages/assay-cli/dist/cli.js" assert "$p" --rules "$ASSAY_RULES" --otlp "$ASSAY_OTLP" || status=1
+          else
+            node "${{ github.action_path }}/packages/assay-cli/dist/cli.js" assert "$p" --rules "$ASSAY_RULES" || status=1
+          fi
+        done <<< "$ASSAY_PATHS"
+        exit $status

@@ -283,8 +283,10 @@ export function buildValidityCard(run: Run, findings: Finding[], overall: Metric
     caveats.push(`Runtime cost-state token totals disagree with JSONL usage fields — one source may be incomplete`)
   if (modelIdentificationRate !== null && modelIdentificationRate < 0.5)
     caveats.push(`Model identified for only ${Math.round(modelIdentificationRate * 100)}% of LlmRequests — context-limit checks were skipped for most requests`)
-  if (unknownRatio > 0.2)
-    caveats.push(`${Math.round(unknownRatio * 100)}% of JSONL lines were not recognized by the importer — coverage metrics may be incomplete`)
+  // Catalogued and request-record lines are understood, so only lines of
+  // unknown type count here (ADR-022); the raw unknown share overstated it.
+  if (importerCoverage.unparsedTelemetryRatio > 0.05)
+    caveats.push(`${Math.round(importerCoverage.unparsedTelemetryRatio * 100)}% of JSONL lines are of a type the importer does not know (kept, flagged) — telemetry in them is not counted`)
   if (otel && otel.otelOnly > 0)
     caveats.push(`${otel.otelOnly} API request(s) appear only in OTel (${Object.entries(otel.otelOnlyBySource).map(([k, v]) => `${k} ×${v}`).join(', ')}): ${otel.otelOnlyInputTokens} input and ${otel.otelOnlyOutputTokens} output tokens the transcript never recorded`)
   if (run.capture.level < 3)
