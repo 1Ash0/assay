@@ -62,6 +62,19 @@ Open for exit:
 CLI polish; trace assertions + CI Action; judge-plane interface and Jev calibration study if access verified; docs; write-up of R1/R2 findings; upstream issue drafts (OTel GenAI: compaction/skill entities) if gaps confirmed.
 **Exit:** reproducible `results/`; README claims all at [read]/own-artifact level; cumulative gate passed.
 
+**M5 status (2026-11-03):** built per `docs/M5_PLAN.md`:
+- R4 audit sheet (preregistered);
+- `assay corpus add|audit|stats`, `assay check`, `assay assert`, the CI Action (ADR-036);
+- the judge plane and the J1 runner on TRAIL (ADR-035, preregistered);
+- `pnpm results` with `results/RUN.json`, and the claims ledger in `pnpm check`;
+- `docs/REPORT.md`, upstream drafts, README, LICENSE.
+
+Waiting on Asmit:
+- Groq keys set in his shell, then `node scripts/j1.mjs run`;
+- the GitHub CLI installed and signed in, for the private remote;
+- R4 passes 1 and 2;
+- the cumulative gate (P8, deferred by Asmit).
+
 ## Later (each needs evidence trigger + ADR)
 Atlas (cross-run corpus graph; the only force layout, with a "proximity is not meaning" notice) · MCP server · OpenInference/Langfuse importers · WASM/Rust parser · T5 comprehension study · interop with context-analyzer · other harnesses (Codex) · hosted backend (cut unless a trigger appears) · D-fork-dup, the fork-subagent duplicate detector (trigger: a real session with an `isFork` meta file; M4_PLAN §4a) · changelog watcher, off by default (trigger: a format change missed by the census).
 
