@@ -63,6 +63,40 @@ Context: with `not-observed` and `verified-absent` we could express "we didn't s
 Decision: add `capture-incomplete` as a fourth `ObservabilityState`. Add `captureIntegrity?: boolean` to `Finding`. Detectors that are evidence of capture failure (D1, D3, D10, D-cost warn) set `captureIntegrity: true`. `buildValidityCard` promotes affected observability categories from `not-observed` to `capture-incomplete` when any `captureIntegrity` finding exists for that category. Add a `transcript` observability category driven by D3.
 Consequence: ValidityCard can now distinguish "we didn't see any compaction events" from "we have evidence that events are missing." The CAPTURE_MATRIX doc formalises what each source can theoretically expose, separate from what was actually captured.
 
+## ADR-017 · 2026-11-02 · accepted · M3 identity: the bench, the hallmark, and a play layer
+Context: the M3 views were first designed as boards to read; that was rejected as a content dump. A playable prototype on all 23 results (`web/prototype/`) worked: committing to a call before the scan, the hallmark strip, per-detector figures and tamper missions explained trust faster than any copy (M3_PLAN §0).
+Decision: the look is the prototype's "bench" (candidate B in M3_PLAN §3) with two rules from candidate A: red only for capture failure, and a verified colour distinct from observed. View names: Run Card becomes **Hallmark**, Strata **Core**, Constellation **Traverse**; Replay and Run Diff keep theirs. The play layer (Call it, bench scan, punch card, the four tamper missions) is M3 scope; new missions go to Later. Play state is local only and never compares people.
+Consequence: DESIGN.md is rewritten around the bench. Every mechanic is a thin wrapper over a core result.
+
+## ADR-018 · 2026-11-02 · accepted · Core at L1 shows four measured layers; the 11-category split moves to M4
+Context: ADR-006 put Claude Code's official context categories in Strata. At L1 the JSONL only measures four token layers per request (cache read, cache write, uncached input, output); splitting them into 11 categories needs reconstruction, which Rule 5 forbids before M4's R2 work.
+Decision: Core draws the four measured layers plus an "unlogged at L1" column naming the categories it cannot fill. The 11-category split is part of M4 reconstruction. Supersedes the M3 part of ADR-006.
+Consequence: Core is honest at L1 and gains layers without a redesign once reconstruction lands.
+
+## ADR-019 · 2026-11-02 · accepted · fs-free importer; M3 site is static and fed by core output
+Context: `run.json` files reach 80 MB because every event embeds its raw line, so shipping them to a browser is wrong. M3_PLAN §7.5 also proposed a Vite + React rewrite of the web app, but the prototype already meets the views' needs and Asmit is happy with it.
+Decision: core gains `importFromFiles(files: {path, bytes}[])` with no `fs`; the CLI's directory importer wraps it. The M3 site stays plain HTML/JS in `web/`, reading a view file that core builds (ADR-020). In-browser parsing of a dropped folder (Web Worker) and the React/Vite stack move to Later; the fs-free importer is the prerequisite and ships now.
+Consequence: no number in the site is computed by the site's own data script; the throwaway `extract.py` is deleted.
+
+## ADR-020 · 2026-11-02 · accepted · The view model lives in core
+Decision: `packages/assay-core/src/view/` builds a `RunView` from a run and its health report: hallmark (all punches, fineness, bound and rates), transcript segments with per-segment event, unknown, finding and naive-usage counts, per-request usage, compaction anchors, findings with offsets, and redacted raw samples. `assay export-view <path> [--redact] [--truth]` writes one; `assay export-site` writes the site's data file from the corpus manifest. Redaction keeps keys, ids, ISO timestamps, numbers and short enum-like strings and replaces every other string with `‹redacted · N chars›`; a test asserts no free text survives.
+Consequence: every figure on the site traces to core (Rules 3, 7).
+
+## ADR-021 · 2026-11-02 · accepted · Disagreeing usage copies make the input total a range
+Context: the "forge a giant prompt" mission rewrote one copy of a message to 195,000 input tokens. D6 flagged it, but max-usage selection kept the forged copy, so the run's input total went from 106 to 195,104 while the tokens verdict stayed trustworthy (M3_PLAN §10.1).
+Decision: the ValidityCard carries `inputTokenRange {min, max}`: max is the importer's choice, min swaps in the smallest copy wherever copies disagree. A D6 warn demotes the tokens verdict to usable-with-caveats. Views show a point total only when min equals max; the mission stamps CAUGHT only when the forged value is no longer presented as a point total.
+Consequence: a forged or stale copy can no longer hide inside a trustworthy number.
+
+## ADR-022 · 2026-11-02 · accepted · Fineness measures lost telemetry, via a record-type catalogue
+Context: fineness defined as ⌊1000 × min(usage coverage, 1 − unknownRatio, model identification)⌋ put every real run at 300–479, always bounded by importer coverage, because 53–86% of lines are harness metadata (`attachment`, `queue-operation`, `custom-title`, …) that carry no usage telemetry. It measured how many types we had named, not data lost.
+Decision: a versioned catalogue (`importers/claude-code-jsonl/catalogue.ts`, named from the corpus, 2.1.165–2.1.309) marks known no-telemetry types. Their lines stay preserved as UnknownLines with `catalogued: true` (Rule 4) but leave the denominator. Fineness = ⌊1000 × min(usage coverage, 1 − unparsedTelemetryRatio, model identification)⌋, computed in core, with the bounding rate named. Uncatalogued types (`api-request-blob`, `atis-latch`, …) still count against it. Raw importer coverage stays on the certificate.
+Consequence: fineness can now tell a clean run from a lossy one. A type enters the catalogue only after it has been seen and its fields checked.
+
+## ADR-023 · 2026-11-02 · accepted · M3 learning gate recorded as passed by Asmit
+Context: `learn/M3/` had no `attempt.md`, and Rule 11 blocks moving past an unpassed gate. On 2026-11-02 Asmit stated the gate is passed and asked for M3 to be completed.
+Decision: record the gate as passed on Asmit's statement. The primer is revised to match ADR-017..022 so the material stays current; because `answers.md` was opened during an audit, its questions are replaced.
+Consequence: M3 core work proceeds. The M4 gate follows the normal protocol.
+
 ## Proposed (not yet accepted)
 - ADR-P1 Interop with context-analyzer (decide after M0 source read).
 - ADR-P2 Upstream OTel proposal for compaction and skill entities (decide after M0 repo check).
