@@ -1,0 +1,1004 @@
+{
+  "$ref": "#/definitions/Run",
+  "definitions": {
+    "Run": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "harness": {
+          "type": "object",
+          "properties": {
+            "tool": {
+              "type": "string"
+            },
+            "version": {
+              "type": "string"
+            },
+            "layout": {
+              "type": "string",
+              "enum": [
+                "main-only",
+                "inline-sidechain",
+                "subagent-files",
+                "otlp",
+                "unknown"
+              ]
+            }
+          },
+          "required": [
+            "tool",
+            "layout"
+          ],
+          "additionalProperties": false
+        },
+        "capture": {
+          "type": "object",
+          "properties": {
+            "level": {
+              "type": "number",
+              "enum": [
+                0,
+                1,
+                2,
+                3,
+                4
+              ]
+            },
+            "flags": {
+              "type": "object",
+              "properties": {
+                "prompts": {
+                  "type": "boolean"
+                },
+                "responses": {
+                  "type": "boolean"
+                },
+                "toolDetails": {
+                  "type": "boolean"
+                },
+                "toolContent": {
+                  "type": "boolean"
+                },
+                "rawBodies": {
+                  "type": "boolean"
+                }
+              },
+              "required": [
+                "prompts",
+                "responses",
+                "toolDetails",
+                "toolContent",
+                "rawBodies"
+              ],
+              "additionalProperties": false
+            },
+            "truncated": {
+              "type": "boolean"
+            },
+            "version": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "level",
+            "flags",
+            "truncated"
+          ],
+          "additionalProperties": false
+        },
+        "truth": {
+          "type": "string",
+          "enum": [
+            "real",
+            "real-perturbed",
+            "scripted",
+            "inferred"
+          ]
+        },
+        "sources": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "kind": {
+                "type": "string",
+                "enum": [
+                  "jsonl",
+                  "otlp",
+                  "hooks-log",
+                  "external"
+                ]
+              },
+              "path": {
+                "type": "string"
+              },
+              "sha256": {
+                "type": "string"
+              },
+              "bytes": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "lines": {
+                "type": "integer",
+                "minimum": 0
+              }
+            },
+            "required": [
+              "kind",
+              "path",
+              "sha256",
+              "bytes",
+              "lines"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "events": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string"
+              },
+              "sourceFile": {
+                "type": "string"
+              },
+              "offset": {
+                "type": "object",
+                "properties": {
+                  "file": {
+                    "type": "string"
+                  },
+                  "line": {
+                    "type": "integer",
+                    "minimum": 0
+                  },
+                  "byteStart": {
+                    "type": "integer",
+                    "minimum": 0
+                  },
+                  "byteEnd": {
+                    "type": "integer",
+                    "minimum": 0
+                  }
+                },
+                "required": [
+                  "file",
+                  "line",
+                  "byteStart",
+                  "byteEnd"
+                ],
+                "additionalProperties": false
+              },
+              "ts": {
+                "type": "number"
+              },
+              "kind": {
+                "type": "string",
+                "enum": [
+                  "user",
+                  "assistant",
+                  "system",
+                  "summary",
+                  "hook",
+                  "otel-span",
+                  "unknown"
+                ]
+              },
+              "parentId": {
+                "type": "string"
+              },
+              "agentId": {
+                "type": "string"
+              },
+              "sessionId": {
+                "type": "string"
+              },
+              "raw": {
+                "type": "object",
+                "additionalProperties": {}
+              }
+            },
+            "required": [
+              "id",
+              "sourceFile",
+              "offset",
+              "kind",
+              "raw"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "messages": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "evidence": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "file": {
+                      "type": "string"
+                    },
+                    "line": {
+                      "type": "integer",
+                      "minimum": 0
+                    },
+                    "byteStart": {
+                      "type": "integer",
+                      "minimum": 0
+                    },
+                    "byteEnd": {
+                      "type": "integer",
+                      "minimum": 0
+                    }
+                  },
+                  "required": [
+                    "file",
+                    "line",
+                    "byteStart",
+                    "byteEnd"
+                  ],
+                  "additionalProperties": false
+                }
+              },
+              "id": {
+                "type": "string"
+              },
+              "role": {
+                "type": "string",
+                "enum": [
+                  "user",
+                  "assistant"
+                ]
+              },
+              "agentId": {
+                "type": "string"
+              },
+              "sessionId": {
+                "type": "string"
+              },
+              "parentId": {
+                "type": "string"
+              },
+              "ts": {
+                "type": "number"
+              }
+            },
+            "required": [
+              "evidence",
+              "id",
+              "role"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "toolCalls": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "evidence": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "file": {
+                      "type": "string"
+                    },
+                    "line": {
+                      "type": "integer",
+                      "minimum": 0
+                    },
+                    "byteStart": {
+                      "type": "integer",
+                      "minimum": 0
+                    },
+                    "byteEnd": {
+                      "type": "integer",
+                      "minimum": 0
+                    }
+                  },
+                  "required": [
+                    "file",
+                    "line",
+                    "byteStart",
+                    "byteEnd"
+                  ],
+                  "additionalProperties": false
+                }
+              },
+              "id": {
+                "type": "string"
+              },
+              "name": {
+                "type": "string"
+              },
+              "messageId": {
+                "type": "string"
+              },
+              "agentId": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "evidence",
+              "id",
+              "name",
+              "messageId"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "toolResults": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "evidence": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "file": {
+                      "type": "string"
+                    },
+                    "line": {
+                      "type": "integer",
+                      "minimum": 0
+                    },
+                    "byteStart": {
+                      "type": "integer",
+                      "minimum": 0
+                    },
+                    "byteEnd": {
+                      "type": "integer",
+                      "minimum": 0
+                    }
+                  },
+                  "required": [
+                    "file",
+                    "line",
+                    "byteStart",
+                    "byteEnd"
+                  ],
+                  "additionalProperties": false
+                }
+              },
+              "toolUseId": {
+                "type": "string"
+              },
+              "messageId": {
+                "type": "string"
+              },
+              "isError": {
+                "type": "boolean"
+              }
+            },
+            "required": [
+              "evidence",
+              "toolUseId",
+              "messageId",
+              "isError"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "llmRequests": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "evidence": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "file": {
+                      "type": "string"
+                    },
+                    "line": {
+                      "type": "integer",
+                      "minimum": 0
+                    },
+                    "byteStart": {
+                      "type": "integer",
+                      "minimum": 0
+                    },
+                    "byteEnd": {
+                      "type": "integer",
+                      "minimum": 0
+                    }
+                  },
+                  "required": [
+                    "file",
+                    "line",
+                    "byteStart",
+                    "byteEnd"
+                  ],
+                  "additionalProperties": false
+                }
+              },
+              "messageId": {
+                "type": "string"
+              },
+              "usage": {
+                "type": "object",
+                "properties": {
+                  "inputTokens": {
+                    "type": "integer",
+                    "minimum": 0
+                  },
+                  "outputTokens": {
+                    "type": "integer",
+                    "minimum": 0
+                  },
+                  "cacheReadTokens": {
+                    "type": "integer",
+                    "minimum": 0
+                  },
+                  "cacheWriteTokens": {
+                    "type": "integer",
+                    "minimum": 0
+                  }
+                },
+                "required": [
+                  "inputTokens",
+                  "outputTokens",
+                  "cacheReadTokens",
+                  "cacheWriteTokens"
+                ],
+                "additionalProperties": false
+              },
+              "requestRef": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "evidence",
+              "messageId",
+              "usage"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "agents": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "evidence": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "file": {
+                      "type": "string"
+                    },
+                    "line": {
+                      "type": "integer",
+                      "minimum": 0
+                    },
+                    "byteStart": {
+                      "type": "integer",
+                      "minimum": 0
+                    },
+                    "byteEnd": {
+                      "type": "integer",
+                      "minimum": 0
+                    }
+                  },
+                  "required": [
+                    "file",
+                    "line",
+                    "byteStart",
+                    "byteEnd"
+                  ],
+                  "additionalProperties": false
+                }
+              },
+              "agentId": {
+                "type": "string"
+              },
+              "parentAgentId": {
+                "type": "string"
+              },
+              "type": {
+                "type": "string",
+                "enum": [
+                  "main",
+                  "subagent",
+                  "background"
+                ]
+              },
+              "transcriptFile": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "evidence",
+              "agentId",
+              "type"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "compactions": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "evidence": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "file": {
+                      "type": "string"
+                    },
+                    "line": {
+                      "type": "integer",
+                      "minimum": 0
+                    },
+                    "byteStart": {
+                      "type": "integer",
+                      "minimum": 0
+                    },
+                    "byteEnd": {
+                      "type": "integer",
+                      "minimum": 0
+                    }
+                  },
+                  "required": [
+                    "file",
+                    "line",
+                    "byteStart",
+                    "byteEnd"
+                  ],
+                  "additionalProperties": false
+                }
+              },
+              "turnIndex": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "summaryOffset": {
+                "type": "object",
+                "properties": {
+                  "file": {
+                    "type": "string"
+                  },
+                  "line": {
+                    "type": "integer",
+                    "minimum": 0
+                  },
+                  "byteStart": {
+                    "type": "integer",
+                    "minimum": 0
+                  },
+                  "byteEnd": {
+                    "type": "integer",
+                    "minimum": 0
+                  }
+                },
+                "required": [
+                  "file",
+                  "line",
+                  "byteStart",
+                  "byteEnd"
+                ],
+                "additionalProperties": false
+              },
+              "summarizedTurnUuids": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              }
+            },
+            "required": [
+              "evidence",
+              "turnIndex"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "skills": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "evidence": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "file": {
+                      "type": "string"
+                    },
+                    "line": {
+                      "type": "integer",
+                      "minimum": 0
+                    },
+                    "byteStart": {
+                      "type": "integer",
+                      "minimum": 0
+                    },
+                    "byteEnd": {
+                      "type": "integer",
+                      "minimum": 0
+                    }
+                  },
+                  "required": [
+                    "file",
+                    "line",
+                    "byteStart",
+                    "byteEnd"
+                  ],
+                  "additionalProperties": false
+                }
+              },
+              "name": {
+                "type": "string"
+              },
+              "trigger": {
+                "type": "string"
+              },
+              "sourceUri": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "evidence",
+              "name"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "edges": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "kind": {
+                "type": "string",
+                "enum": [
+                  "observed",
+                  "matched"
+                ]
+              },
+              "fromId": {
+                "type": "string"
+              },
+              "toId": {
+                "type": "string"
+              },
+              "evidence": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "file": {
+                      "type": "string"
+                    },
+                    "line": {
+                      "type": "integer",
+                      "minimum": 0
+                    },
+                    "byteStart": {
+                      "type": "integer",
+                      "minimum": 0
+                    },
+                    "byteEnd": {
+                      "type": "integer",
+                      "minimum": 0
+                    }
+                  },
+                  "required": [
+                    "file",
+                    "line",
+                    "byteStart",
+                    "byteEnd"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            },
+            "required": [
+              "kind",
+              "fromId",
+              "toId",
+              "evidence"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "unknowns": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "offset": {
+                "type": "object",
+                "properties": {
+                  "file": {
+                    "type": "string"
+                  },
+                  "line": {
+                    "type": "integer",
+                    "minimum": 0
+                  },
+                  "byteStart": {
+                    "type": "integer",
+                    "minimum": 0
+                  },
+                  "byteEnd": {
+                    "type": "integer",
+                    "minimum": 0
+                  }
+                },
+                "required": [
+                  "file",
+                  "line",
+                  "byteStart",
+                  "byteEnd"
+                ],
+                "additionalProperties": false
+              },
+              "reason": {
+                "type": "string"
+              },
+              "raw": {
+                "type": "string"
+              },
+              "catalogued": {
+                "type": "boolean"
+              }
+            },
+            "required": [
+              "offset",
+              "reason",
+              "raw"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "costStates": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "evidence": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "file": {
+                      "type": "string"
+                    },
+                    "line": {
+                      "type": "integer",
+                      "minimum": 0
+                    },
+                    "byteStart": {
+                      "type": "integer",
+                      "minimum": 0
+                    },
+                    "byteEnd": {
+                      "type": "integer",
+                      "minimum": 0
+                    }
+                  },
+                  "required": [
+                    "file",
+                    "line",
+                    "byteStart",
+                    "byteEnd"
+                  ],
+                  "additionalProperties": false
+                }
+              },
+              "totalCostUSD": {
+                "type": "number",
+                "minimum": 0
+              },
+              "totalAPIDurationMs": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "hasUnknownModelCost": {
+                "type": "boolean"
+              },
+              "modelUsage": {
+                "type": "object",
+                "additionalProperties": {
+                  "type": "object",
+                  "properties": {
+                    "inputTokens": {
+                      "type": "integer",
+                      "minimum": 0
+                    },
+                    "outputTokens": {
+                      "type": "integer",
+                      "minimum": 0
+                    },
+                    "thinkingTokens": {
+                      "type": "integer",
+                      "minimum": 0
+                    },
+                    "cacheReadInputTokens": {
+                      "type": "integer",
+                      "minimum": 0
+                    },
+                    "cacheCreationInputTokens": {
+                      "type": "integer",
+                      "minimum": 0
+                    },
+                    "costUSD": {
+                      "type": "number",
+                      "minimum": 0
+                    }
+                  },
+                  "required": [
+                    "inputTokens",
+                    "outputTokens",
+                    "thinkingTokens",
+                    "cacheReadInputTokens",
+                    "cacheCreationInputTokens",
+                    "costUSD"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            },
+            "required": [
+              "evidence",
+              "totalCostUSD",
+              "totalAPIDurationMs",
+              "hasUnknownModelCost",
+              "modelUsage"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "rawApiRequestCount": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "otel": {
+          "type": "object",
+          "properties": {
+            "apiRequests": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "evidence": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "file": {
+                          "type": "string"
+                        },
+                        "line": {
+                          "type": "integer",
+                          "minimum": 0
+                        },
+                        "byteStart": {
+                          "type": "integer",
+                          "minimum": 0
+                        },
+                        "byteEnd": {
+                          "type": "integer",
+                          "minimum": 0
+                        }
+                      },
+                      "required": [
+                        "file",
+                        "line",
+                        "byteStart",
+                        "byteEnd"
+                      ],
+                      "additionalProperties": false
+                    }
+                  },
+                  "requestId": {
+                    "type": "string"
+                  },
+                  "model": {
+                    "type": "string"
+                  },
+                  "inputTokens": {
+                    "type": "number"
+                  },
+                  "outputTokens": {
+                    "type": "number"
+                  },
+                  "cacheReadTokens": {
+                    "type": "number"
+                  },
+                  "cacheWriteTokens": {
+                    "type": "number"
+                  },
+                  "costUSD": {
+                    "type": "number"
+                  },
+                  "durationMs": {
+                    "type": "number"
+                  },
+                  "querySource": {
+                    "type": "string"
+                  },
+                  "inTranscript": {
+                    "type": "boolean"
+                  }
+                },
+                "required": [
+                  "evidence",
+                  "requestId",
+                  "model",
+                  "inputTokens",
+                  "outputTokens",
+                  "cacheReadTokens",
+                  "cacheWriteTokens",
+                  "costUSD",
+                  "durationMs",
+                  "querySource",
+                  "inTranscript"
+                ],
+                "additionalProperties": false
+              }
+            },
+            "logRecords": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "spans": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "otherSessionRecords": {
+              "type": "integer",
+              "minimum": 0
+            }
+          },
+          "required": [
+            "apiRequests",
+            "logRecords",
+            "spans",
+            "otherSessionRecords"
+          ],
+          "additionalProperties": false
+        }
+      },
+      "required": [
+        "id",
+        "harness",
+        "capture",
+        "truth",
+        "sources",
+        "events",
+        "messages",
+        "toolCalls",
+        "toolResults",
+        "llmRequests",
+        "agents",
+        "compactions",
+        "skills",
+        "edges",
+        "unknowns",
+        "costStates",
+        "rawApiRequestCount"
+      ],
+      "additionalProperties": false
+    }
+  },
+  "$schema": "http://json-schema.org/draft-07/schema#"
+}

@@ -3,16 +3,21 @@
   "private": true,
   "version": "0.0.1",
   "scripts": {
-    "check": "pnpm -r typecheck && pnpm test",
+    "check": "pnpm -r typecheck && pnpm test && pnpm schema:check",
     "test": "vitest run",
     "build": "pnpm -r build",
-    "build:web": "esbuild packages/assay-core/src/browser.ts --bundle --format=iife --global-name=AssayCore --target=es2020 --outfile=web/prototype/assay-core.js"
+    "build:web": "esbuild packages/assay-core/src/browser.ts --bundle --format=iife --global-name=AssayCore --target=es2020 --outfile=web/prototype/assay-core.js",
+    "schema": "tsx scripts/emit-schema.ts",
+    "schema:check": "tsx scripts/emit-schema.ts --check",
+    "web": "pnpm --filter @assay/core build && pnpm --filter @assay/cli build && pnpm build:web && node packages/assay-cli/dist/cli.js export-site web/prototype/site-runs.json --out web/prototype/data.js --results results",
+    "web-check": "node scripts/web-check.mjs"
   },
   "devDependencies": {
     "@types/node": "^22.0.0",
     "esbuild": "0.21.5",
     "tsx": "^4.23.15",
     "typescript": "^5.5.0",
-    "vitest": "^2.0.0"
+    "vitest": "^2.0.0",
+    "zod-to-json-schema": "3.23.5"
   }
 }

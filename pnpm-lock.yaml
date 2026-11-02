@@ -23,6 +23,9 @@ importers:
       vitest:
         specifier: ^2.0.0
         version: 2.1.9(@types/node@22.20.5)
+      zod-to-json-schema:
+        specifier: 3.23.5
+        version: 3.23.5(zod@3.25.76)
 
   packages/assay-cli:
     dependencies:
@@ -725,6 +728,11 @@ packages:
     engines: {node: '>=8'}
     hasBin: true
 
+  zod-to-json-schema@3.23.5:
+    resolution: {integrity: sha512-5wlSS0bXfF/BrL4jPAbz9da5hDlDptdEppYfe+x4eIJ7jioqKG9uUxOwPzqof09u/XeVdrgFu29lZi+8XNDJtA==}
+    peerDependencies:
+      zod: ^3.23.3
+
   zod@3.25.76:
     resolution: {integrity: sha512-gzUt/qt81nXsFGKIFcC3YnfEAx5NkunCfnDlvuBSSFS02bcXu4Lmea0AFIUwbLWxWPx3d9p8S5QoaujKcNQxcQ==}
 
@@ -1241,5 +1249,9 @@ snapshots:
     dependencies:
       siginfo: 2.0.0
       stackback: 0.0.2
+
+  zod-to-json-schema@3.23.5(zod@3.25.76):
+    dependencies:
+      zod: 3.25.76
 
   zod@3.25.76: {}
