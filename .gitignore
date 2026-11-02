@@ -11,3 +11,9 @@ dist/
 # Local env
 .env
 .env.local
+
+# Derived health/run output: embeds raw transcript lines (prompts). Regenerate locally.
+results/
+
+# Generated from results/ by web/prototype/extract.py
+web/prototype/data.js

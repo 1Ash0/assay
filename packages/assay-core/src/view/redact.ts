@@ -16,7 +16,7 @@ export function redact(v: unknown, key?: string): unknown {
     return Object.fromEntries(Object.entries(v).map(([k, x]) => [k, redact(x, k)]))
   }
   if (typeof v === 'string') {
-    const shortToken = v.length <= 28 && !/[\s\/]/.test(v)
+    const shortToken = v.length <= 28 && !/[\s\\/]/.test(v)
     if (!(key && SENSITIVE.has(key)) && (ID_RE.test(v) || TS_RE.test(v) || shortToken)) return v
     return `‹redacted · ${v.length} chars›`
   }
@@ -25,9 +25,9 @@ export function redact(v: unknown, key?: string): unknown {
 
 // File paths reduced to their last segment, inside messages too.
 export function basename(p: string): string {
-  return p.split(/[\/]/).pop() ?? p
+  return p.split(/[\\/]/).pop() ?? p
 }
 
 export function stripPaths(msg: string): string {
-  return msg.replace(/[A-Za-z]:\[^\s:]+|\/(?:[^\s/:]+\/)+[^\s/:]+/g, m => basename(m))
+  return msg.replace(/[A-Za-z]:\\[^\s:]+|\/(?:[^\s/:]+\/)+[^\s/:]+/g, m => basename(m))
 }

@@ -13,6 +13,8 @@ export interface ViewOptions {
   id?: string
   // Relabel truth when the run was imported without it (e.g. perturbed copies).
   truth?: Truth
+  // Where the run's health result lives, shown as its source on the site.
+  file?: string
 }
 
 type Band = { user: number; assistant: number; system: number; other: number; unknown: number; f: Record<string, number>; n: number; nc: number }
@@ -113,6 +115,7 @@ export function buildRunView(run: Run, report: HealthReport, opts: ViewOptions =
     models,
     id: opts.id ?? run.id.slice(0, 8),
     session: run.id,
+    file: opts.file ?? basename(run.sources[0]!.path),
     truth: opts.truth ?? run.truth,
     harness: run.harness,
     capture: run.capture,

@@ -37,13 +37,26 @@ describe('buildRunView', () => {
   })
   it('every string in redacted raw samples is an id, timestamp, short token or marker', () => {
     const v = view()
-    const ok = (x: string) => x.startsWith('‹') || x.length <= 28 && !/[\s\/]/.test(x)
+    const ok = (x: string) => x.startsWith('‹') || x.length <= 28 && !/[\s\\/]/.test(x)
     const walk = (x: unknown): string[] =>
       typeof x === 'string' ? [x] : x && typeof x === 'object' ? Object.values(x).flatMap(walk) : []
     const raws = [...v.findings.flatMap(f => f.items.map(i => i.raw)), v.unknownSample?.raw]
     const strings = raws.flatMap(walk)
     expect(strings.length).toBeGreaterThan(0)
     expect(strings.filter(x => !ok(x))).toEqual([])
-    expect(v.source.file).not.toMatch(/[\/]/)
+    expect(v.source.file).not.toMatch(/[\\/]/)
+  })
+})
+
+describe('path stripping', () => {
+  it('reduces Windows and POSIX paths to basenames', async () => {
+    const { basename, stripPaths } = await import('../packages/assay-core/src/view/redact.js')
+    expect(basename(String.raw`E:\a\b\c.jsonl`)).toBe('c.jsonl')
+    expect(stripPaths(String.raw`missing E:\a\b\agent-1.jsonl here`)).toBe('missing agent-1.jsonl here')
+    expect(stripPaths('see /home/u/x/y.jsonl')).toBe('see y.jsonl')
+  })
+  it('view evidence files carry no directory', () => {
+    const v = view()
+    for (const f of v.findings) for (const i of f.items) for (const e of i.ev) expect(e.file).not.toMatch(/[\\/]/)
   })
 })
