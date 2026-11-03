@@ -25,3 +25,4 @@ Every number assay publishes (README, report, site copy) is a row here, pointing
 | trail-overcount | TRAIL: tokens from summing every span ÷ tokens from LLM calls only | results/TRAIL-health.json | /naiveOvercount | 1.814 | 0.0005 |
 | trail-agent-disagree | TRAIL: agent spans whose token total disagrees with the LLM calls beneath them | results/TRAIL-health.json | /agentTotalsDisagreeing | 177 | 0 |
 | trail-agent-totals | TRAIL: agent spans carrying a token total | results/TRAIL-health.json | /agentSpansWithTotals | 202 | 0 |
+| positives-fired | Known positives (one documented change to a real session) caught by D3, D8, D11 and D0 | results/detector-positives.json | /fired | 4 | 0 |

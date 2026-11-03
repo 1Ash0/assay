@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 import { importTrail, attachOtlp, buildRunView, census, diffCensus, IMPORTER_SUPPORT, importClaudeCodeDir, Run, runHealth, Truth } from '@assay/core'
 import { assertRules, card, checkExit, parseRules } from './check.js'
-import { corpusAdd, corpusAudit, corpusStats } from './corpus.js'
+import { corpusAdd, corpusAudit, corpusCard, corpusRegister, corpusSite, corpusStats } from './corpus.js'
 import { existsSync, mkdirSync, readdirSync, readFileSync, statSync, writeFileSync } from 'fs'
 import { homedir } from 'os'
 import { dirname, join, resolve } from 'path'
@@ -21,7 +21,14 @@ Commands:
   requests <path>      Seal of every request record in a session (ADR-026)
   corpus add <session.jsonl> [--project p] [--truth t]
                        Freeze a finished session (and its subagents) read-only
-  corpus audit         Every manifest entry still matches its sha
+  corpus register <frozen.jsonl> --truth t
+                       List a file already under corpus/frozen (hash it in place)
+  corpus card <session.jsonl> [--id x] [--truth t] [--purpose text] [--site] [--contributor c] [--otlp f] [--twin-of id]
+                       Write a session's card; facts are read by importing it
+  corpus site --out <runs.json>
+                       Write the site's run list from cards
+  corpus audit         Every manifest entry still matches its sha; every frozen
+                       file is listed and every session has a card
   corpus stats         Sessions by project, truth and version
   catalogue check [dir ...]
                        Versions and record formats seen vs the importer's support
@@ -119,6 +126,13 @@ if (command === 'import') {
 } else if (command === 'corpus') {
   const sub = args[0]
   if (sub === 'add' && args[1]) process.exit(corpusAdd(args[1], { ...(flag('--project') ? { project: flag('--project')! } : {}), ...(flag('--truth') ? { truth: flag('--truth')! } : {}) }))
+  else if (sub === 'register' && args[1]) process.exit(corpusRegister(args[1], flag('--truth') ?? 'real'))
+  else if (sub === 'card' && args[1]) {
+    const run = withOtlp(importAny(args[1]), flag('--otlp')), h = runHealth(run)
+    process.exit(corpusCard(args[1], { ...(flag('--otlp') ? { otlp: flag('--otlp')! } : {}), ...(flag('--twin-of') ? { twinOf: flag('--twin-of')! } : {}), ...(flag('--id') ? { id: flag('--id')! } : {}), ...(flag('--truth') ? { truth: flag('--truth')! } : {}), ...(flag('--purpose') ? { purpose: flag('--purpose')! } : {}), ...(flag('--contributor') ? { contributor: flag('--contributor')! } : {}), ...(args.includes('--site') ? { site: true } : {}) },
+      { version: run.harness.version ?? null, level: run.capture.level, layout: run.harness.layout ?? 'unknown', agents: run.agents.length, compactions: run.compactions.length, requestRecords: h.validity.requests?.records ?? 0, flags: { ...run.capture.flags } }))
+  }
+  else if (sub === 'site' && flag('--out')) process.exit(corpusSite(flag('--out')!))
   else if (sub === 'audit') process.exit(corpusAudit())
   else if (sub === 'stats') process.exit(corpusStats())
   else usage()
@@ -133,7 +147,9 @@ if (command === 'import') {
     if (!existsSync(d)) return
     for (const f of readdirSync(d)) {
       const q = join(d, f)
-      if (statSync(q).isDirectory()) { if (!['tool-results', 'otel', 'l4'].includes(f)) walk(q) }
+      // Perturbed and scripted files are deliberate (d0-perturbed declares 9.0.0);
+      // the catalogue counts versions seen in the wild.
+      if (statSync(q).isDirectory()) { if (!['tool-results', 'otel', 'l4', 'real-perturbed', 'scripted'].includes(f)) walk(q) }
       else if (f.endsWith('.jsonl')) paths.push(q)
     }
   }

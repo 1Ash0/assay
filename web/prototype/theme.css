@@ -235,8 +235,12 @@ body::before{content:"";position:fixed;left:0;right:0;top:-30%;height:30%;pointe
   padding:9px 11px;background:var(--ink);color:var(--paper);font:400 12.5px/1.45 var(--body);letter-spacing:0;text-transform:none;white-space:normal;box-shadow:var(--shadow);animation:rise .2s var(--ease)}
 html,body{overflow-x:clip}
 /* .panel is relative for its corner brackets; panels that pin keep sticky. */
-.plate.panel,.rail.panel,.transport.panel{position:sticky}
-.plate.panel,.rail.panel{top:64px}
+/* Pinned panels only where the layout has three columns; narrower, the side
+   panels flow with the page (index.html sets that), and this must not override it. */
+@media (min-width:1181px){.plate.panel,.rail.panel{position:sticky;top:64px}}
+@media (min-width:821px){.transport.panel{position:sticky}}
+@media (max-width:1180px){.plate.panel,.rail.panel{position:static}}
+@media (max-width:820px){.transport.panel{position:static}}
 /* Scan meters: one height, number baseline aligned, captions below. */
 .meters{align-items:stretch}
 .meter{display:flex;flex-direction:column;gap:6px}
@@ -316,3 +320,4 @@ html,body{overflow-x:clip}
 .transport .hint,.transport .mono{white-space:nowrap}
 .transport .pos{white-space:nowrap;flex:none}
 @container stage (max-width:640px){.transport{gap:6px}.transport .tbtn{min-width:34px;padding:0 6px}}
+.punch.verdict{flex-wrap:wrap;row-gap:4px!important}.punch.verdict em{white-space:nowrap}

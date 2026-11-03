@@ -2,6 +2,7 @@
 // a JSON pointer and the value published. Fails on any disagreement; an
 // absent artifact is "unchecked", which is reported and never counted as a pass.
 import { existsSync, readFileSync } from 'node:fs'
+import { corpusData } from './corpus-version.mjs'
 
 const rows = readFileSync('docs/CLAIMS.md', 'utf8').split('\n')
   .filter(l => /^\| [a-z0-9-]+ \|/.test(l))
@@ -29,6 +30,13 @@ for (const doc of ['docs/REPORT.md', 'README.md']) {
   for (const m of readFileSync(doc, 'utf8').matchAll(/\[([a-z0-9]+(?:-[a-z0-9]+)+)(?:, ([a-z0-9-]+))*\]/g)) {
     for (const id of m[0].slice(1, -1).split(/,\s*/)) if (!ids.has(id)) { bad++; console.log(`UNKNOWN    ${id.padEnd(22)} cited in ${doc}, not in docs/CLAIMS.md`) }
   }
+}
+// Results must come from the corpus that is here now (step 6). In CI there is
+// no corpus and no results, so this is skipped there.
+if (existsSync('results/RUN.json')) {
+  const run = JSON.parse(readFileSync('results/RUN.json', 'utf8')), now = corpusData()
+  if (now && run.corpus?.dataSha256 && run.corpus.dataSha256 !== now.sha256) { bad++; console.log(`CORPUS     results were computed on corpus ${run.corpus.version ?? '(unversioned)'} ${run.corpus.dataSha256.slice(0, 12)}; the files here are ${now.sha256.slice(0, 12)}. Rerun pnpm results.`) }
+  else if (now && !run.corpus) console.log('note       results/RUN.json predates corpus versions; rerun pnpm results to stamp one')
 }
 console.log(`claims: ${ok} match, ${bad} mismatch or unknown, ${unchecked} unchecked (artifact absent) of ${rows.length}`)
 process.exit(bad ? 1 : 0)

@@ -3,6 +3,7 @@
 // sha of each artifact), so a published number can be traced to a run.
 // Without the corpus it stops and says so; it never writes partial results.
 import { execSync } from 'node:child_process'
+import { corpusData, corpusVersion } from './corpus-version.mjs'
 import { createHash } from 'node:crypto'
 import { existsSync, readFileSync, writeFileSync } from 'node:fs'
 
@@ -27,6 +28,8 @@ const artifacts = [
   // Slowest last: T3 imports every session five times.
   sh('node scripts/t3-score.mjs results/T3-diff-stability-v1.json', 'results/T3-diff-stability-v1.json'),
 ].filter(Boolean)
+// Known positives for detectors silent on real sessions (corpus plan step 4).
+artifacts.push(sh('node scripts/detector-positives.mjs', 'results/detector-positives.json'))
 // TRAIL (gated, local) when present: aggregates only (ADR-037).
 if (existsSync('TRAIL/GAIA')) artifacts.push(sh('node scripts/trail-health.mjs results/TRAIL-health.json', 'results/TRAIL-health.json'))
 // J1 is scored only once every span has been attempted; until then it is skipped, not partially written.
@@ -39,6 +42,8 @@ const run = {
   dirty: execSync('git status --porcelain -- packages scripts').toString().trim().length > 0,
   started, finished: new Date().toISOString(),
   corpusManifestSha256: sha('corpus/MANIFEST.json'),
+  // The data the numbers came from (scripts/corpus-version.mjs); claims check compares it.
+  corpus: { version: corpusVersion()?.version ?? null, dataSha256: corpusData()?.sha256 ?? null },
   artifacts: Object.fromEntries(artifacts.map(a => [a, sha(a)])),
 }
 writeFileSync('results/RUN.json', JSON.stringify(run, null, 2))
