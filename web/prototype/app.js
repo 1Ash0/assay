@@ -134,7 +134,7 @@ function punchStrip(r, struck) {
   const P = (kind, top, bot, title, on = true) => `<span class="punch ${kind} ${on ? 'on' : 'blank'}" title="${esc(title)}"><b>${top}</b><i>${bot}</i></span>`;
   return P('sponsor', 'CC', esc(r.harness.version), 'Sponsor: ' + r.harness.tool + ' ' + r.harness.version) +
     P('capture', 'L' + r.capture.level, 'capture', 'Capture level ' + r.capture.level + ' of 4') +
-    P('fine', struck ? (h.fineness ?? '–') : '???', struck ? 'fineness' : 'assaying', h.bound ? `Fineness ${h.fineness}/1000, bounded by ${h.bound}` : 'Fineness', struck) +
+    P('fine', struck ? (h.fineness ?? '–') : '???', struck ? 'trust' : 'assaying', h.bound ? `Trust score ${h.fineness}/1000, bounded by ${h.bound}` : 'Fineness', struck) +
     P('truth ' + r.truth, r.truth === 'real' ? 'R' : r.truth === 'scripted' ? 'S' : 'P', r.truth, 'Truth: ' + r.truth) +
     P('date', dateLetter(h.firstTs), 'date', 'First event date (UTC)', struck) +
     `<span class="punch verdict ${struck ? 'on ' + cls : 'blank'}" id="hallmark" title="${esc(verdictText(r.overall))}"><b>${struck ? verdictGlyph(r.overall) : '?'}</b><i>${struck ? esc(verdictText(r.overall)) : 'verdict'}</i></span>`;
@@ -223,12 +223,18 @@ function update(fromUser) {
   // meters
   const nv = at(c.naive, p), av = at(c.out, p);
   const lb = r.findings.some(f => f.id === 'D1') && p > (prep(r).items.find(i => i.d === 'D1') || { bin: 1e9 }).bin;
-  $('#mNaive').textContent = fmt(nv); $('#mAssay').textContent = (lb ? '≥ ' : '') + fmt(av);
+  // Full digits, as on the Report: one number format across the site.
+  $('#mNaive').textContent = full(nv); $('#mAssay').textContent = (lb ? '≥ ' : '') + full(av);
   $('#mNaive').title = full(nv); $('#mAssay').title = full(av);
   $('#mRatio').innerHTML = av > 0 ? (nv / av > 1.01 ? `Summing every line would overcount by <b>×${(nv / av).toFixed(2)}</b>` : 'No double-counting on this run') : (r.reqs.length ? '&nbsp;' : 'No usage records to count');
   $('#mReq').textContent = full(at(c.req, p));
-  $('#mReqSub').textContent = `${full(r.counts.events)} events → ${full(r.counts.llm)} unique requests`;
+  const rq = r.validity.requests;
+  $('#mReqSub').textContent = `${full(r.counts.events)} events deduplicated to ${full(r.counts.llm)} requests${rq ? ` · ${full(rq.sealed)} of ${full(rq.records)} request records sealed` : ''}`;
   $('#mUnk').textContent = full(at(c.unk, p));
+  // One count, split the way core splits it: request records are read by their own
+  // reader, catalogued types carry no telemetry, the rest are of unknown type.
+  { const ic = r.validity.importerCoverage, req = r.counts.unknowns - ic.unknownLines, unk = ic.unknownLines - ic.cataloguedLines;
+    $('#mUnkSub').textContent = `${req ? full(req) + ' request records (read separately) · ' : ''}${full(ic.cataloguedLines)} known types without telemetry · ${full(unk)} of unknown type`; }
   const frac = p / BINS, reasons = $('#mReasons').children;
   for (let i = 0; i < reasons.length; i++) reasons[i].classList.toggle('in', frac >= (i + 1) / (reasons.length + 1) || S.struck);
   // feed: findings the head has passed
@@ -278,7 +284,7 @@ function renderRail() {
         <dt>Edges</dt><dd>${full(r.counts.observed)} observed · ${full(r.counts.matched)} matched</dd>
       </dl>
       <div><div class="label" style="margin-bottom:6px">What the record can’t tell you</div><ul class="caveats">${(v.caveats || []).map(c => `<li>${esc(c)}</li>`).join('') || '<li>No caveats.</li>'}</ul></div>
-      ${r.unknownSample ? `<button class="btn ghost" data-unk="1">Open a held-aside line →</button>` : ''}
+      ${r.unknownSample ? `<button class="btn ghost" data-unk="1">Open a kept line →</button>` : ''}
       <div class="label">Click any gate or red tick to drill to the bytes.</div>`;
     return;
   }
@@ -383,7 +389,7 @@ function renderBytes() {
   else { it = r.findings.find(x => x.id === d).items[k]; keys = DMAP[d].keys; }
   const e = it.ev[0] || {};
   const bytes = r.source.bytes || 1;
-  railHead(`<button class="tbtn" data-act="up" aria-label="Back">←</button><span class="label">${unk ? 'Held aside' : esc(d) + ' #' + (k + 1)} · the bytes</span>`);
+  railHead(`<button class="tbtn" data-act="up" aria-label="Back">←</button><span class="label">${unk ? 'Kept, not read as an event' : esc(d) + ' #' + (k + 1)} · the bytes</span>`);
   $('#railBody').innerHTML = `<div class="msg" style="font-size:13px">${esc(it.msg)}</div>
     <dl class="kv"><dt>File</dt><dd title="${esc(e.file || '')}">${esc(e.file || '')}</dd><dt>Line</dt><dd>${full(e.line)}</dd><dt>Bytes</dt><dd>${full(e.b0)} – ${full(e.b1)}</dd><dt>sha256</dt><dd title="${esc(r.source.sha256)}">${esc(r.source.sha256.slice(0, 20))}…</dd></dl>
     <div><div class="label" style="margin-bottom:4px">Where in the file</div><div class="bytebar"><i style="left:${(e.b0 / bytes * 100).toFixed(2)}%;width:${Math.max(0.4, (e.b1 - e.b0) / bytes * 100).toFixed(2)}%"></i></div></div>
@@ -486,6 +492,7 @@ function coreSvg(r, w = 160, h = 120) {
 const COLS = [
   ['date', 'Date', r => r.hallmark.firstTs || 0, r => r.hallmark.firstTs ? new Date(r.hallmark.firstTs).toISOString().slice(0, 10) : '–'],
   ['id', 'Run', r => r.id, r => `<span class="mono">${esc(r.id)}</span>`],
+  ['shape', 'Shape', r => r.source.lines, r => spark(r)],
   ['ver', 'Version', r => r.harness.version || '', r => esc(r.harness.version || '–')],
   ['cap', 'Capture', r => r.capture.level, r => 'L' + r.capture.level],
   ['truth', 'Truth', r => r.truth, r => `<span class="truth ${r.truth}" style="font-size:10px;padding:1px 6px">${esc(r.truth)}</span>`],
@@ -494,6 +501,11 @@ const COLS = [
   ['find', 'Findings', r => r.findings.reduce((a, f) => a + f.count, 0), r => fmt(r.findings.reduce((a, f) => a + f.count, 0))],
   ['ctx', 'Context tokens', r => r.validity.totalContextTokens || 0, r => fmt(r.validity.totalContextTokens)],
 ];
+// Lines per column across the transcript (core band), findings in amber.
+function spark(r) {
+  const B = r.band || [], m = Math.max(1, ...B.map(b => b.user + b.assistant + b.system + b.other + b.unknown));
+  return `<svg class="spark" viewBox="0 0 140 18" preserveAspectRatio="none" aria-hidden="true">${B.map((b, i) => { const t = b.user + b.assistant + b.system + b.other + b.unknown, h = 16 * t / m, f = b.f && Object.keys(b.f).length; return `<rect x="${i}" y="${17 - h}" width=".8" height="${h}" fill="${f ? 'var(--ochre)' : 'var(--a)'}" opacity="${f ? 1 : .55}"/>`; }).join('')}</svg>`;
+}
 function shared(list) {
   if (!list.length) return '';
   const uniq = f => [...new Set(list.map(f))];

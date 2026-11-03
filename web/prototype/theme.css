@@ -234,3 +234,23 @@ body::before{content:"";position:fixed;left:0;right:0;top:-30%;height:30%;pointe
 [data-tip]:hover::after,[data-tip]:focus-visible::after{content:attr(data-tip);position:absolute;left:0;top:calc(100% + 8px);z-index:50;width:max-content;max-width:300px;
   padding:9px 11px;background:var(--ink);color:var(--paper);font:400 12.5px/1.45 var(--body);letter-spacing:0;text-transform:none;white-space:normal;box-shadow:var(--shadow);animation:rise .2s var(--ease)}
 html,body{overflow-x:clip}
+/* .panel is relative for its corner brackets; panels that pin keep sticky. */
+.plate.panel,.rail.panel,.transport.panel{position:sticky}
+.plate.panel,.rail.panel{top:64px}
+/* Scan meters: one height, number baseline aligned, captions below. */
+.meters{align-items:stretch}
+.meter{display:flex;flex-direction:column;gap:6px}
+.meter .ratio{font-size:12.5px;color:var(--ink-2);line-height:1.45}
+.meter .vs .big{font-size:clamp(20px,1.9vw,30px)}
+
+/* ---------- Report oscilloscope ---------- */
+.sc{margin:0;padding:12px 14px 10px;border:1px solid var(--rule);background:var(--glass),var(--paper);position:relative;overflow:hidden}
+.sc svg{display:block;width:100%;height:120px}
+.sc figcaption{margin-top:6px}
+.sc-trace{filter:drop-shadow(0 0 4px var(--cob));stroke-dasharray:3000;stroke-dashoffset:3000;animation:draw 2.4s var(--ease) .3s forwards}
+.sc-head{animation:sweep 7s linear infinite}
+@keyframes sweep{from{transform:translateX(0)}to{transform:translateX(1060px)}}
+.rp-loc{display:inline-block;position:relative;width:80px;height:6px;margin-right:10px;vertical-align:middle;border:1px solid var(--rule);background:var(--paper)}
+.rp-loc i{position:absolute;top:-2px;width:2px;height:8px;background:var(--ochre)}
+.rp-level{font-size:13.5px;color:var(--ink-2);line-height:1.5;display:grid;gap:4px;padding-top:10px;border-top:1px dashed var(--rule)}
+.spark{width:120px;height:18px;display:block}

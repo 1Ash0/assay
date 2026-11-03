@@ -260,10 +260,8 @@ export function buildValidityCard(run: Run, findings: Finding[], overall: Metric
 
   if (d1.length > 0)
     caveats.push(`${d1.length} subagent(s) missing transcript files — token totals are undercounted`)
-  if (d2.length > 0)
-    caveats.push(`${d2.length} message(s) appeared as raw duplicates; deduplicated before counting`)
-  if (d6info.length > 0)
-    caveats.push(`${d6info.length} message(s) had streaming-partial usage duplicates; max-usage record selected`)
+  // Caveats say what the record cannot tell you. Duplicates that were
+  // resolved (D2, D6 info) are findings, not limits, so they are not repeated here.
   if (d6warn.length > 0)
     caveats.push(`${d6warn.length} message(s) had unexpected inputToken disagreement across duplicates`)
   if (d5.length > 0)
@@ -272,17 +270,21 @@ export function buildValidityCard(run: Run, findings: Finding[], overall: Metric
     caveats.push(`${d7.length} compaction(s) showed unusual token patterns — post-compaction counts may not reflect summarization`)
   if (d8.length > 0)
     caveats.push(`${d8.length} source file(s) contained conflicting sessionIds`)
-  // capture-integrity caveats: elevate from findings to ValidityCard text
+  // capture-integrity caveats: elevate from findings to ValidityCard text.
+  // Cost state is said once, by the D-cost caveat below, when that fired.
   const captureIncompleteCategories = Object.entries(observability)
-    .filter(([, v]) => v.state === 'capture-incomplete')
+    .filter(([k, v]) => v.state === 'capture-incomplete' && !(k === 'costState' && dCost.length > 0))
     .map(([k]) => k)
   if (captureIncompleteCategories.length > 0)
     caveats.push(`Capture incomplete for: ${captureIncompleteCategories.join(', ')} — affirmative evidence of capture failure; these categories are not merely unobserved`)
 
   if (d10.length > 0)
-    caveats.push(`api-request count mismatch: JSONL has ${run.rawApiRequestCount} api-request records vs ${run.llmRequests.length} LlmRequests — may indicate capture gaps or internal routing calls not reflected in conversation transcript`)
+    // Say the measured split rather than guess at causes.
+    caveats.push(requests
+      ? `${run.rawApiRequestCount} request records against ${run.llmRequests.length} requests in the conversation: ${requests.linked} linked by id, ${requests.refWithoutRecord} request(s) name a record that is not in the file, ${requests.recordWithoutRef} record(s) are named by no request`
+      : `${run.rawApiRequestCount} api-request records against ${run.llmRequests.length} requests in the conversation; the transcript does not say what the difference is`)
   if (dCost.length > 0)
-    caveats.push(`Runtime cost-state token totals disagree with JSONL usage fields — one source may be incomplete`)
+    caveats.push(`Cost: the runtime's cost-state totals disagree with the transcript's usage, so there is no independent cost cross-check`)
   if (modelIdentificationRate !== null && modelIdentificationRate < 0.5)
     caveats.push(`Model identified for only ${Math.round(modelIdentificationRate * 100)}% of LlmRequests — context-limit checks were skipped for most requests`)
   // Catalogued and request-record lines are understood, so only lines of
@@ -296,8 +298,11 @@ export function buildValidityCard(run: Run, findings: Finding[], overall: Metric
     caveats.push(`${otel.otelOnly} API request(s) appear only in OTel (${Object.entries(otel.otelOnlyBySource).map(([k, v]) => `${k} ×${v}`).join(', ')}): ${otel.otelOnlyInputTokens} input and ${otel.otelOnlyOutputTokens} output tokens the transcript never recorded`)
   if (run.capture.level < 3)
     caveats.push(`Capture Level ${run.capture.level}: internal non-conversation API calls (e.g. tool-routing requests) not captured — token totals understate full API spend; OTel (L3+) required for complete cost accounting`)
+  // Sealed request records are request bodies, rebuilt and hash-checked (ADR-026).
   if (run.capture.level < 2)
-    caveats.push(`Capture Level ${run.capture.level}: tool content and request bodies not captured`)
+    caveats.push(requests && requests.sealed > 0
+      ? `Capture Level ${run.capture.level}: tool content not captured; request bodies exist only as the ${requests.sealed} sealed request record(s)`
+      : `Capture Level ${run.capture.level}: tool content and request bodies not captured`)
 
   return {
     claimedTurns,

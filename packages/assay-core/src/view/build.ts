@@ -136,7 +136,8 @@ export function buildRunView(run: Run, report: HealthReport, opts: ViewOptions =
     naive,
     dedup,
     tools: counter(run.toolCalls.map(t => t.name), 10),
-    unknownReasons: counter(run.unknowns.map(u => u.reason), 8),
+    // Request records are read by their own reader (ADR-026), so they are not listed as held aside.
+    unknownReasons: counter(run.unknowns.filter(u => !u.parsedAs).map(u => u.reason), 8),
     unknownSample,
     rawApi: run.rawApiRequestCount,
     spine: redactSpine(buildSpine(run, report)),

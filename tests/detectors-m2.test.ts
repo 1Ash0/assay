@@ -230,10 +230,11 @@ describe('ValidityCard', () => {
     expect(report.validity.caveats.some(c => c.includes('Capture Level'))).toBe(true)
   })
 
-  it('caveats include D6 info for streaming duplicates in detectors fixture', () => {
+  it('resolved streaming duplicates are a D6 finding, not repeated as a caveat', () => {
     const run = importClaudeCodeDir(DETECTORS)
     const report = runHealth(run)
-    expect(report.validity.caveats.some(c => c.includes('streaming-partial'))).toBe(true)
+    expect(report.findings.some(f => f.detectorId === 'D6' && f.severity === 'info')).toBe(true)
+    expect(report.validity.caveats.some(c => c.includes('streaming-partial'))).toBe(false)
   })
 
   it('claimedTurns and verifiedUsageTurns can differ (no-usage messages)', () => {

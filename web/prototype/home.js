@@ -40,12 +40,12 @@ function specimen() {
     <div class="punches" id="punches">
       <span class="punch sponsor"><b>CC</b><i>${esc(r.harness.version)}</i></span>
       <span class="punch capture"><b>L${r.capture.level}</b><i>capture</i></span>
-      <span class="punch fine" title="bounded by ${esc(h.bound)}"><b>${h.fineness}</b><i>fineness</i></span>
+      <span class="punch fine" title="bounded by ${esc(h.bound)}"><b>${h.fineness}</b><i>trust</i></span>
       <span class="punch truth"><b>R</b><i>real</i></span>
       <span class="punch date"><b>${date}</b><i>date</i></span>
       <span class="punch verdict"><b>▲</b><i>usable, with caveats</i></span>
     </div>
-    <div class="src" style="margin-top:8px">Fineness ${h.fineness}/1000, marked to its lowest rate: ${esc(h.bound)}.</div>
+    <div class="src" style="margin-top:8px">Trust score ${h.fineness}/1000, capped by its lowest rate: ${esc(h.bound)}.</div>
     <div class="finding">
       <span class="d">${f.id}</span><span class="m">${esc(DET.find(x => x[0] === f.id)[1])}: the next event is stamped earlier than the one before it.</span>
       <span class="w">line ${full(e.line)} · bytes ${full(e.b0)}–${full(e.b1)}</span>
@@ -179,6 +179,11 @@ $('#theme').onclick = () => {
 { const th = store.get('theme', null); if (th) document.documentElement.dataset.theme = th; }
 const io = 'IntersectionObserver' in window ? new IntersectionObserver(es => es.forEach(x => { if (x.isIntersecting) { x.target.classList.add('seen'); io.unobserve(x.target); } }), { threshold: 0.12 }) : null;
 document.querySelectorAll('.reveal').forEach(n => io ? io.observe(n) : n.classList.add('seen'));
+// Live wire: one real finding per run and detector, with its line; the track is
+// doubled so the loop is seamless. Names come from the detector list above.
+{ const W = document.getElementById('wire'); if (W) { const NAME = Object.fromEntries(DET.map(([id, n]) => [id, n])); const items = [];
+  for (const r of REAL) for (const f of r.findings) { const e = f.items[0] && f.items[0].ev && f.items[0].ev[0]; items.push(`<a href="index.html#run=${esc(r.id)}"><i>${f.severity === 'warn' ? '▲' : '●'}</i><b>${esc(NAME[f.id] || f.id)}</b>${esc(r.id)}${e ? ' · line ' + full(e.line + 1) : ''} · ×${full(f.count)}</a>`); }
+  const pick = items.filter((_, i) => i % Math.max(1, Math.floor(items.length / 40)) === 0); W.innerHTML = pick.join('') + pick.join(''); } }
 // The heading counts the detectors listed above, so it cannot drift from them.
 { const W = ['Zero','One','Two','Three','Four','Five','Six','Seven','Eight','Nine','Ten','Eleven','Twelve','Thirteen','Fourteen','Fifteen','Sixteen']; const g = document.getElementById('gcount'); if (g) g.textContent = W[DET.length] || DET.length; }
 $('#foot').textContent = `${REAL.length} real · ${RUNS.filter(r => r.truth === 'real-perturbed').length} perturbed · ${RUNS.filter(r => r.truth === 'scripted').length} scripted sessions`;

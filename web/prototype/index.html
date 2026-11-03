@@ -112,7 +112,7 @@ svg.ctx{display:block;width:100%;height:150px;overflow:visible}
 /* counters */
 .meters{display:grid;grid-template-columns:1.4fr 1fr 1fr;gap:12px}
 .meter{padding:14px 16px;min-width:0}
-.big{font-size:40px;font-weight:700;letter-spacing:-.03em;line-height:1;font-variant-numeric:tabular-nums}
+.big{font-size:clamp(24px,2.3vw,36px);font-weight:700;letter-spacing:-.03em;line-height:1;font-variant-numeric:tabular-nums}
 .big small{font-size:14px;font-weight:600;color:var(--mute);letter-spacing:0;margin-left:4px}
 .vs{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:10px}
 .naive .big{color:var(--ochre);text-decoration:line-through;text-decoration-thickness:2px;text-decoration-color:color-mix(in srgb,var(--ochre) 50%,transparent)}
@@ -290,7 +290,7 @@ svg.fig{display:block;width:100%;height:auto;aspect-ratio:300/90;flex:none;backg
 #dropzone.busy #dropmsg{opacity:.7}
 @media (prefers-reduced-motion:reduce){*,*::before,*::after{animation-duration:.01ms!important;transition-duration:.01ms!important}}
 </style>
-<link rel="stylesheet" href="theme.css?v=15">
+<link rel="stylesheet" href="theme.css?v=22">
 </head>
 <body>
 <header class="top">
@@ -340,7 +340,7 @@ svg.fig{display:block;width:100%;height:auto;aspect-ratio:300/90;flex:none;backg
               <svg class="tape" id="tape" preserveAspectRatio="none" role="img" aria-label="Transcript tape"></svg>
               <div class="axis"><span>line 0</span><span id="axisEnd"></span></div>
               <div class="legend">
-                <span><i style="background:var(--u)"></i>user</span><span><i style="background:var(--a)"></i>assistant</span><span><i style="background:var(--s)"></i>system / other</span><span><i class="hatch" style="border:1px solid var(--rule)"></i>held aside (unknown, kept)</span><span><i style="background:var(--ochre)"></i>warning</span><span><i style="background:var(--mute)"></i>info finding</span>
+                <span><i style="background:var(--u)"></i>user</span><span><i style="background:var(--a)"></i>assistant</span><span><i style="background:var(--s)"></i>system / other</span><span><i class="hatch" style="border:1px solid var(--rule)"></i>not read as events (kept)</span><span><i style="background:var(--ochre)"></i>warning</span><span><i style="background:var(--mute)"></i>info finding</span>
               </div>
             </div>
             <div class="tapewrap">
@@ -362,13 +362,14 @@ svg.fig{display:block;width:100%;height:auto;aspect-ratio:300/90;flex:none;backg
             <div class="ratio" id="mRatio">&nbsp;</div>
           </div>
           <div class="panel meter">
-            <div class="label">Requests verified</div>
+            <div class="label">Requests</div>
             <div class="big" id="mReq" style="margin-top:10px">0</div>
             <div class="ratio" id="mReqSub">&nbsp;</div>
           </div>
           <div class="panel meter">
-            <div class="label">Held aside, not dropped</div>
+            <div class="label">Lines not read as events · kept</div>
             <div class="big" id="mUnk" style="margin-top:10px">0</div>
+            <div class="ratio" id="mUnkSub">&nbsp;</div>
             <div class="reasons" id="mReasons"></div>
           </div>
         </div>
@@ -454,10 +455,10 @@ svg.fig{display:block;width:100%;height:auto;aspect-ratio:300/90;flex:none;backg
 </div>
 <div class="sr" id="live" aria-live="polite"></div>
 
-<script src="data.js?v=15"></script>
-<script src="app.js?v=15"></script>
-<script src="assay-core.js?v=15"></script>
-<script src="views.js?v=15"></script>
-<script src="report.js?v=15"></script>
+<script src="data.js?v=22"></script>
+<script src="app.js?v=22"></script>
+<script src="assay-core.js?v=22"></script>
+<script src="views.js?v=22"></script>
+<script src="report.js?v=22"></script>
 </body>
 </html>

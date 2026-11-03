@@ -15,7 +15,40 @@
 
   // A run's name is what it was, not its hash (the hash stays as secondary text).
   const title = r => `${day(r.hallmark.firstTs)} · ${r.harness.tool.replace('claude-code', 'Claude Code')} ${r.harness.version || ''}`;
-  const sub = r => `${full(r.validity.claimedTurns)} turns · ${full(r.counts.tools)} tool calls · ${full(r.counts.agents)} subagents`;
+  // "No subagents seen", never "0": at L1 subagent use can leave no marker (see the subagent card).
+  const sub = r => `${full(r.validity.claimedTurns)} requests · ${full(r.counts.tools)} tool calls · ${r.counts.agents ? full(r.counts.agents) + " subagents" : "no subagents seen"}`;
+
+  // The run's shape, drawn from core's 140-column band: lines per column by
+  // kind (bars), context per request (the trace), findings (ticks). The
+  // sweeping head is decoration: it moves over the data and encodes nothing.
+  function scope(r) {
+    const B = r.band || [], n = B.length; if (!n) return '';
+    const W = 1000, H = 120, cw = W / n;
+    const tot = b => b.user + b.assistant + b.system + b.other + b.unknown;
+    const maxL = Math.max(1, ...B.map(tot)), maxC = Math.max(1, ...B.map(b => b.nc || 0));
+    let bars = '', ticks = '', pts = [];
+    B.forEach((b, i) => {
+      let y = H - 4;
+      for (const [k, col] of [['user', 'var(--u)'], ['assistant', 'var(--a)'], ['system', 'var(--s)'], ['other', 'var(--s)'], ['unknown', 'var(--o)']]) {
+        const h = (H - 34) * b[k] / maxL; if (h <= 0) continue;
+        y -= h; bars += `<rect x="${(i * cw + .6).toFixed(1)}" y="${y.toFixed(1)}" width="${(cw - 1.2).toFixed(1)}" height="${h.toFixed(1)}" fill="${col}" opacity=".75"/>`;
+      }
+      if (b.nc) pts.push(`${(i * cw + cw / 2).toFixed(1)},${(H - 6 - (H - 30) * b.nc / maxC).toFixed(1)}`);
+      if (b.f && Object.keys(b.f).length) {
+        const warn = Object.keys(b.f).some(id => (r.findings.find(f => f.id === id) || {}).severity === 'warn');
+        ticks += `<rect x="${(i * cw).toFixed(1)}" y="2" width="${Math.max(1.5, cw - 1).toFixed(1)}" height="${warn ? 10 : 5}" fill="${warn ? 'var(--ochre)' : 'var(--mute)'}"/>`;
+      }
+    });
+    const trace = pts.length > 1 ? `<polyline points="${pts.join(' ')}" fill="none" stroke="var(--cob)" stroke-width="1.6" class="sc-trace"/>` : '';
+    return `<figure class="sc">
+      <svg viewBox="0 0 ${W} ${H}" preserveAspectRatio="none" role="img" aria-label="Shape of the transcript: ${full(r.source.lines)} lines in ${n} columns, with context per request and where findings sit">
+        <defs><linearGradient id="scg" x1="0" x2="1"><stop offset="0" stop-color="var(--cob)" stop-opacity="0"/><stop offset="1" stop-color="var(--cob)" stop-opacity=".35"/></linearGradient></defs>
+        ${bars}${trace}${ticks}<rect class="sc-head" x="-60" y="0" width="60" height="${H}" fill="url(#scg)"/></svg>
+      <figcaption class="label">The whole transcript, ${full(r.source.lines)} lines, left to right · bars: lines by kind · trace: context per request · ticks: findings</figcaption>
+    </figure>`;
+  }
+  // Where in the file a finding sits, as a mark on a bar the width of the file.
+  const locate = (r, e) => e && r.source.lines ? `<span class="rp-loc" aria-hidden="true"><i style="left:${(100 * e.line / r.source.lines).toFixed(2)}%"></i></span>` : '';
 
   function ring(r) {
     const f = r.hallmark.fineness, C = 2 * Math.PI * 52;
@@ -67,7 +100,7 @@
         <span class="rp-sev ${f.severity}">${f.severity}</span>
         <span class="rp-fname"><b>${esc(name(f.id))}</b> <span class="mono rp-id">${esc(f.id)}</span><br><span class="rp-note">${esc(what(f.id) || (f.items[0] ? f.items[0].msg.slice(0, 140) : ''))}</span></span>
         <span class="mono rp-cnt">×${full(f.count)}</span>
-        <span class="mono rp-at">${e ? `line ${full(e.line + 1)} · bytes ${full(e.b0)}–${full(e.b1)}` : 'no single line'}</span>
+        <span class="mono rp-at">${locate(r, e)}${e ? `line ${full(e.line + 1)} · bytes ${full(e.b0)}–${full(e.b1)}` : 'no single line'}</span>
       </button>`;
     }).join('');
   }
@@ -77,6 +110,9 @@
     const v = r.validity, obs = v.observability || {};
     const next = LADDER[r.capture.level + 1];
     const req = v.requests;
+    // Capture-level caveats are the same on every run at that level; they live
+    // with the level, not in this run's own list.
+    const levelCav = v.caveats.filter(c => /^Capture Level \d+:/.test(c)), runCav = v.caveats.filter(c => !levelCav.includes(c));
     host.innerHTML = `
     <div class="rp-head rise">
       <div class="rp-id">
@@ -89,19 +125,20 @@
       </div>
       ${ring(r)}
     </div>
-    <div class="hud-rule"></div>
+    ${scope(r)}
     <div class="rp-answers">
-      ${answer('tokens', r, `${full(v.verifiedUsageTurns)} of ${full(v.claimedTurns)} turns carry usage. ${r.findings.some(f => f.id === 'D2') ? 'Messages written on several lines were counted once.' : 'No duplicated messages.'}`)}
+      ${answer('tokens', r, `${full(v.verifiedUsageTurns)} of ${full(v.claimedTurns)} requests carry usage. ${r.findings.some(f => f.id === 'D2') ? 'Messages written on several lines were counted once.' : 'No duplicated messages.'}`)}
       ${answer('structure', r, `${full(r.counts.observed)} links observed by id, ${full(r.counts.matched)} by exact match, none guessed. ${obs.transcript ? esc(obs.transcript.reason) : ''}`)}
       ${answer('subagents', r, obs.subagent ? esc(obs.subagent.reason) : 'No subagent information.')}
     </div>
     <div class="rp-grid">
       <section class="panel rp-sec"><div class="label">Numbers you can quote</div><div class="rp-nums">${numbers(r)}</div>
-        ${req ? `<div class="rp-seal"><span class="rp-sealmark ${req.broken ? 'bad' : ''}">${req.broken ? '✕' : '✓'}</span>${full(req.sealed)} of ${full(req.records)} request records <span tabindex="0" data-tip="Sealed: the request body was rebuilt from the transcript and hashes to the digest Claude Code recorded for it.">sealed</span>: rebuilt from the transcript, they hash to their own digest.${req.broken ? ` ${full(req.broken)} broken.` : ''}</div>` : ''}
+        ${req ? `<div class="rp-seal"><span class="rp-sealmark ${req.broken ? 'bad' : ''}">${req.broken ? '✕' : '✓'}</span><span>${full(req.sealed)} of ${full(req.records)} request records <span tabindex="0" data-tip="Sealed: the request body was rebuilt from the transcript and hashes to the digest Claude Code recorded for it.">sealed</span>: rebuilt from the transcript, they hash to their own digest.${req.broken ? ` ${full(req.broken)} broken.` : ''}</span></div>` : ''}
       </section>
       <section class="panel rp-sec"><div class="label">What went wrong · click to see the bytes</div><div class="rp-finds">${findings(r)}</div></section>
       <section class="panel rp-sec"><div class="label">What this record can't tell you</div>
-        <ul class="rp-cav">${v.caveats.map(c => `<li>${esc(c)}</li>`).join('')}</ul>
+        <ul class="rp-cav">${runCav.map(c => `<li>${esc(c)}</li>`).join('') || '<li>Nothing beyond the capture level below.</li>'}</ul>
+        ${levelCav.length ? `<div class="rp-level"><span class="label">What L${r.capture.level} cannot see</span>${levelCav.map(c => { const t = c.replace(/^Capture Level \d+: /, ''); return esc(t[0].toUpperCase() + t.slice(1)); }).join('. ')}.</div>` : ''}
         ${next ? `<div class="rp-next"><span class="label">Capture more</span>${esc(next[0])} adds ${esc(next[1].replace(/^\+ /, ''))}. <a href="home.html#levels">How to turn it on →</a></div>` : ''}
       </section>
     </div>`;

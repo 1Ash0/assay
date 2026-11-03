@@ -139,3 +139,24 @@ Audit fixes:
 - The landing hero overflowed at phone width; no view scrolls sideways at 375px now.
 
 Still open: Timeline zoom; publishing itself (owner decision: where, and when).
+
+## Status (2026-11-03, fourth pass: honesty and life)
+Core caveats (health.ts), so the CLI and site agree:
+- resolved duplicates (D2, D6 info) are findings, not repeated as caveats;
+- cost state is said once (the D-cost caveat), not also as "capture incomplete";
+- the request-count caveat states the measured split (linked, request without record, record without request) instead of guessing causes;
+- "request bodies not captured" no longer appears on runs whose request records are sealed.
+
+Site:
+- one count of lines not read as events, split as core splits it (request records, known types without telemetry, unknown type); request records are no longer listed among unknown types;
+- "Requests verified" renamed "Requests", with the sealed records beside it;
+- side panels aligned (a theme rule had turned their sticky positioning into a 76px offset);
+- full digits everywhere, meters of equal height;
+- "requests" for the request count; "no subagents seen" instead of "0 subagents"; "trust" instead of "fineness";
+- capture-level caveats shown once with the level, not in each run's list.
+
+Life, all drawn from core data:
+- the Report header has an oscilloscope of the whole transcript (lines by kind, context trace, finding ticks) with a sweeping head that encodes nothing;
+- each finding has a locator showing where in the file it sits;
+- the Runs table has a shape sparkline per run;
+- the landing has a live wire of real findings, each linking to its run.
