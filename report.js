@@ -139,7 +139,7 @@
       <section class="panel rp-sec"><div class="label">What this record can't tell you</div>
         <ul class="rp-cav">${runCav.map(c => `<li>${esc(c)}</li>`).join('') || '<li>Nothing beyond the capture level below.</li>'}</ul>
         ${levelCav.length ? `<div class="rp-level"><span class="label">What L${r.capture.level} cannot see</span>${levelCav.map(c => { const t = c.replace(/^Capture Level \d+: /, ''); return esc(t[0].toUpperCase() + t.slice(1)); }).join('. ')}.</div>` : ''}
-        ${next ? `<div class="rp-next"><span class="label">Capture more</span>${esc(next[0])} adds ${esc(next[1].replace(/^\+ /, ''))}. <a href="home.html#levels">How to turn it on →</a></div>` : ''}
+        ${next ? `<div class="rp-next"><span class="label">Capture more</span>${esc(next[0])} adds ${esc(next[1].replace(/^\+ /, ''))}. <a href="index.html#levels">How to turn it on →</a></div>` : ''}
       </section>
     </div>`;
     animate(host);

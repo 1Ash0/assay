@@ -51,7 +51,7 @@ function specimen() {
       <span class="bytes" aria-hidden="true"><i style="left:${(e.b0 / r.source.bytes * 100).toFixed(2)}%;width:${Math.max(0.5, (e.b1 - e.b0) / r.source.bytes * 100).toFixed(2)}%"></i></span>
     </div>
     <div style="margin-top:14px;display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap">
-      <span class="src">${esc(r.file)}</span><a class="btn ghost" style="height:40px;font-size:14px;padding:0 16px" href="index.html#run=${esc(r.id)}">Assay it →</a>
+      <span class="src">${esc(r.file)}</span><a class="btn ghost" style="height:40px;font-size:14px;padding:0 16px" href="explorer.html#run=${esc(r.id)}">Assay it →</a>
     </div>`;
   const ps = [...document.querySelectorAll('#punches .punch')];
   ps.forEach((p, i) => setTimeout(() => p.classList.add('in'), reduced ? 0 : 500 + i * 180));
@@ -77,7 +77,7 @@ function renderGame() {
       <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:22px">
         <button class="btn" id="gcheck" ${G.done ? 'hidden' : ''}>Assay it</button>
         <button class="btn" id="gnext" ${G.done ? '' : 'hidden'}>Next session →</button>
-        <a class="btn ghost" href="index.html#run=${esc(r.id)}">Watch the full assay</a>
+        <a class="btn ghost" href="explorer.html#run=${esc(r.id)}">Watch the full assay</a>
       </div>
     </div>
     <div class="gside">
@@ -116,7 +116,7 @@ function renderRack() {
   $('#gdetail').innerHTML = `<div><div class="label">${id}</div><h3>${esc(name)}</h3><p>${esc(what)}</p></div>
     <div>
       <div class="src" style="margin-bottom:10px">${h.length ? `Fired ${full(total)} times across ${h.length} real session${h.length > 1 ? 's' : ''}.` : 'Never fired on a real session yet. The check still runs on every one.'}${others.length ? ` Also on ${others.map(r => `<span class="mono">${esc(r.id)}</span> (${r.truth})`).join(', ')}.` : ''}</div>
-      <div class="mini-shelf" aria-label="Real sessions">${REAL.map(r => { const hit = r.findings.some(f => f.id === gsel); return `<a class="${hit ? 'hit' : ''}" style="height:${24 + Math.min(70, Math.log10(r.source.lines + 1) * 18)}px" href="index.html#run=${esc(r.id)}" title="${esc(r.id)}${hit ? ' · fired' : ''}"></a>`; }).join('')}</div>
+      <div class="mini-shelf" aria-label="Real sessions">${REAL.map(r => { const hit = r.findings.some(f => f.id === gsel); return `<a class="${hit ? 'hit' : ''}" style="height:${24 + Math.min(70, Math.log10(r.source.lines + 1) * 18)}px" href="explorer.html#run=${esc(r.id)}" title="${esc(r.id)}${hit ? ' · fired' : ''}"></a>`; }).join('')}</div>
       <div class="src" style="margin-top:8px">One bar per real session, height by file length. Amber: this gate fired.</div>
     </div>`;
 }
@@ -150,7 +150,7 @@ function core(r, w = 92, h = 230) {
 }
 function renderCores() {
   $('#cores').innerHTML = `<svg width="0" height="0" style="position:absolute"><defs><pattern id="hp" width="4" height="4" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><rect width="4" height="4" fill="var(--paper)"/><line x1="0" y1="0" x2="0" y2="4" stroke="var(--unk)" stroke-width="1" opacity=".5"/></pattern></defs></svg>` +
-    REAL.map(r => `<a class="core" href="index.html#run=${esc(r.id)}" aria-label="Assay ${esc(r.id)}">${core(r)}<span class="cid">${esc(r.id)}</span><span class="cv">v${esc(r.harness.version)} · ${fmt(r.source.lines)} ln</span></a>`).join('');
+    REAL.map(r => `<a class="core" href="explorer.html#run=${esc(r.id)}" aria-label="Assay ${esc(r.id)}">${core(r)}<span class="cid">${esc(r.id)}</span><span class="cv">v${esc(r.harness.version)} · ${fmt(r.source.lines)} ln</span></a>`).join('');
 }
 
 /* ---------- missions ---------- */
@@ -160,7 +160,7 @@ function renderMissions() {
     ['m1', '01', 'Lose a subagent', 'Make a subagent’s transcript disappear before the total is taken.'],
     ['m2', '02', 'Forge a giant prompt', 'Rewrite one copy of a message to read 195,000 input tokens.'],
     ['m3', '03', 'Make copies disagree', 'Nudge one copy of a message from 3 tokens to 8.']];
-  $('#missions').innerHTML = M.map(([id, no, t, p]) => `<a class="panel mission" href="index.html#mission=${id}">${caught[id] ? `<span class="stamp">${/leaked/.test(caught[id]) ? 'FLAGGED' : 'CAUGHT'}</span>` : ''}
+  $('#missions').innerHTML = M.map(([id, no, t, p]) => `<a class="panel mission" href="explorer.html#mission=${id}">${caught[id] ? `<span class="stamp">${/leaked/.test(caught[id]) ? 'FLAGGED' : 'CAUGHT'}</span>` : ''}
     <span class="no">MISSION ${no}</span><h3>${t}</h3><p>${p}</p><span class="st">${caught[id] ? '✓ ' + esc(caught[id]) : 'Play →'}</span></a>`).join('');
 }
 
@@ -181,7 +181,7 @@ document.querySelectorAll('.reveal').forEach(n => io ? io.observe(n) : n.classLi
 // Live wire: one real finding per run and detector, with its line; the track is
 // doubled so the loop is seamless. Names come from the detector list above.
 { const W = document.getElementById('wire'); if (W) { const NAME = Object.fromEntries(DET.map(([id, n]) => [id, n])); const items = [];
-  for (const r of REAL) for (const f of r.findings) { const e = f.items[0] && f.items[0].ev && f.items[0].ev[0]; items.push(`<a href="index.html#run=${esc(r.id)}"><i>${f.severity === 'warn' ? '▲' : '●'}</i><b>${esc(NAME[f.id] || f.id)}</b>${esc(r.id)}${e ? ' · line ' + full(e.line + 1) : ''} · ×${full(f.count)}</a>`); }
+  for (const r of REAL) for (const f of r.findings) { const e = f.items[0] && f.items[0].ev && f.items[0].ev[0]; items.push(`<a href="explorer.html#run=${esc(r.id)}"><i>${f.severity === 'warn' ? '▲' : '●'}</i><b>${esc(NAME[f.id] || f.id)}</b>${esc(r.id)}${e ? ' · line ' + full(e.line + 1) : ''} · ×${full(f.count)}</a>`); }
   const pick = items.filter((_, i) => i % Math.max(1, Math.floor(items.length / 40)) === 0); W.innerHTML = pick.join('') + pick.join(''); } }
 // The heading counts the detectors listed above, so it cannot drift from them.
 { const W = ['Zero','One','Two','Three','Four','Five','Six','Seven','Eight','Nine','Ten','Eleven','Twelve','Thirteen','Fourteen','Fifteen','Sixteen']; const g = document.getElementById('gcount'); if (g) g.textContent = W[DET.length] || DET.length; }
