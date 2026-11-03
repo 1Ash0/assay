@@ -36,3 +36,9 @@
 Groq no longer lists `llama-3.3-70b-versatile` or any `*70b*` model. The models listed were: allam-2-7b, openai/gpt-oss-120b, openai/gpt-oss-20b, openai/gpt-oss-safeguard-20b, qwen/qwen3.8-27b, plus speech and guard models.
 
 The judge model is changed to **`openai/gpt-oss-120b`**, the largest general model listed. If it is unavailable, `qwen/qwen3.8-27b` is used. The model id used is recorded in every cached answer and in the result. Nothing else changes; no judge answer existed when this was written.
+
+## Amendment 2 (2026-11-03, before any scoring; no probability was looked at)
+- **What happened.** The first run hit Groq's rate limit. 210 calls failed with HTTP 429 and 3 with network errors, and the runner had recorded them as unanswered spans.
+- **Why that is wrong.** Those failures depend on quota and time, not on the span. Counting them as unanswered would drop about a third of the sample for a reason unrelated to the question.
+- **The change.** Rate-limit and network failures now stop the run without recording the span, so it is retried later. The 213 such entries were removed from the cache (a copy is kept locally).
+- **Unchanged.** A span the model cannot answer, such as Groq's "failed to generate JSON" (4 spans so far), is still a final unanswered result, as preregistered.
