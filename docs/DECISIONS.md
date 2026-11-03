@@ -222,6 +222,18 @@ Decision: `importers/trail/` maps one TRAIL file to a canonical Run.
 
 Consequence: assay's Capture Level, detectors and views run on a second, multi-author source. The one-user threat now has a counter-sample for structural findings, though not for Claude Code transcripts.
 
+## ADR-038 · 2026-11-03 · accepted · Site look: Phosphor (retro-futurist instrument glass); Report as the default run view; plain labels; real runs on the public site
+Context: the M5 site was honest but read as a lab bench in its author's vocabulary (critique in docs/SITE_PLAN.md). The owner asked for a product: simple to grasp, visually striking, game-like, with animated reconstructions, and real data in public.
+
+Decision:
+- **Look:** `web/prototype/theme.css` is the one source of colour and type for every page. Night ground, glass panels, phosphor data colours, CRT scanlines in dark theme. Chakra Petch for display, IBM Plex Sans for text, JetBrains Mono for data. Colour meanings are unchanged: vermilion is capture failure only, amber is warning, mint is verified or sealed, cyan is data, magenta is interaction and never data.
+- **Motion:** DESIGN rule 10 widens. Decorative motion (backgrounds, reveals, hover) is allowed where it encodes nothing. Data motion is still a scan, a step, a rebuild or a flow along an observed edge, and is driven by a result field. Reduced motion means still.
+- **Report** replaces the Bench as the default run view; the scan stays as Replay the assay.
+- **Labels in plain words**, the assay metaphors kept in visuals.
+- **Real runs on the public site.** The owner chose this over scripted-only. What ships is core's redacted export (`RunView`, ADR-020): keys, ids, timestamps and numbers survive and every other string is redacted; no raw transcript leaves the machine. TRAIL runs never ship (its licence forbids resharing). A publish step will check the export for unredacted strings before upload.
+
+Consequence: Rule 8 is read as: raw traces stay local; redacted exports may be published by the owner. The publish check is a precondition, not a follow-up.
+
 ## Proposed (not yet accepted)
 - ADR-P1 Interop with context-analyzer (decide after M0 source read).
 - ADR-P2 Upstream OTel proposal for compaction and skill entities (decide after M0 repo check).

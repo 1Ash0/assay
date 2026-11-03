@@ -12,11 +12,11 @@ Rewritten 2026-11-02 for M3 (ADR-017). The look is the **bench**: a playable ins
 7. A total with disagreeing copies (D6, ADR-021) is shown as a range, never as one number. A D1 total carries ≥.
 8. Depth never encodes a quantity.
 9. Every view has table mode (`t`) and describe mode (`d`).
-10. Reduced motion means instant. Motion is only a stamp, a scan, or a step.
+10. Reduced motion means instant. Data motion is a stamp, a scan, a step, a rebuild or a flow along an observed edge; decorative motion encodes nothing (ADR-038).
 
-## Colour and type
-- One meaning per colour. Red (vermilion) is reserved for capture failure (`captureIntegrity`, `capture-incomplete`, do-not-trust); other warnings use ochre. Verified has its own colour, distinct from observed and from `real`.
-- Bricolage Grotesque for display and text, IBM Plex Mono for data. Bone ground with a dot grid in light; near-black in dark.
+## Colour and type (Phosphor, ADR-038; tokens in `web/prototype/theme.css`)
+- One meaning per colour. Vermilion is reserved for capture failure (`captureIntegrity`, `capture-incomplete`, do-not-trust); amber for other warnings; mint for verified and sealed; cyan for data; magenta for interaction, never data.
+- Chakra Petch for display, IBM Plex Sans for text, JetBrains Mono for data. Night ground with glass panels and scanlines in dark; cool paper in light.
 
 ## The hallmark
 Six punches read left to right: sponsor (harness version) · capture · fineness · truth · date letter · verdict. Sponsor, capture and truth strike at intake; fineness, date and verdict stay dashed until the scan completes.

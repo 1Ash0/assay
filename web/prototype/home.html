@@ -6,26 +6,8 @@
 <title>assay</title>
 <meta name="description" content="assay checks a coding agent's transcript before you trust its numbers: what was captured, what was lost, and which totals lie.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,300..800&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap">
 <style>
-:root{
-  --ground:#E9E5DA; --paper:#F5F2EA; --paper-2:#EFEBE1; --ink:#17160F; --ink-2:#3B3930; --mute:#5F5B50; --rule:#CBC5B6; --rule-2:#DCD7CA;
-  --verm:#C9341A; --verm-soft:#F3D3C9; --cob:#2238C4; --cob-soft:#D5DAF5; --ochre:#9A6A00; --ochre-soft:#F1E1B8;
-  --u:#9AA3D9; --a:#2238C4; --s:#7D786B; --unk:#17160F;
-  --shadow:0 1px 0 rgba(23,22,15,.06),0 18px 40px -18px rgba(23,22,15,.3);
-  --display:'Bricolage Grotesque',ui-sans-serif,system-ui,sans-serif; --mono:'IBM Plex Mono',ui-monospace,monospace;
-  --spring:cubic-bezier(.2,1.4,.4,1); --ease:cubic-bezier(.2,.7,.1,1);
-}
-@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
-  --ground:#11100C; --paper:#1A1914; --paper-2:#211F19; --ink:#EEE9DC; --ink-2:#CFC9B9; --mute:#A39D8E; --rule:#3A372E; --rule-2:#2B2922;
-  --verm:#FF6A4A; --verm-soft:#4A2219; --cob:#8C9EFF; --cob-soft:#232A55; --ochre:#E6AE34; --ochre-soft:#43361A;
-  --u:#59618F; --a:#8C9EFF; --s:#8C8676; --unk:#EEE9DC; --shadow:0 18px 40px -18px rgba(0,0,0,.7);
-}}
-:root[data-theme="dark"]{
-  --ground:#11100C; --paper:#1A1914; --paper-2:#211F19; --ink:#EEE9DC; --ink-2:#CFC9B9; --mute:#A39D8E; --rule:#3A372E; --rule-2:#2B2922;
-  --verm:#FF6A4A; --verm-soft:#4A2219; --cob:#8C9EFF; --cob-soft:#232A55; --ochre:#E6AE34; --ochre-soft:#43361A;
-  --u:#59618F; --a:#8C9EFF; --s:#8C8676; --unk:#EEE9DC; --shadow:0 18px 40px -18px rgba(0,0,0,.7);
-}
 *{box-sizing:border-box}
 [hidden]{display:none!important}
 html,body{margin:0;background:var(--ground);color:var(--ink);font-family:var(--display);font-size:16px;-webkit-font-smoothing:antialiased;overflow-x:hidden}
@@ -199,6 +181,7 @@ footer .wrap{display:flex;gap:18px;flex-wrap:wrap}
 }
 @media (prefers-reduced-motion:reduce){*,*::before,*::after{animation-duration:.01ms!important;transition-duration:.01ms!important}.reveal{opacity:1;transform:none}.punch{opacity:1}}
 </style>
+<link rel="stylesheet" href="theme.css">
 </head>
 <body>
 <nav class="top" aria-label="Main">

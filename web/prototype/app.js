@@ -619,7 +619,7 @@ document.addEventListener('click', e => {
   if (t.dataset.view) return go(t.dataset.view);
   if (t.dataset.goto) return go(t.dataset.goto);
   if (t.dataset.close === 'card') $('#card').classList.remove('on');
-  if (t.dataset.run) { S.mission = null; if (t.dataset.open) go('bench'); return load(t.dataset.run); }
+  if (t.dataset.run) { S.mission = null; if (t.dataset.open) go('bench'); const p = load(t.dataset.run); if (t.dataset.replay) go('replay'); return p; }
   if (t.dataset.gate) { S.sel = S.sel === t.dataset.gate ? null : t.dataset.gate; S.item = null; document.querySelectorAll('.gate').forEach(g => g.setAttribute('aria-pressed', g.dataset.gate === S.sel)); return renderRail(); }
   if (t.dataset.d && t.dataset.k != null) { S.sel = t.dataset.d; S.item = { d: t.dataset.d, k: +t.dataset.k }; return renderRail(); }
   if (t.dataset.unk) { S.item = { unk: true }; return renderRail(); }

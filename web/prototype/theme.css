@@ -1,0 +1,55 @@
+/* Phosphor: the shared look of the landing and the bench (ADR-038).
+   Retro-futurist instrument glass: night ground, glossy panels, phosphor data.
+   One meaning per colour, unchanged from DESIGN.md:
+   verm = capture failure only · ochre = warning · mint = verified/sealed ·
+   cob/a = assistant and data · u = user · brand = interactive, never data. */
+:root{
+  --ground:#EEF1F8; --paper:#FFFFFF; --paper-2:#F3F5FB; --ink:#0B1020; --ink-2:#2A3350; --mute:#4E5873; --rule:#C9D0E2; --rule-2:#DDE2EF;
+  --verm:#C42B16; --verm-soft:#FBD9D2; --cob:#0A6E9C; --cob-soft:#D3ECF7; --ochre:#8F5D00; --ochre-soft:#FBE7BF;
+  --mint:#00804F; --mint-soft:#CDF3E2; --brand:#B5177A; --brand-soft:#F8D6EB;
+  --u:#5563E0; --a:#0A6E9C; --s:#6B7590; --o:#B9C1D6; --unk:#0B1020;
+  --glow:0 0 0 transparent; --glow-strong:0 0 0 transparent;
+  --glass:linear-gradient(180deg,rgba(255,255,255,.9),rgba(255,255,255,.7));
+  --shadow:0 1px 0 rgba(11,16,32,.05),0 14px 34px -16px rgba(11,16,32,.28);
+  --scan-a:0;
+  --display:'Chakra Petch',ui-sans-serif,system-ui,sans-serif;
+  --body:'IBM Plex Sans',ui-sans-serif,system-ui,sans-serif;
+  --mono:'JetBrains Mono','IBM Plex Mono',ui-monospace,monospace;
+  --spring:cubic-bezier(.2,1.4,.4,1); --ease:cubic-bezier(.2,.7,.1,1);
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --ground:#05070D; --paper:#0C1019; --paper-2:#111624; --ink:#E9EEFF; --ink-2:#B9C3DE; --mute:#8892AE; --rule:#222B42; --rule-2:#161D2E;
+  --verm:#FF5A43; --verm-soft:#3E1510; --cob:#3DE3FF; --cob-soft:#0B3140; --ochre:#FFB52E; --ochre-soft:#3D2C0A;
+  --mint:#4DFFB4; --mint-soft:#0C3626; --brand:#FF4FD2; --brand-soft:#3A0F33;
+  --u:#6F7CFF; --a:#3DE3FF; --s:#7A84A0; --o:#2E3650; --unk:#E9EEFF;
+  --glow:0 0 18px color-mix(in srgb,var(--cob) 35%,transparent); --glow-strong:0 0 28px color-mix(in srgb,var(--cob) 60%,transparent);
+  --glass:linear-gradient(180deg,rgba(255,255,255,.055),rgba(255,255,255,.012));
+  --shadow:inset 0 1px 0 rgba(255,255,255,.06),0 18px 40px -18px rgba(0,0,0,.9);
+  --scan-a:.035; color-scheme:dark;
+}}
+:root[data-theme="dark"]{
+  --ground:#05070D; --paper:#0C1019; --paper-2:#111624; --ink:#E9EEFF; --ink-2:#B9C3DE; --mute:#8892AE; --rule:#222B42; --rule-2:#161D2E;
+  --verm:#FF5A43; --verm-soft:#3E1510; --cob:#3DE3FF; --cob-soft:#0B3140; --ochre:#FFB52E; --ochre-soft:#3D2C0A;
+  --mint:#4DFFB4; --mint-soft:#0C3626; --brand:#FF4FD2; --brand-soft:#3A0F33;
+  --u:#6F7CFF; --a:#3DE3FF; --s:#7A84A0; --o:#2E3650; --unk:#E9EEFF;
+  --glow:0 0 18px color-mix(in srgb,var(--cob) 35%,transparent); --glow-strong:0 0 28px color-mix(in srgb,var(--cob) 60%,transparent);
+  --glass:linear-gradient(180deg,rgba(255,255,255,.055),rgba(255,255,255,.012));
+  --shadow:inset 0 1px 0 rgba(255,255,255,.06),0 18px 40px -18px rgba(0,0,0,.9);
+  --scan-a:.035; color-scheme:dark;
+}
+
+html,body{font-family:var(--body)}
+h1,h2,h3,.display,.mark{font-family:var(--display);letter-spacing:-.01em}
+/* Night sky: a faint horizon glow and a perspective grid floor. Decoration
+   only; no quantity is encoded (DESIGN rule 8). */
+body{background-color:var(--ground);
+  background-image:radial-gradient(1200px 500px at 50% -10%,color-mix(in srgb,var(--u) 14%,transparent),transparent 70%),
+    radial-gradient(color-mix(in srgb,var(--ink) 10%,transparent) .6px,transparent .7px);
+  background-size:auto,16px 16px;background-attachment:fixed}
+/* CRT scanlines over everything, invisible in light theme. */
+body::after{content:"";position:fixed;inset:0;pointer-events:none;z-index:100;
+  background:repeating-linear-gradient(0deg,rgba(0,0,0,var(--scan-a)) 0 1px,transparent 1px 3px)}
+.panel{background:var(--glass),var(--paper);border-color:var(--rule);backdrop-filter:blur(6px)}
+.label{letter-spacing:.14em}
+::selection{background:var(--brand);color:#fff}
+@media (prefers-reduced-motion:reduce){*,*::before,*::after{animation-duration:0s!important;transition-duration:0s!important}}

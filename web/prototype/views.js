@@ -96,7 +96,11 @@ function charge(r, s) {
 
 function coreBox(r) {
   const st = r.spine.steps, withC = st.filter(s => s.context);
-  if (!withC.length) return `<div class="hint">Core box: no sealed requests in this run, so no columns to draw.</div>`;
+  if (!withC.length) {
+    // Point at a run that has sealed requests rather than leave the flagship view empty.
+    const other = A.runs.find(x => x.validity.requests && x.validity.requests.sealed > 0);
+    return `<div class="hint">Core box: no sealed requests in this run, so no columns to draw.${other ? ` <button class="tool" data-run="${esc(other.id)}" data-replay="1">Replay ${esc(other.id)}, which has ${full(other.validity.requests.sealed)} sealed</button>` : ""}</div>`;
+  }
   const W = 1000, H = 90, n = st.length, cw = W / n, max = Math.max(...withC.map(s => s.context.total));
   let svg = '';
   st.forEach((s, i) => {
@@ -221,7 +225,8 @@ function diff() {
     ${row('truth', esc(a.truth), esc(b.truth))}
     ${row('capture', 'L' + a.capture.level, 'L' + b.capture.level)}
     ${row('steps', full(a.spine.steps.length), full(b.spine.steps.length))}
-    ${row('input tokens', tot(a), tot(b))}
+    ${row('context tokens', full(a.validity.totalContextTokens), full(b.validity.totalContextTokens))}
+    ${row('uncached input', tot(a), tot(b))}
   </div>`;
 }
 
