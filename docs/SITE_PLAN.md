@@ -123,3 +123,6 @@ Each step is a shippable commit within the Rule 12 budget. The site only display
 - Learn: Tamper missions, punch card and calls.
 - ⌘K palette, glossary popovers, phone layout, AA contrast measured in both themes.
 - Publish: the redacted export with real runs, after a check that fails on any unredacted string; TRAIL excluded.
+
+## Status (2026-11-03, second pass)
+Palette re-chosen after the owner asked for less generic colours: NieR:Automata's restrained bone-on-black HUD, Alien: Isolation's phosphor terminals and Teenage Engineering's instrument labels, instead of neon cyan and magenta. Built: Report (default), plain navigation with Ctrl K, Rebuild flow with seal, Compare ribbons and twin pairing, landing waves and decode text, HUD panels with corner brackets, scanlines and a refresh band, phone top bar. Not yet: provenance threads drawn between literals (streaks are still a list), Timeline glow and zoom, the Runs table and pattern view, Play as a separate Learn area, glossary popovers, measured AA contrast, the publish step and its redaction check.

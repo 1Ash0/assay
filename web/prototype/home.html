@@ -181,7 +181,8 @@ footer .wrap{display:flex;gap:18px;flex-wrap:wrap}
 }
 @media (prefers-reduced-motion:reduce){*,*::before,*::after{animation-duration:.01ms!important;transition-duration:.01ms!important}.reveal{opacity:1;transform:none}.punch{opacity:1}}
 </style>
-<link rel="stylesheet" href="theme.css">
+<link rel="stylesheet" href="theme.css?v=10">
+<style>.hero>canvas{inset:0 calc(50% - 50vw)!important;width:100vw!important}.hero>*:not(canvas){position:relative;z-index:1}</style>
 </head>
 <body>
 <nav class="top" aria-label="Main">
@@ -192,18 +193,18 @@ footer .wrap{display:flex;gap:18px;flex-wrap:wrap}
     <div class="links"><a href="#call">Play</a><a href="#gates">Gates</a><a href="#levels">Capture</a><a href="#tamper">Tamper</a></div>
     <div class="spacer"></div>
     <button class="tool" id="theme">Theme</button>
-    <a class="btn" href="index.html" style="height:40px;padding:0 18px;font-size:14px">Open the bench</a>
+    <a class="btn" href="index.html" style="height:40px;padding:0 18px;font-size:14px">Open the report</a>
   </div>
 </nav>
 
-<header class="wrap hero">
+<header class="wrap hero" data-fx="waves">
   <div>
-    <div class="label" style="margin-bottom:18px">Trace trust for coding agents</div>
+    <div class="label" style="margin-bottom:18px" data-fx="decode">Trace trust for coding agents</div>
     <h1>Assay the trace <em>before</em> you trust the number.</h1>
     <p class="lede">Agent transcripts double-count, lose subagents and run clocks backwards. assay reads the raw file, marks what it can and can't prove, and points every finding at its exact bytes.</p>
     <div class="ctas">
       <a class="btn" href="#call">Call the first one ↓</a>
-      <a class="btn ghost" href="index.html">Open the bench</a>
+      <a class="btn ghost" href="index.html">Open the report</a>
     </div>
     <div class="cmd" aria-label="CLI"><span>$</span>assay import ~/.claude/projects/&lt;proj&gt; &amp;&amp; assay health<button id="copy">copy</button></div>
   </div>
@@ -265,12 +266,13 @@ footer .wrap{display:flex;gap:18px;flex-wrap:wrap}
 
 <section class="wrap final reveal">
   <h2>Put a run<br>on the bench.</h2>
-  <div class="ctas" style="justify-content:center;margin-top:28px"><a class="btn" href="index.html">Open the bench</a><a class="btn ghost" href="index.html#shelf">Browse the shelf</a></div>
+  <div class="ctas" style="justify-content:center;margin-top:28px"><a class="btn" href="index.html">Open the report</a><a class="btn ghost" href="index.html#shelf">Browse the shelf</a></div>
 </section>
 
 <footer><div class="wrap"><span>assay · prototype</span><span id="foot"></span><span class="spacer"></span><span>Numbers from assay-core via export-site · text redacted</span></div></footer>
 
 <script src="data.js"></script>
-<script src="home.js"></script>
+<script src="home.js?v=10"></script>
+<script src="fx.js?v=10"></script>
 </body>
 </html>

@@ -54,7 +54,7 @@ const thunk = () => { tone(90, 0.25, 'sine', 0.2); setTimeout(() => tone(60, 0.3
 
 /* ---------- state ---------- */
 const S = {
-  view: 'bench', run: null, p: 0, playing: false, speed: 1, struck: false,
+  view: 'report', run: null, p: 0, playing: false, speed: 1, struck: false,
   sel: null, item: null, table: false, desc: false, mission: null,
   filter: 'all', caught: store.get('caught', {}), call: null,
   calls: store.get('calls', { right: 0, total: 0, streak: 0 }), punches: store.get('punches', {}),
@@ -432,6 +432,7 @@ function load(id, opts = {}) {
   $('#mReasons').innerHTML = r.unknownReasons.map(([k, n]) => `<span title="${n} records">${esc(k.replace('unknown-type:', ''))} · ${n}</span>`).join('');
   if (S.table) renderTable();
   setPlay(); renderRail(); update(true);
+  if (S.view === 'report' && window.ASSAY_REPORT) window.ASSAY_REPORT.render(r);
   if (opts.autoplay) setTimeout(() => { S.playing = true; setPlay(); }, 450);
 }
 
@@ -482,7 +483,7 @@ function renderShelf() {
   const list = RUNS.filter(r => S.filter === 'all' || r.truth === S.filter);
   $('#grid').innerHTML = list.map(r => {
     const fc = r.findings.reduce((a, f) => a + f.count, 0);
-    return `<button class="panel card ${r.truth}" data-run="${esc(r.id)}" data-open="1" aria-label="Assay ${esc(r.id)}">
+    return `<button class="panel card sheen ${r.truth}" data-run="${esc(r.id)}" data-open="1" aria-label="Assay ${esc(r.id)}">
       ${coreSvg(r)}
       <div class="foot"><span class="cid">${esc(r.id)}</span><span class="vtag ${verdictClass(r.overall)}" title="${esc(verdictText(r.overall))}">${verdictGlyph(r.overall)}</span></div>
       <div class="meta"><span>v${esc(r.harness.version)}</span><span>L${r.capture.level}</span><span>${fmt(r.source.lines)} ln</span></div>
@@ -494,7 +495,7 @@ function renderShelf() {
   const max = Math.max(3.6, ...pts.map(p => p.v)), Wd = 1000, Hd = 90, x = v => 30 + (v - 1) / (max - 1) * (Wd - 60);
   let s = `<line x1="30" x2="${Wd - 30}" y1="56" y2="56" stroke="var(--rule)"/>`;
   for (let t = 1; t <= max; t += 0.5) s += `<line x1="${x(t)}" x2="${x(t)}" y1="52" y2="60" stroke="var(--rule)"/><text x="${x(t)}" y="78" text-anchor="middle" font-family="IBM Plex Mono" font-size="11" fill="var(--mute)">×${t.toFixed(1)}</text>`;
-  pts.sort((a, b) => a.v - b.v).forEach((p, i) => { const cx = x(p.v), cy = 56 - (i % 3) * 14 - 6; s += `<g class="dot" data-run="${esc(p.r.id)}" data-open="1" tabindex="0" role="button" aria-label="Open ${esc(p.r.id)}, overcount ×${p.v.toFixed(2)}" style="cursor:pointer"><line x1="${cx}" x2="${cx}" y1="${cy}" y2="56" stroke="var(--rule)"/><circle cx="${cx}" cy="${cy}" r="6" fill="var(--verm)" stroke="var(--paper)" stroke-width="2"><title>${esc(p.r.id)}: ×${p.v.toFixed(2)} (${full(p.r.naive[3])} vs ${full(p.r.dedup[3])})</title></circle></g>`; });
+  pts.sort((a, b) => a.v - b.v).forEach((p, i) => { const cx = x(p.v), cy = 56 - (i % 3) * 14 - 6; s += `<g class="dot" data-run="${esc(p.r.id)}" data-open="1" tabindex="0" role="button" aria-label="Open ${esc(p.r.id)}, overcount ×${p.v.toFixed(2)}" style="cursor:pointer"><line x1="${cx}" x2="${cx}" y1="${cy}" y2="56" stroke="var(--rule)"/><circle cx="${cx}" cy="${cy}" r="6" fill="var(--ochre)" stroke="var(--paper)" stroke-width="2"><title>${esc(p.r.id)}: ×${p.v.toFixed(2)} (${full(p.r.naive[3])} vs ${full(p.r.dedup[3])})</title></circle></g>`; });
   
   const svg = $('#dots'); svg.setAttribute('viewBox', `0 0 ${Wd} ${Hd}`); svg.innerHTML = s;
 }
@@ -598,6 +599,7 @@ function go(v) {
   document.querySelectorAll('.tab').forEach(t => t.setAttribute('aria-selected', t.dataset.view === v));
   document.querySelectorAll('.view').forEach(x => x.classList.toggle('on', x.id === 'v-' + v));
   if (v === 'shelf') renderShelf();
+  if (v === 'report' && window.ASSAY_REPORT) window.ASSAY_REPORT.render(S.run);
   if (v === 'tamper') renderMissions();
   if (window.ASSAY_VIEWS && ['traverse', 'replay', 'diff'].includes(v)) window.ASSAY_VIEWS.render(v);
   window.scrollTo({ top: 0 });
@@ -609,7 +611,7 @@ function up() {
   if ($('#card').classList.contains('on')) return $('#card').classList.remove('on');
   if (S.item) { S.item = null; return renderRail(); }
   if (S.sel) { S.sel = null; document.querySelectorAll('.gate').forEach(g => g.setAttribute('aria-pressed', 'false')); return renderRail(); }
-  if (S.view !== 'bench') go('bench');
+  if (S.view !== 'report') go('report');
 }
 function setTable(on) { S.table = on; $('#tableBtn').setAttribute('aria-pressed', on); $('#visual').hidden = on; $('#tableView').hidden = !on; if (on) renderTable(); }
 function setDesc(on) { S.desc = on; $('#descBtn').setAttribute('aria-pressed', on); if (on) live(describe(S.run).replace(/<[^>]+>/g, '')); renderRail(); }
@@ -619,7 +621,7 @@ document.addEventListener('click', e => {
   if (t.dataset.view) return go(t.dataset.view);
   if (t.dataset.goto) return go(t.dataset.goto);
   if (t.dataset.close === 'card') $('#card').classList.remove('on');
-  if (t.dataset.run) { S.mission = null; if (t.dataset.open) go('bench'); const p = load(t.dataset.run); if (t.dataset.replay) go('replay'); return p; }
+  if (t.dataset.run) { S.mission = null; if (t.dataset.open) go('report'); const p = load(t.dataset.run); if (t.dataset.replay) go('replay'); return p; }
   if (t.dataset.gate) { S.sel = S.sel === t.dataset.gate ? null : t.dataset.gate; S.item = null; document.querySelectorAll('.gate').forEach(g => g.setAttribute('aria-pressed', g.dataset.gate === S.sel)); return renderRail(); }
   if (t.dataset.d && t.dataset.k != null) { S.sel = t.dataset.d; S.item = { d: t.dataset.d, k: +t.dataset.k }; return renderRail(); }
   if (t.dataset.unk) { S.item = { unk: true }; return renderRail(); }
@@ -672,8 +674,8 @@ document.addEventListener('keydown', e => {
   if (k === 'Escape') return up();
   if (k === '?') return $('#help').classList.add('on');
   if (k === 'p' || k === 'P') return renderCard();
-  if (k === '1') return go('bench'); if (k === '2') return go('shelf'); if (k === '3') return go('tamper');
-  if (k === '4') return go('traverse'); if (k === '5') return go('replay'); if (k === '6') return go('diff');
+  if (k === '1') return go('report'); if (k === '2') return go('bench'); if (k === '3') return go('replay');
+  if (k === '4') return go('traverse'); if (k === '5') return go('diff'); if (k === '6') return go('shelf'); if (k === '7') return go('tamper');
   if (S.view !== 'bench') return;
   if (k === ' ' && !e.target.closest('button')) { e.preventDefault(); return toggle(); }
   if (k === 'ArrowRight') { e.preventDefault(); return seek(Math.floor(S.p) + (e.shiftKey ? 10 : 1)); }
@@ -685,7 +687,10 @@ document.addEventListener('keydown', e => {
 });
 
 // Shared with views.js (Traverse, Replay, Diff) and the folder drop.
-window.ASSAY = { runs: RUNS, byId, current: () => S.run, load, go, view: () => S.view, files: new Map() };
+window.ASSAY = { runs: RUNS, byId, current: () => S.run, load, go, view: () => S.view, files: new Map(), DMAP, LADDER, esc, full,
+  // Report → Scan: open a detector's first finding with the scan finished.
+  focus(d) { go('bench'); S.p = BINS; S.sel = d; S.item = { d, k: 0 }; update(true); renderRail(); },
+};
 
 /* ---------- folder drop (ADR-019): assay runs in a worker, on your files ---------- */
 async function readEntries(items) {

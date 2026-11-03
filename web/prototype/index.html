@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Assay Bench</title>
+<title>Assay</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap">
 <style>
@@ -290,7 +290,7 @@ svg.fig{display:block;width:100%;height:auto;aspect-ratio:300/90;flex:none;backg
 #dropzone.busy #dropmsg{opacity:.7}
 @media (prefers-reduced-motion:reduce){*,*::before,*::after{animation-duration:.01ms!important;transition-duration:.01ms!important}}
 </style>
-<link rel="stylesheet" href="theme.css">
+<link rel="stylesheet" href="theme.css?v=13">
 </head>
 <body>
 <header class="top">
@@ -299,15 +299,17 @@ svg.fig{display:block;width:100%;height:auto;aspect-ratio:300/90;flex:none;backg
     assay
   </a>
   <nav class="tabs" role="tablist" aria-label="Views">
-    <button class="tab" role="tab" data-view="bench" aria-selected="true">Bench <kbd>1</kbd></button>
-    <button class="tab" role="tab" data-view="shelf" aria-selected="false">Shelf <kbd>2</kbd></button>
-    <button class="tab" role="tab" data-view="tamper" aria-selected="false">Tamper <kbd>3</kbd></button>
-    <button class="tab" role="tab" data-view="traverse" aria-selected="false">Traverse <kbd>4</kbd></button>
-    <button class="tab" role="tab" data-view="replay" aria-selected="false">Replay <kbd>5</kbd></button>
-    <button class="tab" role="tab" data-view="diff" aria-selected="false">Diff <kbd>6</kbd></button>
+    <button class="tab" role="tab" data-view="report" aria-selected="true">Report <kbd>1</kbd></button>
+    <button class="tab" role="tab" data-view="bench" aria-selected="false">Scan <kbd>2</kbd></button>
+    <button class="tab" role="tab" data-view="replay" aria-selected="false">Rebuild <kbd>3</kbd></button>
+    <button class="tab" role="tab" data-view="traverse" aria-selected="false">Timeline <kbd>4</kbd></button>
+    <button class="tab" role="tab" data-view="diff" aria-selected="false">Compare <kbd>5</kbd></button>
+    <button class="tab" role="tab" data-view="shelf" aria-selected="false">Runs <kbd>6</kbd></button>
+    <button class="tab" role="tab" data-view="tamper" aria-selected="false">Play <kbd>7</kbd></button>
   </nav>
   <div class="spacer"></div>
   <div class="score" id="score" title="Tamper missions where assay caught the lie"></div>
+  <button class="tool" data-act="finder" title="Find a run (Ctrl K)">Find <kbd>Ctrl K</kbd></button>
   <label class="tool" title="Assay a session folder on this machine; nothing is uploaded" style="cursor:pointer">Open folder<input type="file" id="pickdir" webkitdirectory multiple hidden></label>
   <button class="tool" id="sound" aria-pressed="false" title="Sound">Sound</button>
   <button class="tool" id="theme" title="Switch theme">Theme</button>
@@ -316,7 +318,8 @@ svg.fig{display:block;width:100%;height:auto;aspect-ratio:300/90;flex:none;backg
 
 <main>
   <!-- BENCH -->
-  <section class="view on" id="v-bench" aria-label="Bench">
+  <section class="view on" id="v-report" aria-label="Report"><div id="report"></div></section>
+  <section class="view" id="v-bench" aria-label="Bench">
     <div class="bench">
       <aside class="panel plate" id="plate" aria-label="Capture level"></aside>
 
@@ -393,8 +396,8 @@ svg.fig{display:block;width:100%;height:auto;aspect-ratio:300/90;flex:none;backg
   <!-- SHELF -->
   <section class="view" id="v-shelf" aria-label="Shelf">
     <div class="shelfhead">
-      <h2>Every session<br>on the shelf.</h2>
-      <p class="hint" style="max-width:420px;margin:0">Each core is a whole transcript, top to bottom. Hatching is what the importer kept aside. Red marks are warnings, grey ones info. ×1.0 below means the counts match. Pick one up to assay it.</p>
+      <h2>Runs</h2>
+      <p class="hint" style="max-width:420px;margin:0">Every session in the corpus. Each card is a whole transcript, top to bottom; hatching is what the importer kept aside. The strip shows how far a naive sum overcounts output tokens (×1.0 means it matches). Pick one to open its report, or press Ctrl K.</p>
       <div class="spacer"></div>
       <div class="filters" id="filters"></div>
     </div>
@@ -429,8 +432,9 @@ svg.fig{display:block;width:100%;height:auto;aspect-ratio:300/90;flex:none;backg
       <kbd>Space</kbd><span>Assay / pause</span>
       <kbd>← →</kbd><span>Step one column (Shift: ten)</span>
       <kbd>Home End</kbd><span>Rewind / finish</span>
-      <kbd>1 2 3</kbd><span>Bench, Shelf, Tamper</span>
-      <kbd>4 5 6</kbd><span>Traverse, Replay, Diff</span>
+      <kbd>1 2 3</kbd><span>Report, Scan, Rebuild</span>
+      <kbd>4 5 6 7</kbd><span>Timeline, Compare, Runs, Play</span>
+      <kbd>Ctrl K</kbd><span>Find a run</span>
       <kbd>J K</kbd><span>Replay: next / previous step</span>
       <kbd>T</kbd><span>Table mode</span>
       <kbd>P</kbd><span>Punch card</span>
@@ -449,9 +453,10 @@ svg.fig{display:block;width:100%;height:auto;aspect-ratio:300/90;flex:none;backg
 </div>
 <div class="sr" id="live" aria-live="polite"></div>
 
-<script src="data.js"></script>
-<script src="app.js"></script>
-<script src="assay-core.js"></script>
-<script src="views.js"></script>
+<script src="data.js?v=13"></script>
+<script src="app.js?v=13"></script>
+<script src="assay-core.js?v=13"></script>
+<script src="views.js?v=13"></script>
+<script src="report.js?v=13"></script>
 </body>
 </html>

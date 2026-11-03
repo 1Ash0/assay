@@ -23,16 +23,16 @@ Six punches read left to right: sponsor (harness version) · capture · fineness
 **Fineness** (ADR-022) = ⌊1000 × min(usage coverage, parsed telemetry, model identification)⌋, marked to the lowest standard; the punch names the bounding rate. Catalogued no-telemetry record types are preserved but leave the denominator.
 
 ## Views
-- **Bench** (intake scan): a head reads the transcript left to right in 140 segments; detector gates count as it passes their findings; the context curve fills; the hallmark strikes at the end. Step, scrub, replay. Same run, same scan, every time.
+- **Scan** (was Bench; intake scan): a head reads the transcript left to right in 140 segments; detector gates count as it passes their findings; the context curve fills; the hallmark strikes at the end. Step, scrub, replay. Same run, same scan, every time.
 - **Certificate**: verdict per metric family, assay notes (findings by severity, each with an offset), "not counted" footnotes, the observability boxes, and per-detector figures (D1 no-recovery box, D2 copies, D6 range, D-cost balance, …).
 - **Core**: four measured token layers per request at L1, plus an "unlogged at L1" column (ADR-018). The 11-category split is M4.
-- **Shelf**: every run in the corpus as a specimen, filterable by truth and verdict.
-- **Traverse**: a Marey chart of who did what, when.
+- **Runs** (was Shelf): every run in the corpus as a specimen, filterable by truth and verdict.
+- **Timeline** (was Traverse): a Marey chart of who did what, when.
 - **Replay** (M4, P6), around the selected step:
   - **Core box:** one column per request with category bands at measured height; dashed means not reconstructed, a wavy line means compaction.
-  - **The Charge:** the selected request's make-up, with a Rebuild play that lays the blocks back and strikes the seal. The seal is core's digest check and appears only for sealed requests; categories mostly split by characters are stippled.
+  - **Rebuild** (was the Charge): categories flow along ribbons, as wide as their tokens, into the request body; dashed ribbons where most of a category is split by characters; the seal stamps last. It is a full-width row and a freshly opened run starts on its first sealed request. Formerly: the selected request's make-up, with a Rebuild play that lays the blocks back and strikes the seal. The seal is core's digest check and appears only for sealed requests; categories mostly split by characters are stippled.
   - **Streaks:** each tool call's literals and where each first appeared, with `l1-lines` labelled as an upper bound.
-- **Run Diff**: twin lanes from core's `align` (ADR-034), with ribbons for exact key matches and the first divergence shown as "at or after" when neighbours share a key. The view says that keys ignore inputs, and whether the pair is a recorded twin.
+- **Compare** (was Run Diff; curved ribbons draw in, the first divergence pulses; a run opens against its recorded twin): twin lanes from core's `align` (ADR-034), with ribbons for exact key matches and the first divergence shown as "at or after" when neighbours share a key. The view says that keys ignore inputs, and whether the pair is a recorded twin.
 - **Site data**: `data.js` holds what the bench and shelf draw; each run's spine is in `runs/<id>.json` (gitignored, scanned by web-check), loaded on first use.
 
 ## Play layer (ADR-017)

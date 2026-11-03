@@ -65,32 +65,46 @@ function traverse(r) {
 // One colour per category, from the bench palette; vermilion stays reserved
 // for capture failure. A category's inferred tokens are drawn stippled.
 const CAT = {
-  System: 'var(--s)', 'CLAUDE.md': 'var(--cob)', Memory: 'var(--cob)', Skills: 'color-mix(in srgb,var(--cob) 45%,var(--paper))',
-  MCP: 'color-mix(in srgb,var(--cob) 70%,var(--ink))', Rules: 'var(--cob)', You: 'var(--ochre)', Files: 'color-mix(in srgb,var(--ink) 60%,var(--paper))',
-  Output: 'color-mix(in srgb,var(--ink) 35%,var(--paper))', Claude: 'var(--a)', Hooks: 'color-mix(in srgb,var(--ochre) 50%,var(--paper))', uncategorised: 'var(--paper-2)',
+  System: 'var(--c1)', 'CLAUDE.md': 'var(--c2)', Memory: 'var(--c2)', Skills: 'var(--c3)', MCP: 'var(--c4)', Rules: 'var(--c2)',
+  You: 'var(--u)', Files: 'var(--c5)', Output: 'var(--c6)', Claude: 'var(--a)', Hooks: 'var(--c3)', uncategorised: 'var(--o)',
 };
-const STIPPLE = 'background-image:radial-gradient(var(--paper) 1px,transparent 1.2px);background-size:4px 4px';
 const partsOf = c => c ? c.parts.map(([cat, m, i]) => ({ cat, m, i, t: m + i })).filter(p => p.t > 0) : [];
 
+// The Charge as a flow: each category on the left pours along a ribbon, as
+// wide as its tokens, into the request body on the right. A category mostly
+// split by characters (inferred) has a dashed ribbon edge. The seal is core's
+// digest check, already done; the animation only reveals it.
 function charge(r, s) {
   const c = s.context;
   if (!c) {
     // Core's validity card says whether the run has request records at all.
     const why = !r.validity.requests ? 'This run has no request records (Claude Code before 2.1.299 writes none), so there is nothing to check a rebuild against.' : 'This step has no sealed request record, so its make-up is not drawn.';
-    return `<div style="border:1.5px dashed var(--rule);border-radius:8px;padding:10px"><div class="label">The Charge · not reconstructed</div><div class="hint">${why} Only a request whose rebuild hashes to its own digest is drawn here.</div></div>`;
+    return `<div class="chg-empty"><div class="label">Rebuild · not reconstructed</div><div class="hint">${why} Only a request whose rebuild hashes to its own digest is drawn here.</div></div>`;
   }
-  const ps = partsOf(c), tot = ps.reduce((a, p) => a + p.t, 0) || 1;
-  const stack = ps.map(p => `<div class="chg" title="${esc(p.cat)}: ${full(p.t)} tokens (${full(p.m)} measured, ${full(p.i)} split by characters)" style="flex:${p.t};background:${CAT[p.cat] || 'var(--o)'};${p.i >= p.m ? STIPPLE : ''};min-height:2px"></div>`).join('');
-  const legend = ps.slice().sort((a, b) => b.t - a.t).map(p => `<div style="display:flex;gap:8px;align-items:center;font-size:12px"><span style="width:10px;height:10px;border-radius:2px;background:${CAT[p.cat]};${p.i >= p.m ? STIPPLE : ''};border:1px solid var(--rule)"></span><span class="mono" style="min-width:96px">${esc(p.cat)}</span><span class="mono">${full(p.t)}</span><span class="hint">${(100 * p.t / tot).toFixed(1)}%</span></div>`).join('');
+  const ps = partsOf(c).sort((a, b) => b.t - a.t), tot = ps.reduce((a, p) => a + p.t, 0) || 1;
+  // Source bands get a floor of 16px so every label stays legible; the body
+  // stack on the right keeps true proportions.
+  const W = 560, gap = 6, BX = 470, BW = 60, hs = ps.map(p => Math.max(16, 240 * p.t / tot)), H = hs.reduce((a, h) => a + h, 0) + gap * (ps.length - 1);
+  let y = 0, by = 0, svg = '';
+  ps.forEach((p, k) => {
+    const h = hs[k], bh = Math.max(1.5, H * p.t / tot), inf = p.i >= p.m, col = CAT[p.cat] || 'var(--o)';
+    const y0 = y + h / 2, y1 = by + bh / 2, mid = (150 + BX) / 2;
+    svg += `<g class="chg-band" style="--d:${k * 110}ms">
+      <rect x="0" y="${y}" width="6" height="${h}" fill="${col}"/>
+      <text x="14" y="${y + Math.min(h, 22) / 2 + 4}" class="chg-t">${esc(p.cat)} <tspan class="chg-n">${full(p.t)} · ${(100 * p.t / tot).toFixed(1)}%</tspan></text>
+      <path class="chg-rib" d="M150 ${y0} C ${mid} ${y0}, ${mid} ${y1}, ${BX} ${y1}" stroke="${col}" stroke-width="${Math.max(1.5, Math.min(h, bh))}" fill="none" opacity=".5" ${inf ? 'stroke-dasharray="3 3"' : ''}><title>${esc(p.cat)}: ${full(p.t)} tokens (${full(p.m)} measured, ${full(p.i)} split by characters)</title></path>
+      <path class="chg-flow" d="M150 ${y0} C ${mid} ${y0}, ${mid} ${y1}, ${BX} ${y1}" stroke="${col}" stroke-width="1.2" fill="none"/>
+      <rect class="chg-blk" x="${BX}" y="${by}" width="${BW}" height="${bh}" fill="${col}"/>
+    </g>`;
+    y += h + gap; by += bh;
+  });
   const ns = r.spine.notSeparable ? Object.entries(r.spine.notSeparable).map(([k, v]) => `${esc(k)}: ${esc(v)}`).join(' · ') : '';
-  return `<div style="border:1.5px solid var(--rule);border-radius:8px;padding:10px;display:grid;gap:8px">
-    <div style="display:flex;justify-content:space-between;align-items:baseline;gap:8px"><span class="label">The Charge · what it was made of</span><button class="tool" data-rebuild aria-label="Rebuild this request">Rebuild</button></div>
-    <div style="display:grid;grid-template-columns:44px 1fr;gap:12px">
-      <div id="chg" style="display:flex;flex-direction:column-reverse;height:200px;border:1px solid var(--rule);border-radius:4px;overflow:hidden">${stack}</div>
-      <div style="display:grid;gap:3px;align-content:start">${legend}</div>
-    </div>
-    <div id="seal" class="mono" style="font-size:12px;padding:6px 8px;border:1.5px solid var(--ink);border-radius:6px;justify-self:start">sealed · rebuilt body hashes to the record's digest (line ${full(c.line + 1)})</div>
-    <div class="hint">${full(c.deltaMeasured)} of ${full(c.total)} tokens measured by usage deltas; the split across categories is by characters (stippled where most of a category is split). ${ns}</div>
+  return `<div class="chg-box">
+    <div class="chg-top"><span class="label">Rebuild · what this request was made of</span><button class="tool" data-rebuild aria-label="Rebuild this request again">↻ Rebuild</button></div>
+    <div style="overflow-x:auto"><svg id="chg" viewBox="0 0 ${W} ${H}" style="width:100%;max-width:880px;min-width:420px;height:auto;display:block;margin:0 auto" role="img" aria-label="${ps.length} categories flowing into a request of ${full(c.total)} tokens">${svg}
+      <rect x="${BX - 1}" y="0" width="${BW + 2}" height="${H}" fill="none" stroke="var(--ink)" stroke-width="1"/></svg></div>
+    <div id="seal" class="chg-seal"><span>✓</span><div><b>Sealed</b><span class="mono">rebuilt body hashes to the record's own digest · line ${full(c.line + 1)}</span></div></div>
+    <div class="hint">${full(c.deltaMeasured)} of ${full(c.total)} tokens measured by usage deltas; the split across categories is by characters (dashed ribbons where most of a category is split). ${ns}</div>
   </div>`;
 }
 
@@ -136,6 +150,8 @@ function streaks(s) {
 function replay(r) {
   const sp = r.spine, n = sp.steps.length;
   if (!n) return `<div class="panel" style="padding:20px"><div class="hint">This run has no model requests to step through.</div></div>`;
+  // A freshly loaded run opens on its first sealed request, so Rebuild has something to rebuild.
+  if (V.sealFor !== r.id) { V.sealFor = r.id; const k = sp.steps.findIndex(x => x.context); if (k > 0) V.step = k; }
   V.step = Math.max(0, Math.min(n - 1, V.step));
   const s = sp.steps[V.step];
   const [inp, cr, cw, out] = s.usage, tot = inp + cr + cw;
@@ -161,9 +177,8 @@ function replay(r) {
       <div style="display:grid;gap:8px;align-content:start">
         <div class="label">What the model had</div>
         <div class="mono" style="font-size:22px">${full(tot)} <span class="hint">tokens in</span></div>
-        <div style="display:flex;height:16px;border:1px solid var(--rule);border-radius:4px;overflow:hidden">${bar(cr, 'var(--ink)', 'cache read')}${bar(cw, 'var(--cob)', 'cache write')}${bar(inp, 'var(--ochre)', 'uncached input')}</div>
+        <div style="display:flex;height:16px;border:1px solid var(--rule);border-radius:4px;overflow:hidden">${bar(cr, 'var(--ink)', 'cache read')}${bar(cw, 'var(--cob)', 'cache write')}${bar(inp, 'var(--u)', 'uncached input')}</div>
         <div class="hint">cache read ${full(cr)} · cache write ${full(cw)} · uncached ${full(inp)} · out ${full(out)}${lim ? ` · ${(100 * tot / lim).toFixed(1)}% of ${full(lim)}` : ''}</div>
-        ${charge(r, s)}
       </div>
       <div style="display:grid;gap:8px;align-content:start">
         <div class="label">The record</div>
@@ -173,6 +188,7 @@ function replay(r) {
         ${streaks(s)}
       </div>
     </div>
+    ${charge(r, s)}
   </div>`;
 }
 async function fillBytes(r) {
@@ -187,7 +203,8 @@ async function fillBytes(r) {
 function pickDiff() {
   const runs = A.runs;
   V.diffA = V.diffA || A.current().id;
-  V.diffB = V.diffB || (runs.find(x => x.id !== V.diffA && x.harness.version === A.byId[V.diffA].harness.version) || runs.find(x => x.id !== V.diffA)).id;
+  const tw = A.byId[A.byId[V.diffA].twinOf];
+  V.diffB = V.diffB || (tw && tw.id) || (runs.find(x => x.id !== V.diffA && x.harness.version === A.byId[V.diffA].harness.version) || runs.find(x => x.id !== V.diffA)).id;
 }
 function diff() {
   const runs = A.runs;
@@ -204,16 +221,16 @@ function diff() {
   const fuzzy = d != null && d > 0 && (ka[d - 1] === ka[d] || kb[d - 1] === kb[d]);
   const W = 1000, n = Math.max(ka.length, kb.length, 1), xa = i => 10 + (W - 20) * i / Math.max(1, ka.length - 1), xb = j => 10 + (W - 20) * j / Math.max(1, kb.length - 1);
   let svg = '';
-  for (const p of al.pairs) if (p.a != null && p.b != null) svg += `<line x1="${xa(p.a)}" y1="22" x2="${xb(p.b)}" y2="98" stroke="var(--rule)" stroke-width=".8"/>`;
+  for (const p of al.pairs) if (p.a != null && p.b != null) svg += `<path class="df-rib" style="--d:${Math.min(1200, p.a * 12)}ms" d="M${xa(p.a)} 22 C ${xa(p.a)} 60, ${xb(p.b)} 60, ${xb(p.b)} 98" stroke="var(--cob)" stroke-width="1" fill="none"/>`;
   ka.forEach((k, i) => { svg += `<rect x="${xa(i) - 1}" y="10" width="2" height="12" fill="${k ? 'var(--ink)' : 'var(--mute)'}"><title>A step ${i + 1}: ${esc(k || 'no tools')}</title></rect>`; });
   kb.forEach((k, j) => { svg += `<rect x="${xb(j) - 1}" y="98" width="2" height="12" fill="${k ? 'var(--ink)' : 'var(--mute)'}"><title>B step ${j + 1}: ${esc(k || 'no tools')}</title></rect>`; });
-  if (d != null) svg += `<line x1="${xa(Math.min(d, ka.length - 1))}" y1="2" x2="${xb(Math.min(d, kb.length - 1))}" y2="118" stroke="var(--ochre)" stroke-width="2" stroke-dasharray="5 3"><title>first divergence</title></line>`;
+  if (d != null) { const fx = xa(Math.min(d, ka.length - 1)), gx = xb(Math.min(d, kb.length - 1)); svg += `<g class="df-fork"><line x1="${fx}" y1="2" x2="${gx}" y2="118" stroke="var(--ochre)" stroke-width="2" stroke-dasharray="5 3"><title>first divergence</title></line><circle cx="${(fx + gx) / 2}" cy="60" r="6" fill="var(--ochre)"/><circle class="df-ping" cx="${(fx + gx) / 2}" cy="60" r="6" fill="none" stroke="var(--ochre)"/></g>`; }
   const near = (keys, i) => keys.slice(Math.max(0, i - 2), i + 3).map((k, j) => { const at = Math.max(0, i - 2) + j; return `<span class="mono" style="padding:1px 5px;border-radius:4px;${at === i ? 'outline:2px solid var(--ochre)' : 'opacity:.6'}">${esc(k || '·')}</span>`; }).join(' ');
   const twin = a.twinOf === b.id || b.twinOf === a.id;
   return `<div class="panel" style="padding:18px;display:grid;gap:12px">
     <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center"><span class="label">Run Diff · twin lanes</span>
       <label class="hint">A <select id="dA">${opt(V.diffA)}</select></label><label class="hint">B <select id="dB">${opt(V.diffB)}</select></label></div>
-    <div class="hint">${twin ? 'A recorded twin pair: same prompt, same repo commit.' : 'Not a recorded twin pair. No twin runs are in the corpus yet, and unrelated runs diverge early by nature.'}</div>
+    <div class="hint">${twin ? 'A recorded twin pair: same prompt, same repo commit.' : 'Not a recorded twin pair: unrelated runs diverge early by nature. Pick twin-a and twin-b for a recorded pair.'}</div>
     <div style="overflow-x:auto"><svg viewBox="0 0 ${W} 120" style="min-width:600px;width:100%" role="img" aria-label="${full(al.matched)} of ${full(n)} steps aligned by exact tool keys">${svg}</svg></div>
     <div class="hint">top lane A, bottom lane B · a ribbon joins two steps whose tool-name sets are identical · ${full(al.matched)} matched, ${full(al.onlyA)} only in A, ${full(al.onlyB)} only in B</div>
     <div style="display:grid;gap:6px">
@@ -250,21 +267,18 @@ async function render(v) {
     try { r = await ensureSpine(r); } catch (e) { host.innerHTML = `<div class="panel" style="padding:20px"><div class="hint">Could not load runs/${esc(r.id)}.json (${esc(e.message)}). Run pnpm web.</div></div>`; return; }
   }
   host.innerHTML = VIEWS[v](r);
-  if (v === 'replay') fillBytes(r);
+  if (v === 'replay') { fillBytes(r); rebuild(); }
 }
 window.ASSAY_VIEWS = { render, setStep(i) { V.step = i; }, step: () => V.step, reset() { V.step = 0; } };
 
 // Rebuild: lay the Charge's blocks back one by one, then strike the seal. The
 // seal is core's digest check, already done; the motion only reveals it.
 function rebuild() {
-  const blocks = [...document.querySelectorAll('#chg .chg')], seal = $('#seal');
-  if (!blocks.length || !seal) return;
-  const still = matchMedia('(prefers-reduced-motion: reduce)').matches;
-  blocks.forEach(b => { b.style.opacity = still ? 1 : 0; });
-  seal.style.opacity = still ? 1 : 0;
-  if (still) return;
-  blocks.forEach((b, i) => setTimeout(() => { b.style.transition = 'opacity .18s'; b.style.opacity = 1; }, 90 * (i + 1)));
-  setTimeout(() => { seal.style.transition = 'opacity .12s, transform .25s var(--spring)'; seal.style.transform = 'scale(1.12)'; seal.style.opacity = 1; setTimeout(() => { seal.style.transform = ''; }, 250); }, 90 * (blocks.length + 2));
+  const box = $('#chg'), seal = $('#seal');
+  if (!box || !seal) return;
+  // Restart the CSS animation: drop the class, force a reflow, add it back.
+  box.classList.remove('rb-on'); seal.classList.remove('rb-on'); void box.getBoundingClientRect();
+  box.classList.add('rb-on'); seal.style.setProperty('--d', (box.querySelectorAll('.chg-band').length * 110 + 700) + 'ms'); seal.classList.add('rb-on');
 }
 
 document.addEventListener('click', e => {
