@@ -69,10 +69,17 @@ async function run() {
         do { k++ } while (rejected.has(k % keys.length))
         attempt--; continue
       }
-      if (r.status === 429 || r.status >= 500) { last = `http ${r.status}`; k++; await new Promise(res => setTimeout(res, 2000 * 2 ** attempt)); continue }
+      if (r.status === 429 || r.status >= 500) {
+        // Honour the server's retry-after (seconds) when it gives one, up to 2 minutes.
+        const ra = Number(r.headers.get('retry-after'))
+        last = `http ${r.status}`; k++
+        await new Promise(res => setTimeout(res, Number.isFinite(ra) && ra > 0 ? Math.min(ra, 120) * 1000 : 2000 * 2 ** attempt)); continue
+      }
       throw new Error(`groq ${r.status}: ${(await r.text()).slice(0, 200)}`)
     }
-    throw new Error(`groq: retries exhausted (${last}); if this is a connection timeout, check VPN or proxy settings for api.groq.com`)
+    // Quota and network failures say nothing about the span, so they are not a
+    // result: the run stops and the span is retried by the next run.
+    throw Object.assign(new Error(`groq: retries exhausted (${last})`), { transient: true })
   }
   const models = (await call('models')).data.map(m => m.id)
   // Preference order from the preregistration, as amended before any call (Amendment 1).
@@ -93,7 +100,15 @@ async function run() {
       })
       const v = Number(JSON.parse(out.choices[0].message.content).p)
       if (Number.isFinite(v) && v >= 0 && v <= 1) p = v; else error = 'reply had no p in [0,1]'
-    } catch (e) { error = String(e.message).slice(0, 200) }
+    } catch (e) {
+      if (e.transient) {
+        const left = sample.length - done.size - n
+        console.error(`stopped: ${e.message}. ${n} new answers this run, ${left} spans left. Likely the Groq rate limit (per minute or per day); run again later and it resumes.`)
+        return
+      }
+      error = String(e.message).slice(0, 200)
+    }
+    // Only a real outcome is cached: an answer, or a span the model could not answer.
     appendFileSync(CACHE, JSON.stringify({ id, model, p, ...(error ? { error } : {}) }) + '\n')
     if (++n % 25 === 0) console.error(`${n} answered this run`)
   }
