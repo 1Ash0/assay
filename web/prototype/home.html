@@ -37,7 +37,7 @@ nav .wrap{display:flex;align-items:center;gap:24px;height:64px}
 .hero{display:grid;grid-template-columns:minmax(0,1.1fr) minmax(0,1fr);gap:48px;align-items:center;padding-top:72px;padding-bottom:56px}
 h1{margin:0;font-size:clamp(48px,7.4vw,104px);line-height:.9;letter-spacing:-.055em;font-weight:800}
 h1 em{font-style:normal;position:relative;white-space:nowrap;z-index:0}
-h1 em::after{content:"";position:absolute;left:-4px;right:-4px;bottom:.06em;height:.16em;background:var(--verm);z-index:-1;transform-origin:left;animation:swipe .9s .4s var(--ease) both}
+h1 em::after{content:"";position:absolute;left:-4px;right:-4px;bottom:.06em;height:.16em;background:var(--cob);opacity:.8;z-index:-1;transform-origin:left;animation:swipe .9s .4s var(--ease) both}
 @keyframes swipe{from{transform:scaleX(0)}}
 .lede{font-size:21px;line-height:1.45;color:var(--ink-2);max-width:540px;margin:24px 0 32px}
 .ctas{display:flex;gap:12px;flex-wrap:wrap;align-items:center}
@@ -63,11 +63,11 @@ h1 em::after{content:"";position:absolute;left:-4px;right:-4px;bottom:.06em;heig
 .punch.verdict b,.punch.verdict i{color:var(--ochre)}.punch.verdict i{margin:0;font-size:11px;font-weight:600;text-align:left;line-height:1.2;max-width:110px}
 .punch-key{display:grid;grid-template-columns:repeat(6,auto);gap:4px 10px;margin-top:8px;font-family:var(--mono);font-size:10.5px;color:var(--mute)}
 .finding{margin-top:18px;padding:14px;border-radius:12px;background:var(--paper-2);border:1px solid var(--rule-2);display:grid;grid-template-columns:auto 1fr;gap:4px 12px;align-items:start}
-.finding .d{font-family:var(--mono);font-weight:600;color:var(--verm);font-size:14px}
+.finding .d{font-family:var(--mono);font-weight:600;color:var(--ochre);font-size:14px}
 .finding .m{font-size:14px;line-height:1.4}
 .finding .w{grid-column:2;font-family:var(--mono);font-size:11.5px;color:var(--mute)}
 .bytes{grid-column:2;height:10px;border-radius:3px;background:var(--ground);position:relative;overflow:hidden;margin-top:4px;border:1px solid var(--rule-2)}
-.bytes i{position:absolute;top:0;bottom:0;background:var(--verm);min-width:2px}
+.bytes i{position:absolute;top:0;bottom:0;background:var(--ochre);min-width:2px}
 
 /* sections */
 section.wrap{padding-top:72px;padding-bottom:72px}
@@ -82,7 +82,7 @@ h2{margin:0;font-size:clamp(36px,5vw,64px);line-height:.95;letter-spacing:-.045e
 .gauge{position:relative;height:120px;margin:34px 0 10px}
 .gauge .track{position:absolute;left:0;right:0;top:50px;height:20px;border-radius:6px;background:repeating-linear-gradient(90deg,var(--rule-2) 0 1px,transparent 1px 10%) ,var(--paper-2);border:1px solid var(--rule)}
 .gauge .naive{position:absolute;right:0;top:0;text-align:right}
-.gauge .naive b{display:block;font-size:20px;color:var(--verm);text-decoration:line-through;text-decoration-thickness:2px}
+.gauge .naive b{display:block;font-size:20px;color:var(--ochre);text-decoration:line-through;text-decoration-thickness:2px}
 .gauge .guess{position:absolute;top:44px;width:4px;height:32px;margin-left:-2px;background:var(--ink);border-radius:2px;pointer-events:none}
 .gauge .guess::after{content:attr(data-v);position:absolute;top:38px;left:50%;transform:translateX(-50%);font-family:var(--mono);font-size:13px;font-weight:600;white-space:nowrap;background:var(--ink);color:var(--paper);padding:3px 8px;border-radius:6px}
 .gauge .truth{position:absolute;top:30px;width:0;height:60px;border-left:3px solid var(--cob);opacity:0;transition:opacity .3s}
@@ -93,13 +93,13 @@ h2{margin:0;font-size:clamp(36px,5vw,64px);line-height:.95;letter-spacing:-.045e
 .gside{display:flex;flex-direction:column;gap:12px;border-left:1px solid var(--rule-2);padding-left:24px}
 .big{font-size:56px;font-weight:800;letter-spacing:-.04em;line-height:.95;font-variant-numeric:tabular-nums}
 .verdict-line{font-size:18px;font-weight:700;min-height:48px;line-height:1.25}
-.verdict-line.good{color:var(--cob)}.verdict-line.bad{color:var(--verm)}
+.verdict-line.good{color:var(--mint)}.verdict-line.bad{color:var(--ochre)}
 .dots{display:flex;gap:5px;flex-wrap:wrap}
 .dots i{width:12px;height:12px;border-radius:50%;border:1.5px solid var(--rule)}
-.dots i.hit{background:var(--cob);border-color:var(--cob)}.dots i.miss{background:var(--verm);border-color:var(--verm)}
+.dots i.hit{background:var(--mint);border-color:var(--mint)}.dots i.miss{background:var(--ochre);border-color:var(--ochre)}
 
 /* gates rack */
-.rack{display:grid;grid-template-columns:repeat(11,minmax(0,1fr));gap:8px}
+.rack{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:8px}
 .g{aspect-ratio:1/1.25;border:2px solid var(--ink);border-radius:14px;display:flex;flex-direction:column;justify-content:space-between;padding:10px;text-align:left;background:var(--paper);transition:transform .3s var(--spring),background .2s}
 .g:hover{transform:translateY(-6px) rotate(-1.5deg)}
 .g[aria-pressed="true"]{background:var(--ink);color:var(--paper)}
@@ -107,13 +107,13 @@ h2{margin:0;font-size:clamp(36px,5vw,64px);line-height:.95;letter-spacing:-.045e
 .g .n{font-size:28px;font-weight:800;letter-spacing:-.03em;line-height:1}
 .g .n small{display:block;font-family:var(--mono);font-size:10px;font-weight:400;letter-spacing:0;opacity:.7;margin-top:3px}
 .g.never{border-style:dashed;border-color:var(--rule);color:var(--mute)}
-.g.warn .n{color:var(--verm)}.g[aria-pressed="true"].warn .n{color:var(--verm)}
+.g.warn .n{color:var(--ochre)}.g[aria-pressed="true"].warn .n{color:var(--ochre)}
 .gdetail{margin-top:14px;padding:20px 22px;display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.1fr);gap:24px;align-items:center;min-height:150px}
 .gdetail h3{margin:0;font-size:30px;letter-spacing:-.03em}
 .gdetail p{margin:8px 0 0;font-size:16px;line-height:1.5;color:var(--ink-2)}
 .mini-shelf{display:flex;gap:4px;align-items:flex-end;flex-wrap:wrap}
 .mini-shelf a{display:block;width:22px;border-radius:4px;background:var(--paper-2);border:1px solid var(--rule);text-decoration:none;transition:transform .2s var(--spring)}
-.mini-shelf a.hit{background:var(--verm);border-color:var(--verm)}
+.mini-shelf a.hit{background:var(--ochre);border-color:var(--ochre)}
 .mini-shelf a:hover{transform:translateY(-4px)}
 
 /* ladder */
@@ -181,8 +181,8 @@ footer .wrap{display:flex;gap:18px;flex-wrap:wrap}
 }
 @media (prefers-reduced-motion:reduce){*,*::before,*::after{animation-duration:.01ms!important;transition-duration:.01ms!important}.reveal{opacity:1;transform:none}.punch{opacity:1}}
 </style>
-<link rel="stylesheet" href="theme.css?v=10">
-<style>.hero>canvas{inset:0 calc(50% - 50vw)!important;width:100vw!important}.hero>*:not(canvas){position:relative;z-index:1}</style>
+<link rel="stylesheet" href="theme.css?v=15">
+<style>.hero>*{min-width:0}.cmd{overflow-wrap:anywhere;min-width:0}.g{aspect-ratio:auto!important;min-height:84px}.hero>canvas{inset:0 calc(50% - 50vw)!important;width:100vw!important}.hero>*:not(canvas){position:relative;z-index:1}</style>
 </head>
 <body>
 <nav class="top" aria-label="Main">
@@ -206,7 +206,7 @@ footer .wrap{display:flex;gap:18px;flex-wrap:wrap}
       <a class="btn" href="#call">Call the first one ↓</a>
       <a class="btn ghost" href="index.html">Open the report</a>
     </div>
-    <div class="cmd" aria-label="CLI"><span>$</span>assay import ~/.claude/projects/&lt;proj&gt; &amp;&amp; assay health<button id="copy">copy</button></div>
+    <div class="cmd" aria-label="CLI"><span>$</span>assay check ~/.claude/projects/&lt;proj&gt;/&lt;session&gt;.jsonl<button id="copy">copy</button></div>
   </div>
   <div class="panel specimen" id="specimen" aria-label="A real run's hallmark"></div>
 </header>
@@ -221,8 +221,8 @@ footer .wrap{display:flex;gap:18px;flex-wrap:wrap}
 
 <section id="gates" class="wrap reveal">
   <div class="sh">
-    <h2>Eleven gates.<br>Every run.</h2>
-    <p>Each gate is a deterministic check with its evidence offset. No judge model. Tap one to see what it catches and which sessions on the shelf tripped it.</p>
+    <h2><span id="gcount">Fourteen</span> gates.<br>Every run.</h2>
+    <p>Each gate is a deterministic check with its evidence offset. No judge model. Tap one to see what it catches and which runs tripped it.</p>
   </div>
   <div class="rack" id="rack"></div>
   <div class="panel gdetail" id="gdetail"></div>
@@ -239,8 +239,8 @@ footer .wrap{display:flex;gap:18px;flex-wrap:wrap}
 
 <section class="wrap reveal">
   <div class="sh">
-    <h2>The shelf.</h2>
-    <p>Every real session, drawn as a core from first line to last. Blue is conversation, hatching is what the importer kept aside rather than drop, red marks are findings. Pick one up.</p>
+    <h2>The runs.</h2>
+    <p>Every real session, drawn as a core from first line to last. Teal is the assistant, lavender the user, hatching is what the importer kept aside rather than drop, amber marks are findings. Pick one to open its report.</p>
   </div>
   <div class="cores" id="cores"></div>
 </section>
@@ -260,19 +260,19 @@ footer .wrap{display:flex;gap:18px;flex-wrap:wrap}
     <div class="rule"><b>Real, perturbed, or scripted.</b><span>Every run says which. Scripted data never stands in for the real thing.</span></div>
     <div class="rule"><b>No inferred edges.</b><span>Links are observed ids or exact string matches. Nothing guessed by a model.</span></div>
     <div class="rule"><b>Gaps look like gaps.</b><span>A missing subagent is a crossed-out box, not a short bar.</span></div>
-    <div class="rule"><b>Stays on your machine.</b><span>Traces are parsed locally. Nothing is uploaded.</span></div>
+    <div class="rule"><b>Your files stay yours.</b><span>Drop a session on the report page and it is parsed in your browser; nothing is uploaded. Runs shown here are redacted exports.</span></div>
   </div>
 </section>
 
 <section class="wrap final reveal">
-  <h2>Put a run<br>on the bench.</h2>
-  <div class="ctas" style="justify-content:center;margin-top:28px"><a class="btn" href="index.html">Open the report</a><a class="btn ghost" href="index.html#shelf">Browse the shelf</a></div>
+  <h2>Open a run.<br>Read its report.</h2>
+  <div class="ctas" style="justify-content:center;margin-top:28px"><a class="btn" href="index.html">Open the report</a><a class="btn ghost" href="index.html#shelf">Browse all runs</a></div>
 </section>
 
-<footer><div class="wrap"><span>assay · prototype</span><span id="foot"></span><span class="spacer"></span><span>Numbers from assay-core via export-site · text redacted</span></div></footer>
+<footer><div class="wrap"><span>assay</span><span id="foot"></span><span class="spacer"></span><span>Numbers from assay-core via export-site · text redacted</span></div></footer>
 
 <script src="data.js"></script>
-<script src="home.js?v=10"></script>
-<script src="fx.js?v=10"></script>
+<script src="home.js?v=15"></script>
+<script src="fx.js?v=15"></script>
 </body>
 </html>

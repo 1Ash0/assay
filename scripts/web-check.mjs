@@ -8,7 +8,8 @@ const KB = f => Math.round(statSync(`${dir}/${f}`).size / 1024)
 
 // 1. Privacy: the data file is redacted by core; check nothing slipped through.
 const leaks = [
-    [/[A-Za-z]:\\[A-Za-z]/, 'Windows path'],
+    // JSON doubles backslashes, so a path in the data reads E:\\x; match one or two.
+    [/[A-Za-z]:\\{1,2}[A-Za-z]/, 'Windows path'],
     [/\/(home|Users)\/[^"\s]+/, 'home path'],
     [/[\w.+-]+@[\w-]+\.[\w.]+/, 'email address'],
     [/user\.account|organization\.id/, 'OTel identity attribute'],

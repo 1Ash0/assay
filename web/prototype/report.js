@@ -27,14 +27,14 @@
         <circle class="rp-arc" cx="60" cy="60" r="52" fill="none" stroke="var(--${tone(r.overall)})" stroke-width="6" stroke-linecap="butt"
           stroke-dasharray="${C}" stroke-dashoffset="${still() ? off : C}" data-off="${off}" transform="rotate(-90 60 60)" style="filter:drop-shadow(0 0 6px color-mix(in srgb,var(--${tone(r.overall)}) 45%,transparent))"/>
       </svg>
-      <div class="rp-ringnum"><b class="display" data-count="${f ?? 0}">${f == null ? '–' : still() ? f : 0}</b><span class="label">trust / 1000</span></div>
+      <div class="rp-ringnum"><b class="display" data-count="${f ?? 0}">${f == null ? '–' : still() ? f : 0}</b><span class="label" tabindex="0" data-tip="Trust score (fineness): 1000 × the lowest of usage coverage, parsed telemetry and model identification. The rate that sets it is named.">trust / 1000</span></div>
     </div>`;
   }
 
   function capture(r) {
     const L = r.capture.level;
     const cells = [0, 1, 2, 3, 4].map(i => `<span class="rp-cap ${i <= L ? 'on' : ''}" title="${esc(LADDER[i][1])}">L${i}</span>`).join('');
-    return `<div class="rp-capture"><span class="label">Captured at</span><b class="display">L${L}</b><span class="label">of L4</span><span class="rp-caps">${cells}</span></div>`;
+    return `<div class="rp-capture"><span class="label" tabindex="0" data-tip="Capture Level: how much of the run was recorded. L1 is the transcript alone; L4 adds the exact API bodies. Anything above this level is not in the record.">Captured at</span><b class="display">L${L}</b><span class="label">of L4</span><span class="rp-caps">${cells}</span></div>`;
   }
 
   function answer(fam, r, body) {
@@ -80,7 +80,7 @@
     host.innerHTML = `
     <div class="rp-head rise">
       <div class="rp-id">
-        <div class="rp-kicker"><span class="pulse"></span><span class="label">Run report · ${esc(r.truth)}${r.truth === 'scripted' ? ' · synthetic' : ''}</span></div>
+        <div class="rp-kicker"><span class="pulse"></span><span class="label">Run report · <span tabindex="0" data-tip="real: an unmodified session. real-perturbed: a real session with a deliberate, documented change. scripted: written by hand for tests, never shown as an example.">${esc(r.truth)}</span>${r.truth === 'scripted' ? ' · synthetic' : ''}</span></div>
         <h1 class="rp-title">${esc(title(r))}</h1>
         <div class="rp-sub">${sub(r)} · <span class="mono">${esc(r.id)}</span> <span class="mono rp-hash">${esc(r.file)}</span></div>
         ${capture(r)}
@@ -97,7 +97,7 @@
     </div>
     <div class="rp-grid">
       <section class="panel rp-sec"><div class="label">Numbers you can quote</div><div class="rp-nums">${numbers(r)}</div>
-        ${req ? `<div class="rp-seal"><span class="rp-sealmark ${req.broken ? 'bad' : ''}">${req.broken ? '✕' : '✓'}</span>${full(req.sealed)} of ${full(req.records)} request records sealed: rebuilt from the transcript, they hash to their own digest.${req.broken ? ` ${full(req.broken)} broken.` : ''}</div>` : ''}
+        ${req ? `<div class="rp-seal"><span class="rp-sealmark ${req.broken ? 'bad' : ''}">${req.broken ? '✕' : '✓'}</span>${full(req.sealed)} of ${full(req.records)} request records <span tabindex="0" data-tip="Sealed: the request body was rebuilt from the transcript and hashes to the digest Claude Code recorded for it.">sealed</span>: rebuilt from the transcript, they hash to their own digest.${req.broken ? ` ${full(req.broken)} broken.` : ''}</div>` : ''}
       </section>
       <section class="panel rp-sec"><div class="label">What went wrong · click to see the bytes</div><div class="rp-finds">${findings(r)}</div></section>
       <section class="panel rp-sec"><div class="label">What this record can't tell you</div>

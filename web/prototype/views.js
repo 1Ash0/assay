@@ -78,7 +78,7 @@ function charge(r, s) {
   const c = s.context;
   if (!c) {
     // Core's validity card says whether the run has request records at all.
-    const why = !r.validity.requests ? 'This run has no request records (Claude Code before 2.1.299 writes none), so there is nothing to check a rebuild against.' : 'This step has no sealed request record, so its make-up is not drawn.';
+    const why = !r.validity.requests ? 'This run has no request records (not every session writes them), so there is nothing to check a rebuild against.' : 'This step has no sealed request record, so its make-up is not drawn.';
     return `<div class="chg-empty"><div class="label">Rebuild · not reconstructed</div><div class="hint">${why} Only a request whose rebuild hashes to its own digest is drawn here.</div></div>`;
   }
   const ps = partsOf(c).sort((a, b) => b.t - a.t), tot = ps.reduce((a, p) => a + p.t, 0) || 1;
@@ -135,15 +135,45 @@ function coreBox(r) {
     <div class="hint">${full(withC.length)} of ${full(n)} requests sealed and drawn · dashed = not reconstructed · wavy line = compaction</div></div>`;
 }
 
+// Provenance threads: each literal arcs from where it first appeared to this
+// tool call (right edge). Line origins (l1-lines) are dashed: they search the
+// transcript, which holds text the model never received, so they over-count.
+// Request origins sit in three zones of the request: system, tools, messages.
+function threads(s) {
+  const ps = s.provenance || [];
+  const ex = ps.flatMap(p => p.examples.map(([text, w]) => ({ text, w, lines: p.source === 'l1-lines', tool: (s.tools[p.tool] || { name: '?' }).name })));
+  if (!ex.length) return '';
+  const W = 600, H = 92, X1 = W - 14, BASE = 70;
+  const maxM = Math.max(1, ...ex.filter(e => e.w && e.w[0] === 'm').map(e => parseFloat(e.w.slice(1)) + 1));
+  const xOf = e => {
+    const w = e.w;
+    if (w[0] === 'l') return 14 + (X1 - 40) * Math.min(1, (+w.slice(1)) / Math.max(1, s.line));
+    if (w[0] === 's') return 30;
+    if (w[0] === 't') return 120;
+    return 200 + (X1 - 240) * (parseFloat(w.slice(1)) / maxM);
+  };
+  const zones = ex.some(e => !e.lines) ? `<text x="14" y="88" class="th-z">system</text><text x="110" y="88" class="th-z">tools</text><text x="200" y="88" class="th-z">messages →</text>`
+    : `<text x="14" y="88" class="th-z">line 1</text><text x="${X1 - 40}" y="88" class="th-z" text-anchor="end">line ${full(s.line)}</text>`;
+  let g = `<line x1="14" x2="${X1}" y1="${BASE}" y2="${BASE}" stroke="var(--rule)"/>`;
+  ex.forEach((e, i) => {
+    if (e.w == null) { g += `<circle cx="${X1}" cy="${BASE}" r="3" fill="none" stroke="var(--mute)"><title>${esc(e.text)}: no earlier occurrence</title></circle>`; return; }
+    const x0 = xOf(e), h = 16 + Math.min(48, (X1 - x0) / 9);
+    g += `<path class="th" style="--d:${i * 120}ms" d="M${x0} ${BASE} C ${x0} ${BASE - h}, ${X1} ${BASE - h}, ${X1} ${BASE}" fill="none" stroke="var(--cob)" stroke-width="1.6" ${e.lines ? 'stroke-dasharray="4 4"' : ''}><title>${esc(e.tool)} · ${esc(e.text)} first appeared at ${esc(e.w)}${e.lines ? ' (transcript line, upper bound)' : ''}</title></path><circle cx="${x0}" cy="${BASE}" r="3.5" fill="var(--cob)"/>`;
+  });
+  g += `<rect x="${X1 - 3}" y="${BASE - 8}" width="6" height="16" fill="var(--ink)"/><text x="${X1}" y="${BASE - 12}" text-anchor="end" class="th-z">this call</text>`;
+  return `<svg viewBox="0 0 ${W} ${H}" class="th-svg" role="img" aria-label="${ex.filter(e => e.w).length} of ${ex.length} sampled literals traced to where they first appeared">${g}</svg>`;
+}
+
 function streaks(s) {
   const ps = s.provenance || [];
   if (!ps.length) return '<div class="hint">No tool-call literals in this step.</div>';
+  const svg = threads(s);
   const where = w => w == null ? '<span style="color:var(--mute)">◯ no earlier occurrence</span>' : esc(w[0] === 's' ? 'system block ' + w.slice(1) : w[0] === 't' ? 'tool definition ' + w.slice(1) : w[0] === 'm' ? 'message ' + w.slice(1) : 'line ' + (+w.slice(1) + 1));
   return ps.map(p => {
     const t = s.tools[p.tool] || { name: '?' };
     const ex = p.examples.map(([text, w]) => `<div style="display:flex;gap:8px;align-items:baseline;font-size:12px;padding-left:10px;border-left:2px ${w == null ? 'dotted var(--rule)' : 'dashed var(--ochre)'}"><span class="mono">${esc(text)}</span><span class="hint">${where(w)}</span></div>`).join('');
     return `<div style="display:grid;gap:3px;padding:4px 0;border-top:1px solid var(--rule)"><div class="hint"><span class="mono" style="color:var(--ink)">${esc(t.name)}</span> · ${full(p.sourced)} of ${full(p.count)} literals appeared earlier${p.source === 'l1-lines' ? ' · <span title="No sealed request: searched the transcript lines before the call. The transcript holds text the model never received, so this over-counts.">checked against earlier lines (upper bound)</span>' : ' · checked against the request it received'}</div>${ex}</div>`;
-  }).join('');
+  }).join('') + svg;
 }
 
 /* ---------- Replay: three columns ---------- */

@@ -234,6 +234,8 @@ Decision:
 
 Consequence: Rule 8 is read as: raw traces stay local; redacted exports may be published by the owner. The publish check is a precondition, not a follow-up.
 
+Addendum (same day): the first run of `scripts/publish-site.mjs` refused the export and found two leaks that `web-check` had missed. Validity offsets (`timestampBeforeParent`) carried absolute corpus paths, and `web-check` could not see them because JSON doubles the backslash. A diff line in a tool result (`structuredPatch.lines`) passed the short-token rule. Fixed in core (`scrubPaths` over the whole validity; file and diff content keys always redacted), in `web-check`, and with tests in `tests/view.test.ts`.
+
 ## Proposed (not yet accepted)
 - ADR-P1 Interop with context-analyzer (decide after M0 source read).
 - ADR-P2 Upstream OTel proposal for compaction and skill entities (decide after M0 repo check).

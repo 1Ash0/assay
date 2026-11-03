@@ -4,7 +4,10 @@ const ID_RE = /^(msg_|toolu_|req_|srvtoolu_)[A-Za-z0-9]+$|^[0-9a-f]{8}-[0-9a-f]{
 const TS_RE = /^\d{4}-\d\d-\d\dT[\d:.]+Z$/
 // Keys whose values are free text even when short (titles, paths, prompts).
 const SENSITIVE = new Set(['content', 'text', 'thinking', 'signature', 'input', 'prompt', 'cwd', 'gitBranch', 'slug',
-  'summary', 'display', 'leafUuid', 'title', 'customTitle', 'lastPrompt', 'agentName', 'stdout', 'stderr', 'operation'])
+  'summary', 'display', 'leafUuid', 'title', 'customTitle', 'lastPrompt', 'agentName', 'stdout', 'stderr', 'operation',
+  // Tool results that carry file or diff content: a short diff line passes the token rule otherwise.
+  'lines', 'oldString', 'newString', 'old_string', 'new_string', 'originalFile', 'filePath', 'file_path', 'path', 'command',
+  'query', 'url', 'pattern', 'description'])
 const MAX_LIST = 6
 
 export function redact(v: unknown, key?: string): unknown {
@@ -30,4 +33,13 @@ export function basename(p: string): string {
 
 export function stripPaths(msg: string): string {
   return msg.replace(/[A-Za-z]:\\[^\s:]+|\/(?:[^\s/:]+\/)+[^\s/:]+/g, m => basename(m))
+}
+
+// Every string in a structure with its paths cut to file names; for exports
+// of core's own results (validity), whose offsets carry absolute paths.
+export function scrubPaths<T>(v: T): T {
+  if (typeof v === 'string') return stripPaths(v) as T
+  if (Array.isArray(v)) return v.map(scrubPaths) as T
+  if (v !== null && typeof v === 'object') return Object.fromEntries(Object.entries(v).map(([k, x]) => [k, scrubPaths(x)])) as T
+  return v
 }

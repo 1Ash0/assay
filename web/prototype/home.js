@@ -22,6 +22,9 @@ const DET = [
   ['D8', 'Session conflict', 'One file holds more than one session.'],
   ['D9', 'Clock reversal', 'A timestamp runs backwards.'],
   ['D10', 'Request count', 'The runtime’s own request count disagrees with what was found.'],
+  ['D11', 'Request record broken', 'A recorded request does not rebuild to its own digest, so the record disagrees with itself.'],
+  ['D12', 'Agent total disagrees', 'An agent span reports a token total that differs from the LLM calls beneath it.'],
+  ['D0', 'Unknown format version', 'The harness version is outside what the importer was checked against.'],
   ['D-cost', 'Cost cross-check', 'Runtime cost totals disagree with the transcript’s usage.'],
 ];
 
@@ -64,7 +67,7 @@ function renderGame() {
   $('#game').innerHTML = `
     <div>
       <div class="label">Round ${G.i % ROUNDS.length + 1} of ${ROUNDS.length} · session <span class="mono">${esc(r.id)}</span> · Claude Code ${esc(r.harness.version)}</div>
-      <div class="gq" style="margin-top:10px">Summing every line says the model wrote <span class="mono" style="color:var(--verm)">${full(max)}</span> output tokens. How many did it really write?</div>
+      <div class="gq" style="margin-top:10px">Summing every line says the model wrote <span class="mono" style="color:var(--ochre)">${full(max)}</span> output tokens. How many did it really write?</div>
       <div class="gauge" id="gauge">
         <div class="naive"><span class="label">sum of every line</span><b>${fmt(max)}</b></div>
         <div class="track"></div><div class="fill" id="gfill"></div>
@@ -115,14 +118,14 @@ function renderRack() {
     <div>
       <div class="src" style="margin-bottom:10px">${h.length ? `Fired ${full(total)} times across ${h.length} real session${h.length > 1 ? 's' : ''}.` : 'Never fired on a real session yet. The check still runs on every one.'}${others.length ? ` Also on ${others.map(r => `<span class="mono">${esc(r.id)}</span> (${r.truth})`).join(', ')}.` : ''}</div>
       <div class="mini-shelf" aria-label="Real sessions">${REAL.map(r => { const hit = r.findings.some(f => f.id === gsel); return `<a class="${hit ? 'hit' : ''}" style="height:${24 + Math.min(70, Math.log10(r.source.lines + 1) * 18)}px" href="index.html#run=${esc(r.id)}" title="${esc(r.id)}${hit ? ' · fired' : ''}"></a>`; }).join('')}</div>
-      <div class="src" style="margin-top:8px">One bar per real session, height by file length. Red: this gate fired.</div>
+      <div class="src" style="margin-top:8px">One bar per real session, height by file length. Amber: this gate fired.</div>
     </div>`;
 }
 
 /* ---------- capture ladder ---------- */
 const LEVELS = [
   ['L0', 'Final text', 'Only the final answer or an export. No turns, no usage, nothing to check.'],
-  ['L1', 'Transcript', 'The JSONL Claude Code writes: events, parent links and usage per message. Every run on the shelf today is L1.'],
+  ['L1', 'Transcript', 'The JSONL Claude Code writes: events, parent links and usage per message.'],
   ['L2', '+ Hooks', 'Lifecycle events: compaction before and after, subagent start and stop, instructions loaded.'],
   ['L3', '+ OTel', 'Spans with tool, request and agent ids. Catches internal calls the transcript never shows.'],
   ['L4', '+ API bodies', 'The exact request and response bodies. What the model actually received.'],
@@ -142,7 +145,7 @@ function core(r, w = 92, h = 230) {
     const tot = b.user + b.assistant + b.system + b.other + b.unknown, y = i * rh; if (!tot) return;
     let x = 0; const seg = (n, f) => { if (!n) return; const ww = n / tot * w; s += `<rect x="${x}" y="${y}" width="${ww}" height="${rh + .3}" fill="${f}"/>`; x += ww; };
     seg(b.assistant, 'var(--a)'); seg(b.user, 'var(--u)'); seg(b.system + b.other, 'var(--s)'); seg(b.unknown, 'url(#hp)');
-    if (Object.keys(b.f).length) s += `<rect x="0" y="${y}" width="10" height="${Math.max(rh, 1.5)}" fill="var(--verm)"/>`;
+    if (Object.keys(b.f).length) s += `<rect x="0" y="${y}" width="10" height="${Math.max(rh, 1.5)}" fill="var(--ochre)"/>`;
   });
   return `<svg viewBox="0 0 ${w} ${h}" preserveAspectRatio="none" aria-hidden="true"><rect width="${w}" height="${h}" fill="var(--paper-2)"/>${s}</svg>`;
 }
@@ -168,7 +171,7 @@ document.addEventListener('click', e => {
   if (t.dataset.g) { gsel = t.dataset.g; renderRack(); }
   if (t.dataset.l) { lsel = +t.dataset.l; renderLadder(); }
 });
-$('#copy').onclick = () => { try { navigator.clipboard.writeText('assay import ~/.claude/projects/<proj> && assay health'); $('#copy').textContent = 'copied'; } catch {} };
+$('#copy').onclick = () => { try { navigator.clipboard.writeText('assay check ~/.claude/projects/<proj>/<session>.jsonl'); $('#copy').textContent = 'copied'; } catch {} };
 $('#theme').onclick = () => {
   const root = document.documentElement, dark = root.dataset.theme ? root.dataset.theme === 'dark' : matchMedia('(prefers-color-scheme: dark)').matches;
   root.dataset.theme = dark ? 'light' : 'dark'; store.set('theme', root.dataset.theme);
@@ -176,6 +179,8 @@ $('#theme').onclick = () => {
 { const th = store.get('theme', null); if (th) document.documentElement.dataset.theme = th; }
 const io = 'IntersectionObserver' in window ? new IntersectionObserver(es => es.forEach(x => { if (x.isIntersecting) { x.target.classList.add('seen'); io.unobserve(x.target); } }), { threshold: 0.12 }) : null;
 document.querySelectorAll('.reveal').forEach(n => io ? io.observe(n) : n.classList.add('seen'));
+// The heading counts the detectors listed above, so it cannot drift from them.
+{ const W = ['Zero','One','Two','Three','Four','Five','Six','Seven','Eight','Nine','Ten','Eleven','Twelve','Thirteen','Fourteen','Fifteen','Sixteen']; const g = document.getElementById('gcount'); if (g) g.textContent = W[DET.length] || DET.length; }
 $('#foot').textContent = `${REAL.length} real · ${RUNS.filter(r => r.truth === 'real-perturbed').length} perturbed · ${RUNS.filter(r => r.truth === 'scripted').length} scripted sessions`;
 
 specimen(); renderGame(); renderRack(); renderLadder(); renderCores(); renderMissions();

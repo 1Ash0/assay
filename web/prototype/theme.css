@@ -7,9 +7,9 @@
    cob/a = assistant and data · u = user · brand = interaction, never data. */
 :root{
   --ground:#DCD6C5; --paper:#E9E4D4; --paper-2:#E1DBC9; --ink:#24221C; --ink-2:#45413A; --mute:#5C574C; --rule:#B9B19C; --rule-2:#CEC7B3;
-  --verm:#B0300F; --verm-soft:#F0CDBF; --cob:#11697A; --cob-soft:#CDE3E2; --ochre:#875400; --ochre-soft:#EFD9A8;
-  --mint:#4A7410; --mint-soft:#D9E8BE; --brand:#24221C; --brand-ink:#E9E4D4;
-  --u:#4D46A8; --a:#11697A; --s:#7A7465; --o:#BDB5A1; --unk:#24221C;
+  --verm:#9C290B; --verm-soft:#F0CDBF; --cob:#0D5B6A; --cob-soft:#CDE3E2; --ochre:#734700; --ochre-soft:#EFD9A8;
+  --mint:#3A5C0A; --mint-soft:#D9E8BE; --brand:#24221C; --brand-ink:#E9E4D4;
+  --u:#4D46A8; --a:#0D5B6A; --s:#7A7465; --o:#BDB5A1; --unk:#24221C;
   --glow:0 0 0 transparent; --glow-strong:0 0 0 transparent;
   --glass:linear-gradient(180deg,rgba(255,255,255,.35),rgba(255,255,255,0));
   --shadow:0 1px 0 rgba(36,34,28,.06),0 14px 30px -18px rgba(36,34,28,.35);
@@ -202,3 +202,35 @@ body::before{content:"";position:fixed;left:0;right:0;top:-30%;height:30%;pointe
   .tool[title^="Assay a session folder"],#sound,#helpBtn{display:none!important}
   .tab{min-height:40px}
 }
+
+/* ---------- Provenance threads ---------- */
+.th-svg{width:100%;height:auto;margin-top:6px;border-top:1px dashed var(--rule);padding-top:4px}
+.th-z{font:10px var(--mono);fill:var(--mute);letter-spacing:.06em}
+.th{stroke-dashoffset:0;filter:drop-shadow(0 0 3px color-mix(in srgb,var(--cob) 50%,transparent));opacity:0;animation:fadein .5s var(--ease) var(--d) forwards}
+.th:not([stroke-dasharray]){stroke-dasharray:400;stroke-dashoffset:400;opacity:1;animation:draw 1s var(--ease) var(--d) forwards}
+.th:hover{stroke-width:3}
+#v-traverse svg{filter:drop-shadow(0 0 2px color-mix(in srgb,var(--cob) 35%,transparent))}
+
+/* ---------- Runs table ---------- */
+.shared{margin:12px 2px 0;font-size:14px;color:var(--ink-2);display:flex;gap:10px;align-items:baseline;flex-wrap:wrap}
+.shared:empty{display:none}
+.runtable{margin-top:14px;overflow-x:auto;border:1px solid var(--rule);background:var(--glass),var(--paper)}
+.runtable table{width:100%;border-collapse:collapse;font-size:13.5px;min-width:860px}
+.runtable th{position:sticky;top:0;background:var(--paper-2);text-align:left;border-bottom:1px solid var(--rule)}
+.runtable th button{font:600 11px var(--mono);letter-spacing:.12em;text-transform:uppercase;color:var(--mute);padding:10px 12px;width:100%;text-align:left}
+.runtable th button[aria-sort="ascending"],.runtable th button[aria-sort="descending"]{color:var(--ink)}
+.runtable td{padding:10px 12px;border-bottom:1px solid var(--rule-2);white-space:nowrap;font-variant-numeric:tabular-nums}
+.runtable tbody tr{cursor:pointer;transition:background .15s}
+.runtable tbody tr:hover,.runtable tbody tr:focus-visible{background:color-mix(in srgb,var(--cob) 8%,transparent);outline:none}
+.runtable tbody tr:hover td:first-child{box-shadow:inset 2px 0 0 var(--cob)}
+#detf{font:inherit;font-size:12px;background:var(--paper);color:var(--ink);border:1px solid var(--rule);height:30px;padding:0 8px}
+
+/* ---------- Learn ---------- */
+.learnbar{display:flex;gap:14px;align-items:center;justify-content:flex-end;margin-bottom:10px;flex-wrap:wrap}
+.learnbar .score{display:flex!important}
+
+/* ---------- Glossary: plain words on hover or focus ---------- */
+[data-tip]{position:relative;text-decoration:underline dotted color-mix(in srgb,var(--ink) 40%,transparent);text-underline-offset:3px;cursor:help}
+[data-tip]:hover::after,[data-tip]:focus-visible::after{content:attr(data-tip);position:absolute;left:0;top:calc(100% + 8px);z-index:50;width:max-content;max-width:300px;
+  padding:9px 11px;background:var(--ink);color:var(--paper);font:400 12.5px/1.45 var(--body);letter-spacing:0;text-transform:none;white-space:normal;box-shadow:var(--shadow);animation:rise .2s var(--ease)}
+html,body{overflow-x:clip}

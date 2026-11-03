@@ -1,7 +1,7 @@
 import { HealthReport } from '../health/types.js'
 import { CONTEXT_LIMITS } from '../health/detectors.js'
 import { Run, Truth } from '../schema/index.js'
-import { basename, redact, stripPaths } from './redact.js'
+import { basename, redact, scrubPaths, stripPaths } from './redact.js'
 import { buildSpine } from './spine.js'
 
 // The site's view of one run (ADR-020). Every number the site shows comes
@@ -128,7 +128,7 @@ export function buildRunView(run: Run, report: HealthReport, opts: ViewOptions =
     },
     verdicts: report.verdicts,
     overall: report.overall,
-    validity: { ...v, caveats: v.caveats.map(stripPaths) },
+    validity: scrubPaths(v),
     findings: [...findings.values()].sort((a, b) => a.id.localeCompare(b.id)),
     band,
     reqs,

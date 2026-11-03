@@ -14,7 +14,8 @@
     "contrast": "node scripts/contrast-check.mjs",
     "results": "node scripts/results.mjs",
     "claims": "node scripts/claims.mjs",
-    "public-check": "node scripts/public-check.mjs"
+    "public-check": "node scripts/public-check.mjs",
+    "publish-site": "node scripts/publish-site.mjs"
   },
   "devDependencies": {
     "@types/node": "^22.0.0",

@@ -24,6 +24,9 @@ const DET = [
   ['D8', 'Session conflict', 'One file holds more than one sessionId.', ['sessionId']],
   ['D9', 'Clock reversal', 'A timestamp runs backwards.', ['timestamp']],
   ['D10', 'Request count', 'The runtime’s own API request count disagrees with requests found.', []],
+  ['D11', 'Request record broken', 'A recorded request does not rebuild to its own digest (ADR-026).', ['requestDigest']],
+  ['D12', 'Agent total disagrees', 'An agent span reports a total that differs from the LLM calls beneath it.', []],
+  ['D0', 'Unknown format version', 'The harness version is outside what the importer was checked against (Rule 7).', ['version']],
   ['D-cost', 'Cost cross-check', 'Runtime cost-state totals disagree with the transcript’s usage.', []],
 ].map(([id, name, what, keys]) => ({ id, name, what, keys }));
 const DMAP = Object.fromEntries(DET.map(d => [d.id, d]));
@@ -56,7 +59,7 @@ const thunk = () => { tone(90, 0.25, 'sine', 0.2); setTimeout(() => tone(60, 0.3
 const S = {
   view: 'report', run: null, p: 0, playing: false, speed: 1, struck: false,
   sel: null, item: null, table: false, desc: false, mission: null,
-  filter: 'all', caught: store.get('caught', {}), call: null,
+  filter: 'all', det: null, layout: 'table', sort: ['date', -1], caught: store.get('caught', {}), call: null,
   calls: store.get('calls', { right: 0, total: 0, streak: 0 }), punches: store.get('punches', {}),
 };
 
@@ -172,7 +175,7 @@ function renderTape(r) {
     const ids = Object.keys(b.f); if (!ids.length) return;
     const warn = ids.some(id => (r.findings.find(f => f.id === id) || {}).severity === 'warn');
     const x = i * cw + cw / 2;
-    g += `<line x1="${x}" x2="${x}" y1="${warn ? 0 : 11}" y2="20" stroke="${warn ? 'var(--verm)' : 'var(--mute)'}" stroke-width="${warn ? 2.4 : 1.2}"/>${warn ? `<circle cx="${x}" cy="2" r="3" fill="var(--verm)"/>` : ''}`;
+    g += `<line x1="${x}" x2="${x}" y1="${warn ? 0 : 11}" y2="20" stroke="${warn ? 'var(--ochre)' : 'var(--mute)'}" stroke-width="${warn ? 2.4 : 1.2}"/>${warn ? `<circle cx="${x}" cy="2" r="3" fill="var(--ochre)"/>` : ''}`;
   });
   r.compactions.forEach(line => { const x = c.binOf(line) * cw + cw / 2; g += `<line x1="${x}" x2="${x}" y1="22" y2="${H}" stroke="var(--paper)" stroke-width="1.5" stroke-dasharray="3 3"/>`; });
   g += `</g><line id="head1" x1="0" x2="0" y1="-6" y2="${H + 4}" stroke="var(--ink)" stroke-width="2"/><rect id="hover1" x="0" y="0" width="${cw}" height="${H}" fill="var(--ink)" opacity="0"/>`;
@@ -290,7 +293,7 @@ function renderFeed() {
       <div class="callit">
         <div class="label">Call it first</div>
         <div class="q">Would you trust this session's numbers?</div>
-        <div class="hint">You've seen the capture plate and the tape. Make your call, then watch the bench check it.</div>
+        <div class="hint">You've seen the capture plate and the tape. Make your call, then watch assay check it.</div>
         <div class="calls">
           <button data-call="ok"><span class="vtag ok">●</span>Trust them</button>
           <button data-call="caveat"><span class="vtag caveat">▲</span>Only with caveats</button>
@@ -318,7 +321,7 @@ function renderCard() {
   const where = id => RUNS.filter(r => r.findings.some(f => f.id === id));
   $('#cardBody').innerHTML = DET.map(d => {
     const got = S.punches[d.id], w = where(d.id), real = w.filter(r => r.truth === 'real');
-    const hint = got ? `First seen on <span class="mono">${esc(got)}</span>` : w.length ? `Fires on ${w.length} shelf session${w.length > 1 ? 's' : ''}${real.length ? '' : ' (none real yet)'}` : 'Never fired on the shelf. The check still runs on every session.';
+    const hint = got ? `First seen on <span class="mono">${esc(got)}</span>` : w.length ? `Fires on ${w.length} session${w.length > 1 ? 's' : ''}${real.length ? '' : ' (none real yet)'}` : 'Never fired on a run here. The check still runs on every session.';
     return `<div class="pc ${got ? 'got' : w.length ? '' : 'never'}"><span class="mini-punch">${d.id.replace('D-cost', 'D$')}</span><div><b>${esc(d.name)}</b><div class="where">${hint}</div></div>
       ${!got && w.length ? `<button class="chip" data-run="${esc((real[0] || w[0]).id)}" data-open="1" data-close="card">hunt →</button>` : ''}</div>`;
   }).join('');
@@ -331,25 +334,25 @@ function figure(id, f) {
   let g = '';
   if (id === 'D2') {
     const k = (n(/appears (\d+)×/) || [2])[0];
-    for (let i = Math.min(k, 12) - 1; i >= 0; i--) g += `<rect x="${20 + i * 9}" y="${18 + i * 3}" width="150" height="26" rx="3" fill="${i ? 'none' : 'var(--cob)'}" stroke="${i ? 'var(--verm)' : 'var(--cob)'}" stroke-dasharray="${i ? '3 3' : ''}" opacity="${i ? 0.75 : 1}"/>`;
-    g += T(20, 14, `${k} copies of one message.id`) + T(26, 36, 'kept: 1 request', 'start', 'var(--paper)') + T(300, 70, `naive sum ×${k}`, 'end', 'var(--verm)');
+    for (let i = Math.min(k, 12) - 1; i >= 0; i--) g += `<rect x="${20 + i * 9}" y="${18 + i * 3}" width="150" height="26" rx="3" fill="${i ? 'none' : 'var(--cob)'}" stroke="${i ? 'var(--ochre)' : 'var(--cob)'}" stroke-dasharray="${i ? '3 3' : ''}" opacity="${i ? 0.75 : 1}"/>`;
+    g += T(20, 14, `${k} copies of one message.id`) + T(26, 36, 'kept: 1 request', 'start', 'var(--paper)') + T(300, 70, `naive sum ×${k}`, 'end', 'var(--ochre)');
   } else if (id === 'D6') {
     const r = n(/range (\d+)–(\d+)/) || n(/\((\d+)–(\d+)\)/) || [0, 1], [a, b] = r, x = v => 20 + (v - a) / Math.max(1, b - a) * 260;
-    g = `<line x1="20" x2="280" y1="40" y2="40" stroke="var(--ink)" stroke-width="2"/><line x1="20" x2="20" y1="32" y2="48" stroke="var(--ink)" stroke-width="2"/><circle cx="${x(b)}" cy="40" r="7" fill="var(--verm)"/>` +
-      T(20, 66, full(a)) + T(280, 66, full(b) + ' · selected', 'end', 'var(--verm)') + T(20, 18, 'duplicate copies disagree; max-usage kept');
+    g = `<line x1="20" x2="280" y1="40" y2="40" stroke="var(--ink)" stroke-width="2"/><line x1="20" x2="20" y1="32" y2="48" stroke="var(--ink)" stroke-width="2"/><circle cx="${x(b)}" cy="40" r="7" fill="var(--ochre)"/>` +
+      T(20, 66, full(a)) + T(280, 66, full(b) + ' · selected', 'end', 'var(--ochre)') + T(20, 18, 'duplicate copies disagree; max-usage kept');
   } else if (id === 'D-cost') {
     const r = n(/total \((\d+)\) vs JSONL input total \((\d+)\)/) || [0, 0];
     g = `<line x1="150" x2="150" y1="20" y2="70" stroke="var(--ink)" stroke-width="2"/><line x1="40" x2="260" y1="24" y2="24" stroke="var(--ink)" stroke-width="2"/><path d="M150 70l-10 10h20z" fill="var(--ink)"/>
       <rect x="20" y="30" width="90" height="34" rx="4" fill="var(--paper-2)" stroke="var(--rule)"/><rect x="190" y="30" width="90" height="34" rx="4" fill="var(--paper-2)" stroke="var(--rule)"/>` +
       T(65, 46, 'cost-state', 'middle') + T(65, 59, fmt(r[0]), 'middle', 'var(--ink)') + T(235, 46, 'JSONL', 'middle') + T(235, 59, fmt(r[1]), 'middle', 'var(--ink)') +
-      T(150, 14, r[1] ? `${Math.round(Math.abs(r[1] - r[0]) / Math.max(r[0], r[1]) * 100)}% apart` : '', 'middle', 'var(--verm)');
+      T(150, 14, r[1] ? `${Math.round(Math.abs(r[1] - r[0]) / Math.max(r[0], r[1]) * 100)}% apart` : '', 'middle', 'var(--ochre)');
   } else if (id === 'D1') {
     g = `<rect x="20" y="14" width="120" height="50" fill="var(--cob)" opacity=".85"/>` + T(26, 30, 'main', 'start', 'var(--paper)') +
       `<rect x="160" y="14" width="120" height="50" fill="none" stroke="var(--verm)" stroke-dasharray="4 3" stroke-width="1.5"/><path d="M160 14L280 64M280 14L160 64" stroke="var(--verm)" stroke-width="1.5"/>` +
       T(220, 78, 'subagent · no recovery', 'middle', 'var(--verm)') + T(20, 78, 'totals are a lower bound (≥)');
   } else if (id === 'D9') {
-    g = `<line x1="20" x2="280" y1="44" y2="44" stroke="var(--rule)"/><path d="M60 44L240 44" stroke="var(--ink)" stroke-width="2"/><path d="M240 44L190 24" stroke="var(--verm)" stroke-width="2.5"/><circle cx="190" cy="24" r="4" fill="var(--verm)"/>` +
-      T(20, 70, 'time →') + T(280, 70, 'next event stamped earlier', 'end', 'var(--verm)');
+    g = `<line x1="20" x2="280" y1="44" y2="44" stroke="var(--rule)"/><path d="M60 44L240 44" stroke="var(--ink)" stroke-width="2"/><path d="M240 44L190 24" stroke="var(--ochre)" stroke-width="2.5"/><circle cx="190" cy="24" r="4" fill="var(--ochre)"/>` +
+      T(20, 70, 'time →') + T(280, 70, 'next event stamped earlier', 'end', 'var(--ochre)');
   } else if (id === 'D7') {
     const r = n(/inputTokens (\d+) > pre-compaction (\d+)/);
     g = `<path d="M20 30 Q60 20 100 30 T180 30" fill="none" stroke="var(--rule)"/><path d="M20 60 L130 60" stroke="var(--cob)" stroke-width="6"/><path d="M140 60 L280 50" stroke="var(--ochre)" stroke-width="6"/><path d="M135 20 q5 10 0 20 q-5 10 0 20 q5 10 0 20" fill="none" stroke="var(--ink)" stroke-dasharray="3 2"/>` +
@@ -358,8 +361,8 @@ function figure(id, f) {
     g = `<rect x="20" y="30" width="190" height="24" fill="var(--cob)" opacity=".8"/><line x1="240" x2="240" y1="14" y2="70" stroke="var(--ink)" stroke-width="2" stroke-dasharray="${/unknown/.test(m) ? '4 4' : ''}"/>` +
       T(240, 84, /unknown/.test(m) ? 'limit unknown · not guessed' : 'model limit', 'middle') + T(20, 20, 'context vs the model window');
   } else if (id === 'D4') {
-    g = `<path d="M40 20 h-14 v40 h14" fill="none" stroke="var(--verm)" stroke-width="2"/><circle cx="60" cy="40" r="5" fill="var(--ink)"/><line x1="60" x2="270" y1="40" y2="40" stroke="var(--rule)" stroke-dasharray="4 4"/>` +
-      T(80, 30, 'tool_result arrives') + T(80, 64, 'no tool_use to match it', 'start', 'var(--verm)');
+    g = `<path d="M40 20 h-14 v40 h14" fill="none" stroke="var(--ochre)" stroke-width="2"/><circle cx="60" cy="40" r="5" fill="var(--ink)"/><line x1="60" x2="270" y1="40" y2="40" stroke="var(--rule)" stroke-dasharray="4 4"/>` +
+      T(80, 30, 'tool_result arrives') + T(80, 64, 'no tool_use to match it', 'start', 'var(--ochre)');
   } else return '';
   return `<svg class="fig" viewBox="0 0 300 90" role="img" aria-label="${esc(DMAP[id].name)} figure">${g}</svg>`;
 }
@@ -368,7 +371,7 @@ function renderDetector() {
   railHead(`<button class="tbtn" data-act="up" aria-label="Back">←</button><span class="label">${d.id} · ${esc(d.name)}</span>`);
   $('#railBody').innerHTML = `<div class="msg" style="font-size:13px">${esc(d.what)}</div>
     ${f ? figure(d.id, f) : ''}
-    ${f ? `<div style="display:flex;gap:8px;align-items:baseline"><span class="big" style="font-size:34px;color:${f.severity === 'warn' ? 'var(--verm)' : 'var(--ink)'}">${full(f.count)}</span><span class="hint">${f.severity} finding${f.count > 1 ? 's' : ''}${f.count > f.items.length ? ` · first ${f.items.length} listed` : ''}</span></div>
+    ${f ? `<div style="display:flex;gap:8px;align-items:baseline"><span class="big" style="font-size:34px;color:${f.severity === 'warn' ? 'var(--ochre)' : 'var(--ink)'}">${full(f.count)}</span><span class="hint">${f.severity} finding${f.count > 1 ? 's' : ''}${f.count > f.items.length ? ` · first ${f.items.length} listed` : ''}</span></div>
     <div class="feed">${f.items.map((it, k) => `<button class="row" data-d="${f.id}" data-k="${k}"><span class="d ${f.severity}">#${k + 1}</span><span><span class="msg">${esc(short(it.msg))}</span><div class="where">${it.ev.map(e => `line ${full(e.line)} · bytes ${full(e.b0)}–${full(e.b1)}`).join('<br>')}</div></span></button>`).join('')}</div>`
     : `<div class="desc">This gate found nothing on <span class="mono">${esc(r.id)}</span>. That is a result too: the check ran and passed.</div>`}`;
 }
@@ -473,15 +476,44 @@ function coreSvg(r, w = 160, h = 120) {
     seg(b.assistant, 'var(--a)'); seg(b.user, 'var(--u)'); seg(b.system + b.other, 'var(--s)');
     if (uw) s += `<rect x="${x}" y="${y}" width="${uw}" height="${rh + 0.3}" fill="url(#hpc)"/>`;
     const ids = Object.keys(b.f);
-    if (ids.length) { const warn = ids.some(id => (r.findings.find(f => f.id === id) || {}).severity === 'warn'); s += `<rect x="0" y="${y}" width="${w * (warn ? 0.14 : 0.04)}" height="${Math.max(rh, warn ? 2.4 : 1)}" fill="${warn ? 'var(--verm)' : 'var(--ink)'}" opacity="${warn ? 1 : 0.5}"/>`; }
+    if (ids.length) { const warn = ids.some(id => (r.findings.find(f => f.id === id) || {}).severity === 'warn'); s += `<rect x="0" y="${y}" width="${w * (warn ? 0.14 : 0.04)}" height="${Math.max(rh, warn ? 2.4 : 1)}" fill="${warn ? 'var(--ochre)' : 'var(--ink)'}" opacity="${warn ? 1 : 0.5}"/>`; }
   });
   return `<svg viewBox="0 0 ${w} ${h}" preserveAspectRatio="none" aria-hidden="true"><defs><pattern id="hpc" width="4" height="4" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><rect width="4" height="4" fill="var(--paper)"/><line x1="0" y1="0" x2="0" y2="4" stroke="var(--unk)" stroke-width="1" opacity=".5"/></pattern></defs><rect width="${w}" height="${h}" fill="var(--paper-2)"/>${s}</svg>`;
+}
+// Runs as a sortable table (default) or the gallery of cores. A detector
+// filter narrows to runs where it fired and states what those runs share,
+// read straight from their fields (after Honeycomb's BubbleUp).
+const COLS = [
+  ['date', 'Date', r => r.hallmark.firstTs || 0, r => r.hallmark.firstTs ? new Date(r.hallmark.firstTs).toISOString().slice(0, 10) : '–'],
+  ['id', 'Run', r => r.id, r => `<span class="mono">${esc(r.id)}</span>`],
+  ['ver', 'Version', r => r.harness.version || '', r => esc(r.harness.version || '–')],
+  ['cap', 'Capture', r => r.capture.level, r => 'L' + r.capture.level],
+  ['truth', 'Truth', r => r.truth, r => `<span class="truth ${r.truth}" style="font-size:10px;padding:1px 6px">${esc(r.truth)}</span>`],
+  ['trust', 'Trust', r => r.hallmark.fineness ?? -1, r => r.hallmark.fineness ?? '–'],
+  ['verdict', 'Verdict', r => r.overall, r => `<span class="vtag ${verdictClass(r.overall)}">${verdictGlyph(r.overall)}</span> ${esc(verdictText(r.overall))}`],
+  ['find', 'Findings', r => r.findings.reduce((a, f) => a + f.count, 0), r => fmt(r.findings.reduce((a, f) => a + f.count, 0))],
+  ['ctx', 'Context tokens', r => r.validity.totalContextTokens || 0, r => fmt(r.validity.totalContextTokens)],
+];
+function shared(list) {
+  if (!list.length) return '';
+  const uniq = f => [...new Set(list.map(f))];
+  const vs = uniq(r => r.harness.version).filter(Boolean).sort((a, b) => a.localeCompare(b, undefined, { numeric: true }));
+  const caps = uniq(r => 'L' + r.capture.level), lay = uniq(r => r.harness.layout).filter(Boolean), tr = uniq(r => r.truth);
+  return `${list.length} run${list.length > 1 ? 's' : ''} · versions ${esc(vs.length > 1 ? vs[0] + '–' + vs[vs.length - 1] : vs[0] || '–')} · capture ${esc(caps.join(', '))} · layout ${esc(lay.join(', ') || '–')} · ${esc(tr.join(', '))}`;
 }
 function renderShelf() {
   const kinds = [['all', 'All'], ['real', 'Real'], ['real-perturbed', 'Perturbed'], ['scripted', 'Scripted']];
   $('#filters').innerHTML = kinds.map(([k, t]) => `<button class="chip" data-filter="${k}" aria-pressed="${S.filter === k}">${t} · ${k === 'all' ? RUNS.length : RUNS.filter(r => r.truth === k).length}</button>`).join('');
-  const list = RUNS.filter(r => S.filter === 'all' || r.truth === S.filter);
-  $('#grid').innerHTML = list.map(r => {
+  const dets = DET.filter(d => RUNS.some(r => r.findings.some(f => f.id === d.id)));
+  $('#filters').innerHTML += `<select class="chip" id="detf" aria-label="Only runs where a detector fired"><option value="">Any finding</option>${dets.map(d => `<option value="${d.id}" ${S.det === d.id ? 'selected' : ''}>${esc(d.name)} · ${d.id}</option>`).join('')}</select><button class="chip" data-layout="${S.layout === 'gallery' ? 'table' : 'gallery'}">${S.layout === 'gallery' ? 'Table' : 'Gallery'}</button>`;
+  let list = RUNS.filter(r => (S.filter === 'all' || r.truth === S.filter) && (!S.det || r.findings.some(f => f.id === S.det)));
+  $('#shared').innerHTML = S.det ? `<span class="label">${esc(DMAP[S.det].name)} fired on</span> ${shared(list)}` : '';
+  if (S.layout !== 'gallery') {
+    const c = COLS.find(x => x[0] === S.sort[0]) || COLS[0], dir = S.sort[1];
+    list = list.slice().sort((x, y) => { const p = c[2](x), q = c[2](y); return (p < q ? -1 : p > q ? 1 : 0) * dir; });
+    $('#grid').className = 'runtable';
+    $('#grid').innerHTML = `<table><thead><tr>${COLS.map(([k, t]) => `<th><button data-sort="${k}" aria-sort="${S.sort[0] === k ? (dir > 0 ? 'ascending' : 'descending') : 'none'}">${t}${S.sort[0] === k ? (dir > 0 ? ' ↑' : ' ↓') : ''}</button></th>`).join('')}</tr></thead><tbody>${list.map(r => `<tr data-run="${esc(r.id)}" data-open="1" tabindex="0">${COLS.map(col => `<td>${col[3](r)}</td>`).join('')}</tr>`).join('')}</tbody></table>`;
+  } else { $('#grid').className = 'grid'; $('#grid').innerHTML = list.map(r => {
     const fc = r.findings.reduce((a, f) => a + f.count, 0);
     return `<button class="panel card sheen ${r.truth}" data-run="${esc(r.id)}" data-open="1" aria-label="Assay ${esc(r.id)}">
       ${coreSvg(r)}
@@ -489,7 +521,7 @@ function renderShelf() {
       <div class="meta"><span>v${esc(r.harness.version)}</span><span>L${r.capture.level}</span><span>${fmt(r.source.lines)} ln</span></div>
       <div class="meta"><span class="truth ${r.truth}" style="font-size:9px;padding:1px 5px">${r.truth}</span><span>${fmt(fc)} findings</span></div>
     </button>`;
-  }).join('');
+  }).join(''); }
   // overcount strip: real sessions with usage only
   const pts = RUNS.filter(r => r.truth === 'real' && r.dedup[3] > 0).map(r => ({ r, v: r.naive[3] / r.dedup[3] }));
   const max = Math.max(3.6, ...pts.map(p => p.v)), Wd = 1000, Hd = 90, x = v => 30 + (v - 1) / (max - 1) * (Wd - 60);
@@ -499,6 +531,9 @@ function renderShelf() {
   
   const svg = $('#dots'); svg.setAttribute('viewBox', `0 0 ${Wd} ${Hd}`); svg.innerHTML = s;
 }
+document.addEventListener('change', e => { if (e.target.id === 'detf') { S.det = e.target.value || null; renderShelf(); } });
+// Rows open on Enter like the buttons they stand in for.
+document.addEventListener('keydown', e => { if (e.key === 'Enter' && e.target.matches && e.target.matches('tr[data-run]')) e.target.click(); });
 // gentle tilt toward the pointer; depth never encodes a quantity here
 document.addEventListener('pointermove', e => {
   const c = e.target.closest && e.target.closest('.card'); document.querySelectorAll('.card.tilt').forEach(x => { if (x !== c) { x.classList.remove('tilt'); x.style.transform = ''; } });
@@ -533,7 +568,7 @@ function openMission(id) {
   if (m.kind === 'forge') work = `<div class="label">inputTokens on one copy of message …ZXo, line 26</div><div class="dial" id="dial">2</div>`;
   if (m.kind === 'nudge') work = `<div class="label">Three copies of one message</div><div class="dupes" style="grid-template-columns:repeat(3,1fr)"><div class="dupe">copy A<b>3</b>input_tokens</div><div class="dupe" id="victim">copy B<b id="dial">3</b>input_tokens</div><div class="dupe">copy C<b>3</b>input_tokens</div></div>`;
   wb.innerHTML = `<div style="display:flex;flex-direction:column;gap:12px">
-      <span class="label">Mission ${m.no} · the workbench</span><h3 style="margin:0;font-size:30px;letter-spacing:-.03em">${m.title}</h3>
+      <span class="label">Mission ${m.no}</span><h3 style="margin:0;font-size:30px;letter-spacing:-.03em">${m.title}</h3>
       <div class="hint">Specimen <span class="mono">${esc(base.id)}</span> → tampered file <span class="mono">${esc(t.source.file)}</span>. <span class="truth ${t.truth}" style="font-size:9px">${t.truth}</span></div>
       <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:6px"><button class="btn" id="doTamper">${m.verb}</button><button class="btn ghost" id="doSubmit" disabled style="opacity:.4">Hand it to assay →</button></div>
     </div><div style="display:flex;flex-direction:column;gap:12px;justify-content:center">${work}</div>`;
@@ -543,8 +578,8 @@ function openMission(id) {
     const dial = $('#dial');
     if (m.kind === 'shred') $('#victim').classList.add('cut');
     if (m.kind === 'nudge') { $('#victim').classList.add('forged'); roll(dial, 3, 8, 500); }
-    if (m.kind === 'forge') { dial.style.color = 'var(--verm)'; roll(dial, 2, 195000, 1100); }
-    if (m.kind === 'sum') { dial.style.color = 'var(--verm)'; roll(dial, base.dedup[3], base.naive[3], 1200); }
+    if (m.kind === 'forge') { dial.style.color = 'var(--ochre)'; roll(dial, 2, 195000, 1100); }
+    if (m.kind === 'sum') { dial.style.color = 'var(--ochre)'; roll(dial, base.dedup[3], base.naive[3], 1200); }
     $('#doTamper').disabled = true; $('#doTamper').style.opacity = .4;
     const sub = $('#doSubmit'); sub.disabled = false; sub.style.opacity = 1; sub.className = 'btn'; sub.focus();
   };
@@ -626,6 +661,8 @@ document.addEventListener('click', e => {
   if (t.dataset.d && t.dataset.k != null) { S.sel = t.dataset.d; S.item = { d: t.dataset.d, k: +t.dataset.k }; return renderRail(); }
   if (t.dataset.unk) { S.item = { unk: true }; return renderRail(); }
   if (t.dataset.filter) { S.filter = t.dataset.filter; return renderShelf(); }
+  if (t.dataset.layout) { S.layout = t.dataset.layout; return renderShelf(); }
+  if (t.dataset.sort) { S.sort = [t.dataset.sort, S.sort[0] === t.dataset.sort ? -S.sort[1] : 1]; return renderShelf(); }
   if (t.dataset.mission) return openMission(t.dataset.mission);
   if (t.dataset.speed) { S.speed = +t.dataset.speed; document.querySelectorAll('[data-speed]').forEach(b => b.setAttribute('aria-pressed', b === t)); return; }
   if (t.dataset.call) { S.call = t.dataset.call; tone(520, 0.05); return toggle(); }

@@ -55,6 +55,18 @@ describe('path stripping', () => {
     expect(stripPaths(String.raw`missing E:\a\b\agent-1.jsonl here`)).toBe('missing agent-1.jsonl here')
     expect(stripPaths('see /home/u/x/y.jsonl')).toBe('see y.jsonl')
   })
+  it('strips paths anywhere in a structure, such as validity offsets', async () => {
+    const { scrubPaths } = await import('../packages/assay-core/src/view/redact.js')
+    expect(scrubPaths({ q: { first: [{ file: String.raw`E:\assay\corpus\frozen\p\s.jsonl`, line: 3 }] } }))
+      .toEqual({ q: { first: [{ file: 's.jsonl', line: 3 }] } })
+  })
+  it('redacts short diff lines in tool results (publish check found one)', () => {
+    const r = redact({ structuredPatch: [{ lines: ['+langchain-classic>=1.0.3', ' ok'] }] }) as { structuredPatch: { lines: string[] }[] }
+    expect(r.structuredPatch[0]!.lines.every(l => l.startsWith('‹redacted'))).toBe(true)
+  })
+  it('view validity carries no directory', () => {
+    expect(JSON.stringify(view().validity)).not.toMatch(/[A-Za-z]:\\|\/(home|Users)\//)
+  })
   it('view evidence files carry no directory', () => {
     const v = view()
     for (const f of v.findings) for (const i of f.items) for (const e of i.ev) expect(e.file).not.toMatch(/[\\/]/)

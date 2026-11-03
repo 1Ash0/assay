@@ -89,7 +89,7 @@ if (command === 'import') {
   const path = args[0]
   if (!path) { console.error('requests requires a session path'); process.exit(1) }
   const q = importClaudeCodeDir(resolve(path)).requests
-  if (!q) { console.error('no request records (Claude Code before 2.1.299, or none written)'); process.exit(0) }
+  if (!q) { console.error('no request records in this session (not every session writes them)'); process.exit(0) }
   for (const r of q.records) {
     const gap = r.seal === 'unresolved' ? `  ${r.missingMessages}/${r.messageCount} messages without blob` : ''
     console.log(`${r.seal.padEnd(10)} line ${String(r.offset.line + 1).padStart(6)}  ${(r.querySource ?? '?').padEnd(18)} ${r.messageCount} msgs${gap}`)

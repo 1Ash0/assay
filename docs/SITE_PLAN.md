@@ -126,3 +126,16 @@ Each step is a shippable commit within the Rule 12 budget. The site only display
 
 ## Status (2026-11-03, second pass)
 Palette re-chosen after the owner asked for less generic colours: NieR:Automata's restrained bone-on-black HUD, Alien: Isolation's phosphor terminals and Teenage Engineering's instrument labels, instead of neon cyan and magenta. Built: Report (default), plain navigation with Ctrl K, Rebuild flow with seal, Compare ribbons and twin pairing, landing waves and decode text, HUD panels with corner brackets, scanlines and a refresh band, phone top bar. Not yet: provenance threads drawn between literals (streaks are still a list), Timeline glow and zoom, the Runs table and pattern view, Play as a separate Learn area, glossary popovers, measured AA contrast, the publish step and its redaction check.
+
+## Status (2026-11-03, third pass: ready to publish)
+Built: provenance threads under the streaks; Timeline glow; Runs as a sortable table with a gallery toggle and a detector filter that states what the matching runs share; Learn (missions, punch card and calls moved out of the top bar); glossary tips on Capture Level, trust score, sealed and truth; `pnpm publish-site` builds `dist/site`, refuses on any unredacted string, path, email or secret-like token, and leaves out TRAIL runs.
+
+Audit fixes:
+- The landing said eleven gates; core has fourteen, and the count is now derived from the list. It said every run is L1; the twins are L3. It showed an outdated CLI command.
+- Red marked ordinary warnings on both pages; now amber, red only for capture failure. Verified used the data colour; now mint.
+- "Claude Code before 2.1.299 writes no request records" was false both ways in the corpus (one 2.1.165 run has records; several 2.1.308/309 runs have none). Reworded in the CLI and the site.
+- Absolute corpus paths reached data.js through validity offsets, and a diff line passed redaction. Both fixed in core, with tests; web-check now sees escaped paths.
+- Light-theme accents failed AA on the page ground; now 5.3:1 or better, mute 4.95:1.
+- The landing hero overflowed at phone width; no view scrolls sideways at 375px now.
+
+Still open: Timeline zoom; publishing itself (owner decision: where, and when).

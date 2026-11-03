@@ -20,7 +20,7 @@ export function card(run: Run, h: HealthReport): string {
       ? `tokens    context ${n(v.totalContextTokens)} (uncached input ${v.inputTokenRange.min === v.inputTokenRange.max ? n(v.inputTokenRange.max) : `${n(v.inputTokenRange.min)}–${n(v.inputTokenRange.max)}, copies disagree`})${v.otel ? ` · ${v.otel.otelOnly} request(s) seen only in OTel` : ''}`
       : `tokens    prompt ${n(v.totalContextTokens)} over ${run.llmRequests.length} LLM calls (this source reports no cache layers)`,
     q ? `requests  ${q.records} recorded · sealed ${q.sealed} (blobs alone ${q.sealedFromBlobs}, lines alone ${q.sealedFromLines}) · broken ${q.broken} · unresolved ${q.unresolved}`
-      : claude ? 'requests  none recorded (Claude Code before 2.1.299 writes none)' : 'requests  not applicable: this source has no request records to seal',
+      : claude ? 'requests  none recorded in this run (not every session writes request records)' : 'requests  not applicable: this source has no request records to seal',
   ]
   const fs = h.findings.filter(f => f.severity !== 'info')
   lines.push(`findings  ${h.findings.length} (${fs.length} warn/error)`)
