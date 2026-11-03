@@ -2,6 +2,26 @@
   "name": "assay",
   "private": true,
   "version": "0.0.1",
+  "description": "Audit Claude Code telemetry: what was captured, whether it agrees with itself, and a hash-proof of each API request. Local-only, deterministic, no model in any verdict.",
+  "homepage": "https://1ash0.github.io/assay/",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/1Ash0/assay.git"
+  },
+  "bugs": {
+    "url": "https://github.com/1Ash0/assay/issues"
+  },
+  "keywords": [
+    "claude-code",
+    "telemetry",
+    "observability",
+    "ai-agents",
+    "llm",
+    "context-engineering",
+    "opentelemetry",
+    "developer-tools"
+  ],
+  "license": "MIT",
   "scripts": {
     "check": "pnpm --filter @assay/core build && pnpm -r typecheck && pnpm test && pnpm schema:check && pnpm claims && pnpm public-check",
     "test": "vitest run",
