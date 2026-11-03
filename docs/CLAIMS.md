@@ -26,3 +26,6 @@ Every number assay publishes (README, report, site copy) is a row here, pointing
 | trail-agent-disagree | TRAIL: agent spans whose token total disagrees with the LLM calls beneath them | results/TRAIL-health.json | /agentTotalsDisagreeing | 177 | 0 |
 | trail-agent-totals | TRAIL: agent spans carrying a token total | results/TRAIL-health.json | /agentSpansWithTotals | 202 | 0 |
 | positives-fired | Known positives (one documented change to a real session) caught by D3, D8, D11 and D0 | results/detector-positives.json | /fired | 4 | 0 |
+| j1-answered | J1: TRAIL spans the judge answered, of 600 | results/J1-judge-calibration-v1.json | /sample/answered | 589 | 0 |
+| j1-ece | J1: held-out ECE of the judge's probability (model-judged) | results/J1-judge-calibration-v1.json | /primary_ece_heldOut/value | 0.428 | 0.0005 |
+| j1-auroc | J1: held-out AUROC of the judge (model-judged) | results/J1-judge-calibration-v1.json | /auroc_heldOut | 0.480 | 0.0005 |
