@@ -1,0 +1,112 @@
+{
+  "fps": 30,
+  "frames": 1500,
+  "music": {
+    "file": "audio/music.mp3",
+    "offset": 14.8,
+    "volume": 0.6,
+    "bpm": 109,
+    "dropAt": 135
+  },
+  "fade": 12,
+  "cold": {
+    "start": 0,
+    "dur": 135,
+    "diveAt": 96
+  },
+  "shots": [
+    {
+      "id": "runs",
+      "clip": "runs",
+      "start": 135,
+      "dur": 132,
+      "from": 0.3,
+      "rate": 1,
+      "chapter": 1,
+      "label": "Runs"
+    },
+    {
+      "id": "report",
+      "clip": "report",
+      "start": 267,
+      "dur": 199,
+      "from": 1.2,
+      "rate": 1,
+      "chapter": 2,
+      "label": "Report",
+      "cont": true
+    },
+    {
+      "id": "scan",
+      "clip": "scan",
+      "start": 466,
+      "dur": 132,
+      "from": 0.3,
+      "rate": 1,
+      "chapter": 3,
+      "label": "Scan"
+    },
+    {
+      "id": "timeline",
+      "clip": "timeline",
+      "start": 598,
+      "dur": 132,
+      "from": 0.3,
+      "rate": 1,
+      "chapter": 4,
+      "label": "Timeline"
+    },
+    {
+      "id": "rebuild",
+      "clip": "rebuild",
+      "start": 730,
+      "dur": 264,
+      "from": 2.9,
+      "rate": 1,
+      "chapter": 5,
+      "label": "Rebuild"
+    },
+    {
+      "id": "compare",
+      "clip": "compare",
+      "start": 994,
+      "dur": 133,
+      "from": 0.3,
+      "rate": 1,
+      "chapter": 6,
+      "label": "Compare"
+    },
+    {
+      "id": "learnA",
+      "clip": "learn",
+      "start": 1127,
+      "dur": 110,
+      "from": 0.3,
+      "rate": 1,
+      "chapter": 7,
+      "label": "Learn"
+    },
+    {
+      "id": "learnB",
+      "clip": "learn",
+      "start": 1237,
+      "dur": 88,
+      "from": 3.97,
+      "rate": 2,
+      "chapter": 7,
+      "label": "Learn",
+      "cont": true
+    }
+  ],
+  "outro": {
+    "start": 1325,
+    "dur": 175,
+    "from": 9.84,
+    "rate": 0.5,
+    "cardAt": 66
+  },
+  "events": {
+    "caught": 1283,
+    "sealed": 793
+  }
+}

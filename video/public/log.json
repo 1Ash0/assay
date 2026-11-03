@@ -1,0 +1,170 @@
+{
+ "file": "ef76e3fc-3d50-4f52-b5c6-00596db08ce6.jsonl",
+ "rows": [
+  {
+   "line": 37,
+   "kind": "assistant",
+   "text": "usage  in 2  cache_read 31,967  cache_write 53,294  out 430"
+  },
+  {
+   "line": 39,
+   "kind": "tool_use",
+   "text": "Read  id toolu_01MEizZe…"
+  },
+  {
+   "line": 40,
+   "kind": "tool_result",
+   "text": "Read  ok  365 ms"
+  },
+  {
+   "line": 41,
+   "kind": "tool_use",
+   "text": "Bash  id toolu_016ofiFB…"
+  },
+  {
+   "line": 42,
+   "kind": "tool_use",
+   "text": "Bash  id toolu_01828ToX…"
+  },
+  {
+   "line": 43,
+   "kind": "tool_result",
+   "text": "Bash  ok  3.1 s"
+  },
+  {
+   "line": 49,
+   "kind": "tool_result",
+   "text": "Bash  ok  10.2 s"
+  },
+  {
+   "line": 61,
+   "kind": "assistant",
+   "text": "usage  in 2  cache_read 85,261  cache_write 5,577  out 494"
+  },
+  {
+   "line": 63,
+   "kind": "tool_use",
+   "text": "Bash  id toolu_01Xjinkw…"
+  },
+  {
+   "line": 64,
+   "kind": "tool_use",
+   "text": "Grep  id toolu_01HoWDGR…"
+  },
+  {
+   "line": 65,
+   "kind": "tool_result",
+   "text": "Bash  ok  2.1 s"
+  },
+  {
+   "line": 71,
+   "kind": "tool_result",
+   "text": "Grep  ok  1.8 s"
+  },
+  {
+   "line": 75,
+   "kind": "assistant",
+   "text": "usage  in 2  cache_read 90,838  cache_write 3,594  out 497"
+  },
+  {
+   "line": 77,
+   "kind": "tool_use",
+   "text": "Read  id toolu_01M5JvEd…"
+  },
+  {
+   "line": 78,
+   "kind": "tool_result",
+   "text": "Read  ok  342 ms"
+  },
+  {
+   "line": 79,
+   "kind": "tool_use",
+   "text": "Grep  id toolu_01NpSc48…"
+  },
+  {
+   "line": 80,
+   "kind": "tool_result",
+   "text": "Grep  ok  400 ms"
+  },
+  {
+   "line": 86,
+   "kind": "assistant",
+   "text": "usage  in 2  cache_read 94,432  cache_write 1,679  out 1778"
+  },
+  {
+   "line": 88,
+   "kind": "tool_use",
+   "text": "Write  id toolu_01C4S69h…"
+  },
+  {
+   "line": 89,
+   "kind": "tool_use",
+   "text": "Bash  id toolu_01XeBze4…"
+  },
+  {
+   "line": 90,
+   "kind": "tool_result",
+   "text": "Write  ok  1.2 s"
+  },
+  {
+   "line": 96,
+   "kind": "tool_result",
+   "text": "Bash  error  1.4 s"
+  },
+  {
+   "line": 100,
+   "kind": "assistant",
+   "text": "usage  in 2  cache_read 96,111  cache_write 3,310  out 496"
+  },
+  {
+   "line": 102,
+   "kind": "tool_use",
+   "text": "Grep  id toolu_017UDWPj…"
+  },
+  {
+   "line": 103,
+   "kind": "tool_result",
+   "text": "Grep  ok  407 ms"
+  },
+  {
+   "line": 107,
+   "kind": "assistant",
+   "text": "usage  in 2  cache_read 99,421  cache_write 1,530  out 964"
+  },
+  {
+   "line": 109,
+   "kind": "tool_use",
+   "text": "Edit  id toolu_01G6P2Jz…"
+  },
+  {
+   "line": 110,
+   "kind": "tool_use",
+   "text": "Edit  id toolu_012Zbqmm…"
+  },
+  {
+   "line": 111,
+   "kind": "tool_use",
+   "text": "Bash  id toolu_013WNEHv…"
+  },
+  {
+   "line": 112,
+   "kind": "tool_result",
+   "text": "Edit  ok  1.1 s"
+  },
+  {
+   "line": 119,
+   "kind": "tool_result",
+   "text": "Edit  ok  1.6 s"
+  },
+  {
+   "line": 120,
+   "kind": "tool_result",
+   "text": "Bash  ok  2.7 s"
+  },
+  {
+   "line": 124,
+   "kind": "assistant",
+   "text": "usage  in 2  cache_read 100,951  cache_write 1,221  out 661"
+  }
+ ]
+}
