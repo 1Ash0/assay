@@ -44,6 +44,13 @@ The first recorded twin pair (same prompt, same commit) diverged at step 1: one 
 ### 5. What the categories say, and how much is measured
 For sealed requests, assay splits context into the official categories by literal markers, with 0.09% uncategorised [r2-uncat]. Only 7.7% of input tokens are *measured* by usage deltas [r2-delta]; the rest is split by characters and drawn as inferred. The opening request, mostly system prompt and tools, can never be delta-measured.
 
+### 6. A second, multi-author source: TRAIL
+assay's importer for OpenInference/smolagents traces reads all 148 TRAIL traces [trail-traces] at L3, version-checked, with byte-exact offsets for every span.
+- **Summing every span's token total overcounts 1.81×** [trail-overcount]: agent spans carry totals as well as the LLM calls beneath them.
+- **177 of the 202 agent totals** [trail-agent-disagree, trail-agent-totals] disagree with those calls, always lower. No rule we tested explains them. assay counts LLM calls only, and reports each disagreement (D12).
+
+This is the same class of problem as Claude Code's duplicate message copies (D2), in a different harness.
+
 ## Threats (read before quoting any number)
 - **One user, one machine, one task style.** The ≥3-users criterion is not met.
 - **Versions 2.1.301–2.1.316 for every request-record result.** D0 and `assay catalogue check` flag later versions.

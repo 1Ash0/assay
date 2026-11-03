@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-import { attachOtlp, buildRunView, census, diffCensus, IMPORTER_SUPPORT, importClaudeCodeDir, Run, runHealth, Truth } from '@assay/core'
+import { importTrail, attachOtlp, buildRunView, census, diffCensus, IMPORTER_SUPPORT, importClaudeCodeDir, Run, runHealth, Truth } from '@assay/core'
 import { assertRules, card, checkExit, parseRules } from './check.js'
 import { corpusAdd, corpusAudit, corpusStats } from './corpus.js'
 import { existsSync, mkdirSync, readdirSync, readFileSync, statSync, writeFileSync } from 'fs'
@@ -60,7 +60,7 @@ if (command === 'import') {
   const path = args[0]
   if (!path) { console.error('import requires a path'); process.exit(1) }
   try {
-    const run = withOtlp(importClaudeCodeDir(resolve(path)), flag('--otlp'))
+    const run = withOtlp(importAny(path), flag('--otlp'))
     console.error(
       `imported  L${run.capture.level}  ${run.events.length} events  ` +
       `${run.unknowns.length} unknowns  ${run.compactions.length} compactions  ` +
@@ -101,7 +101,7 @@ if (command === 'import') {
   const path = args[0]
   if (!path || path.startsWith('--')) usage()
   let run: Run
-  try { run = withOtlp(importClaudeCodeDir(resolve(path)), flag('--otlp')) } catch (err) { console.error(`${command} failed: ${err instanceof Error ? err.message : err}`); process.exit(1) }
+  try { run = withOtlp(importAny(path), flag('--otlp')) } catch (err) { console.error(`${command} failed: ${err instanceof Error ? err.message : err}`); process.exit(1) }
   const report = runHealth(run)
   if (command === 'check') {
     if (args.includes('--json')) process.stdout.write(JSON.stringify(report, null, 2) + '\n')
@@ -161,7 +161,7 @@ if (command === 'import') {
   const path = args[0]
   if (!path) { console.error('export-view requires a session path'); process.exit(1) }
   const truth = flag('--truth') as Truth | undefined
-  const run = withOtlp(importClaudeCodeDir(resolve(path), truth ? { truth } : {}), flag('--otlp'))
+  const run = withOtlp(importAny(path, truth ? { truth } : {}), flag('--otlp'))
   const id = flag('--id')
   writeOutput(buildRunView(run, runHealth(run), { ...(id ? { id } : {}), ...(truth ? { truth } : {}) }))
 } else if (command === 'export-site') {
@@ -193,6 +193,19 @@ if (command === 'import') {
   console.error(`wrote ${outFile} (${Math.round(js.length / 1024)} KB, ${runs.length} runs)`)
 } else {
   usage()
+}
+
+// A TRAIL trace (one .json with trace_id and spans; ADR-037) or a Claude Code
+// session (.jsonl or folder). The format is read from the file, not guessed from its name alone.
+function importAny(path: string, opts: { truth?: Truth } = {}): Run {
+  const p = resolve(path)
+  if (p.endsWith('.json')) {
+    const bytes = new Uint8Array(readFileSync(p))
+    const head = new TextDecoder().decode(bytes.subarray(0, 4096))
+    if (/"trace_id"/.test(head) && /"spans"/.test(new TextDecoder().decode(bytes))) return importTrail({ path: p, bytes }, opts)
+    throw new Error(`${path} is .json but not a TRAIL trace (no trace_id and spans)`)
+  }
+  return importClaudeCodeDir(p, opts)
 }
 
 // ADR-025: an OTLP file-exporter capture joined by session.id and request_id.

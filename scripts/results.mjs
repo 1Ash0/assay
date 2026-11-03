@@ -27,6 +27,8 @@ const artifacts = [
   // Slowest last: T3 imports every session five times.
   sh('node scripts/t3-score.mjs results/T3-diff-stability-v1.json', 'results/T3-diff-stability-v1.json'),
 ].filter(Boolean)
+// TRAIL (gated, local) when present: aggregates only (ADR-037).
+if (existsSync('TRAIL/GAIA')) artifacts.push(sh('node scripts/trail-health.mjs results/TRAIL-health.json', 'results/TRAIL-health.json'))
 // J1 is scored only once every span has been attempted; until then it is skipped, not partially written.
 if (existsSync('results/J1/cache.jsonl')) {
   try { execSync('node scripts/j1.mjs score', { stdio: ['ignore', 'ignore', 'inherit'] }); artifacts.push('results/J1-judge-calibration-v1.json') }

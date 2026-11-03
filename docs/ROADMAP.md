@@ -76,7 +76,7 @@ Waiting on Asmit:
 - the cumulative gate (P8, deferred by Asmit).
 
 ## Later (each needs evidence trigger + ADR)
-Atlas (cross-run corpus graph; the only force layout, with a "proximity is not meaning" notice) · MCP server · OpenInference/Langfuse importers · WASM/Rust parser · T5 comprehension study · interop with context-analyzer · other harnesses (Codex) · hosted backend (cut unless a trigger appears) · D-fork-dup, the fork-subagent duplicate detector (trigger: a real session with an `isFork` meta file; M4_PLAN §4a) · changelog watcher, off by default (trigger: a format change missed by the census).
+Atlas (cross-run corpus graph; the only force layout, with a "proximity is not meaning" notice) · MCP server · Langfuse importers (OpenInference/smolagents done for TRAIL, ADR-037) · WASM/Rust parser · T5 comprehension study · interop with context-analyzer · other harnesses (Codex) · hosted backend (cut unless a trigger appears) · D-fork-dup, the fork-subagent duplicate detector (trigger: a real session with an `isFork` meta file; M4_PLAN §4a) · changelog watcher, off by default (trigger: a format change missed by the census).
 
 ## Scope fence
 Anything not on this page goes to Later. A feature that needs a judge model for a primary outcome is out of scope for core.

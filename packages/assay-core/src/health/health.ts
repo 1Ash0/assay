@@ -12,12 +12,13 @@ import {
   d10ApiRequestCount,
   d11RequestSeals,
   d0VersionSupport,
+  d12AggregateTokens,
   requestLinks,
   dCostStateCheck,
 } from './detectors.js'
 import { CategoryObservability, Finding, FinenessRate, HealthReport, MetricVerdict, ValidityCard } from './types.js'
 import { captureQuality } from './quality.js'
-import { IMPORTER_SUPPORT, versionSupport } from '../importers/claude-code-jsonl/support.js'
+import { supportRange, versionSupport } from '../importers/claude-code-jsonl/support.js'
 
 export function runHealth(run: Run): HealthReport {
   const findings: Finding[] = [
@@ -33,6 +34,7 @@ export function runHealth(run: Run): HealthReport {
     ...d10ApiRequestCount(run),
     ...d11RequestSeals(run),
     ...d0VersionSupport(run),
+    ...d12AggregateTokens(run),
     ...dCostStateCheck(run),
   ]
 
@@ -86,7 +88,7 @@ export function buildValidityCard(run: Run, findings: Finding[], overall: Metric
       modelByMsgId.set(mid, msg['model'])
     }
   }
-  const identifiedCount = run.llmRequests.filter(r => modelByMsgId.has(r.messageId)).length
+  const identifiedCount = run.llmRequests.filter(r => r.model || modelByMsgId.has(r.messageId)).length
   const modelIdentificationRate = run.llmRequests.length > 0
     ? identifiedCount / run.llmRequests.length
     : null
@@ -124,8 +126,8 @@ export function buildValidityCard(run: Run, findings: Finding[], overall: Metric
   const requests = requestSummary(run)
   const version = {
     value: run.harness.version ?? null,
-    support: versionSupport(run.harness.version),
-    range: `${IMPORTER_SUPPORT.min}–${IMPORTER_SUPPORT.max}`,
+    support: versionSupport(run.harness.version, run.harness.tool),
+    range: supportRange(run.harness.tool),
   }
   const fineness = finenessOf({
     'usage coverage': usageCoverageRate,
@@ -287,6 +289,9 @@ export function buildValidityCard(run: Run, findings: Finding[], overall: Metric
   // unknown type count here (ADR-022); the raw unknown share overstated it.
   if (importerCoverage.unparsedTelemetryRatio > 0.05)
     caveats.push(`${Math.round(importerCoverage.unparsedTelemetryRatio * 100)}% of JSONL lines are of a type the importer does not know (kept, flagged) — telemetry in them is not counted`)
+  // The source cut some content short (e.g. TRAIL values ending "... (truncated"); counts are unaffected, text is incomplete.
+  if (run.capture.truncated)
+    caveats.push('Some captured content is truncated at the source; text-based checks (provenance, categories) see only the kept part')
   if (otel && otel.otelOnly > 0)
     caveats.push(`${otel.otelOnly} API request(s) appear only in OTel (${Object.entries(otel.otelOnlyBySource).map(([k, v]) => `${k} ×${v}`).join(', ')}): ${otel.otelOnlyInputTokens} input and ${otel.otelOnlyOutputTokens} output tokens the transcript never recorded`)
   if (run.capture.level < 3)

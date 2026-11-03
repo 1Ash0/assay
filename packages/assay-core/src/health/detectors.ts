@@ -1,4 +1,4 @@
-import { IMPORTER_SUPPORT, versionSupport } from '../importers/claude-code-jsonl/support.js'
+import { supportRange, versionSupport } from '../importers/claude-code-jsonl/support.js'
 import { Run } from '../schema/run.js'
 import { Finding } from './types.js'
 
@@ -26,6 +26,10 @@ const SYNTHETIC_MODEL = '<synthetic>'
 // Fires when a tool result references an agentId but no agent transcript file was found.
 export function d1SubagentBlindSpot(run: Run): Finding[] {
   const findings: Finding[] = []
+  // D1's premise is Claude Code's layout, where each subagent's transcript is a
+  // separate file that can go missing. Sources whose subagents are inline spans
+  // (TRAIL, ADR-037) have nothing to lose this way: 60 false warnings otherwise.
+  if (run.harness.tool !== 'claude-code') return findings
   // Agents known from events
   const agentsWithFile = new Set(
     run.agents.filter(a => a.transcriptFile).map(a => a.agentId)
@@ -209,7 +213,7 @@ export function d5ContextOverflow(run: Run): Finding[] {
   }
 
   for (const req of run.llmRequests) {
-    const model = modelByMsgId.get(req.messageId) ?? null
+    const model = req.model ?? modelByMsgId.get(req.messageId) ?? null
 
     if (!model || model === SYNTHETIC_MODEL) {
       findings.push({
@@ -501,14 +505,47 @@ export function d10ApiRequestCount(run: Run): Finding[] {
 // (`assay catalogue check`) is how it gets checked and added to `seen`.
 export function d0VersionSupport(run: Run): Finding[] {
   const v = run.harness.version
-  const s = versionSupport(v)
-  const range = `${IMPORTER_SUPPORT.min}–${IMPORTER_SUPPORT.max}`
+  const s = versionSupport(v, run.harness.tool)
+  const range = supportRange(run.harness.tool)
   if (s === 'checked') return []
   if (s === 'in-range-unchecked') {
-    return [{ detectorId: 'D0', severity: 'info', message: `Claude Code ${v} is inside the importer's range (${range}) but no session at this version has been checked`, evidence: [] }]
+    return [{ detectorId: 'D0', severity: 'info', message: `${run.harness.tool} ${v} is inside the importer's range (${range}) but no session at this version has been checked`, evidence: [] }]
   }
-  const what = s === 'no-version' ? 'no Claude Code version on any line' : `Claude Code ${v} is outside the importer's range (${range})`
+  const what = s === 'no-version' ? `no ${run.harness.tool} version in the source` : `${run.harness.tool} ${v} is outside the importer's range (${range})`
   return [{ detectorId: 'D0', severity: 'warn', message: `${what}; the run is read, but the format is not known to match`, evidence: [] }]
+}
+
+// D12 — aggregate token totals that disagree with their LLM calls (ADR-037)
+// Some sources put token totals on agent spans as well as on each LLM call.
+// assay counts LLM calls only, so its totals are unaffected; this finding is
+// for anyone summing every span, which overcounts. It reports, per agent span,
+// its total against the sum of LLM calls beneath it, and does not guess what
+// the agent total means (on TRAIL, no rule explains it).
+// False positive: a source whose agent totals deliberately cover a different
+// scope (e.g. own calls only) would be flagged though internally consistent.
+export function d12AggregateTokens(run: Run): Finding[] {
+  if (run.harness.tool !== 'openinference-smolagents') return []
+  const llmTotal = new Map<string, number>()
+  const children = new Map<string, string[]>()
+  for (const e of run.events) {
+    const a = (e.raw['span_attributes'] ?? {}) as Record<string, unknown>
+    if (a['openinference.span.kind'] === 'LLM' && a['llm.token_count.total'] != null) llmTotal.set(e.id, Number(a['llm.token_count.total']))
+    if (e.parentId) children.set(e.parentId, [...(children.get(e.parentId) ?? []), e.id])
+  }
+  const below = (id: string): number => (children.get(id) ?? []).reduce((s, c) => s + (llmTotal.get(c) ?? 0) + below(c), 0)
+  const out: Finding[] = []
+  for (const e of run.events) {
+    const a = (e.raw['span_attributes'] ?? {}) as Record<string, unknown>
+    if (a['openinference.span.kind'] !== 'AGENT' || a['llm.token_count.total'] == null) continue
+    const own = Number(a['llm.token_count.total']), sum = below(e.id)
+    if (own === sum) continue
+    out.push({
+      detectorId: 'D12', severity: 'info',
+      message: `agent span ${e.id} reports ${own} tokens; the LLM calls beneath it total ${sum}. assay counts the LLM calls; summing both overcounts`,
+      evidence: [e.offset],
+    })
+  }
+  return out
 }
 
 // D11 — request-record seals (ADR-026)

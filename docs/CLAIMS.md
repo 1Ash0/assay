@@ -21,3 +21,7 @@ Every number assay publishes (README, report, site copy) is a row here, pointing
 | l4a-redacted | L4 calibration 1: values the raw-body logger redacted | results/L4-calibration-cae68025.json | /redactedLeaves | 356 | 0 |
 | l4b-messages | L4 calibration 2 (twin A): messages equal between record and wire | results/L4-calibration-ff627b48.json | /messages/equal | 10 | 0 |
 | l4b-subagent-unpaired | L4 calibration 2 (subagent session): raw requests with no transcript record | results/L4-calibration-257eafee.json | /unpaired/length | 5 | 0 |
+| trail-traces | TRAIL: traces read by the TRAIL importer | results/TRAIL-health.json | /traces | 148 | 0 |
+| trail-overcount | TRAIL: tokens from summing every span ÷ tokens from LLM calls only | results/TRAIL-health.json | /naiveOvercount | 1.814 | 0.0005 |
+| trail-agent-disagree | TRAIL: agent spans whose token total disagrees with the LLM calls beneath them | results/TRAIL-health.json | /agentTotalsDisagreeing | 177 | 0 |
+| trail-agent-totals | TRAIL: agent spans carrying a token total | results/TRAIL-health.json | /agentSpansWithTotals | 202 | 0 |

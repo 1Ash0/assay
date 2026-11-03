@@ -51,6 +51,9 @@ export const LlmRequestSchema = z.object({
   // The API's request id (assistant `requestId`, `req_…`). Not the transcript's
   // own `requestRef` field, which names an api-request record (D10).
   requestRef: z.string().optional(),
+  // The model, when the source names it on the request itself (TRAIL's
+  // llm.model_name). Claude Code transcripts carry it on the message instead.
+  model: z.string().optional(),
 })
 
 export type LlmRequest = z.infer<typeof LlmRequestSchema>

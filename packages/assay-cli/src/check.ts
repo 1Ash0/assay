@@ -8,14 +8,19 @@ const n = (v: number | null | undefined) => (v == null ? '–' : Math.round(v).t
 export function card(run: Run, h: HealthReport): string {
   const v = h.validity
   const q = v.requests
+  const claude = run.harness.tool === 'claude-code'
   const lines = [
     // Capture Level first, before any number (Rule 1).
     `capture   L${run.capture.level} of L4 · truth ${run.truth} · ${run.harness.tool} ${run.harness.version ?? '(no version)'} (${v.version.support}, importer ${v.version.range})`,
     `overall   ${h.overall}`,
     `verdicts  ${Object.entries(h.verdicts).map(([k, x]) => `${k}: ${x}`).join(' · ')}`,
     `fineness  ${v.fineness.value ?? '–'} (bounded by ${v.fineness.bound ?? '–'})`,
-    `tokens    context ${n(v.totalContextTokens)} (uncached input ${v.inputTokenRange.min === v.inputTokenRange.max ? n(v.inputTokenRange.max) : `${n(v.inputTokenRange.min)}–${n(v.inputTokenRange.max)}, copies disagree`})${v.otel ? ` · ${v.otel.otelOnly} request(s) seen only in OTel` : ''}`,
-    q ? `requests  ${q.records} recorded · sealed ${q.sealed} (blobs alone ${q.sealedFromBlobs}, lines alone ${q.sealedFromLines}) · broken ${q.broken} · unresolved ${q.unresolved}` : 'requests  none recorded (Claude Code before 2.1.299 writes none)',
+    // Each source in its own terms: TRAIL spans have prompt tokens but no cache layers.
+    claude
+      ? `tokens    context ${n(v.totalContextTokens)} (uncached input ${v.inputTokenRange.min === v.inputTokenRange.max ? n(v.inputTokenRange.max) : `${n(v.inputTokenRange.min)}–${n(v.inputTokenRange.max)}, copies disagree`})${v.otel ? ` · ${v.otel.otelOnly} request(s) seen only in OTel` : ''}`
+      : `tokens    prompt ${n(v.totalContextTokens)} over ${run.llmRequests.length} LLM calls (this source reports no cache layers)`,
+    q ? `requests  ${q.records} recorded · sealed ${q.sealed} (blobs alone ${q.sealedFromBlobs}, lines alone ${q.sealedFromLines}) · broken ${q.broken} · unresolved ${q.unresolved}`
+      : claude ? 'requests  none recorded (Claude Code before 2.1.299 writes none)' : 'requests  not applicable: this source has no request records to seal',
   ]
   const fs = h.findings.filter(f => f.severity !== 'info')
   lines.push(`findings  ${h.findings.length} (${fs.length} warn/error)`)

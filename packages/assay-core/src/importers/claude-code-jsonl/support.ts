@@ -14,6 +14,18 @@ export const IMPORTER_SUPPORT = {
   seen: ['2.1.165', '2.1.170', '2.1.177', '2.1.181', '2.1.299', '2.1.301', '2.1.304', '2.1.308', '2.1.309', '2.1.316'],
 } as const
 
+// Every importer, keyed by the tool it reads (Rule 7). The TRAIL importer
+// (ADR-037) is keyed by its instrumenter; its version is the spans' scope_version.
+export const SUPPORT_BY_TOOL: Record<string, { tool: string; min: string; max: string; seen: readonly string[] }> = {
+  'claude-code': IMPORTER_SUPPORT,
+  'openinference-smolagents': { tool: 'openinference-smolagents', min: '0.1.6', max: '0.1.8', seen: ['0.1.6', '0.1.8', '0.1.6+0.1.8'] },
+}
+
+export const supportRange = (tool = 'claude-code') => {
+  const s = SUPPORT_BY_TOOL[tool]
+  return s ? `${s.min}–${s.max}` : 'no importer support declared'
+}
+
 export type VersionSupport = 'checked' | 'in-range-unchecked' | 'outside-range' | 'no-version'
 
 function parts(v: string): number[] | null {
@@ -26,11 +38,13 @@ function cmp(a: number[], b: number[]): number {
   return 0
 }
 
-export function versionSupport(version: string | undefined): VersionSupport {
+export function versionSupport(version: string | undefined, tool = 'claude-code'): VersionSupport {
+  const sup = SUPPORT_BY_TOOL[tool]
+  if (!sup) return 'outside-range'
   if (!version) return 'no-version'
-  if ((IMPORTER_SUPPORT.seen as readonly string[]).includes(version)) return 'checked'
+  if (sup.seen.includes(version)) return 'checked'
   const v = parts(version)
   if (!v) return 'outside-range'
-  const lo = parts(IMPORTER_SUPPORT.min)!, hi = parts(IMPORTER_SUPPORT.max)!
+  const lo = parts(sup.min)!, hi = parts(sup.max)!
   return cmp(v, lo) >= 0 && cmp(v, hi) <= 0 ? 'in-range-unchecked' : 'outside-range'
 }
