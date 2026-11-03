@@ -203,6 +203,25 @@ Decision:
 
 Consequence: CI sees scripted fixtures only (Rule 8), and a gate that cannot close fails the build.
 
+## ADR-037 · 2026-11-03 · accepted · TRAIL importer (OpenInference / smolagents), moved up from Later
+Context: ROADMAP Later lists OpenInference importers, behind an evidence trigger. The trigger is met: TRAIL (148 multi-author agent traces, gated, local) is on this machine, and every assay result so far rests on one user. The format was mapped from the real files before any code was written:
+- pretty-printed JSON, one trace per file, spans nested in `child_spans`;
+- `openinference.span.kind` is LLM 1,974, CHAIN 1,268, TOOL 648, AGENT 207, or absent 529;
+- instrumenter `openinference.instrumentation.smolagents` 0.1.6 or 0.1.8, plus `patronus.sdk` spans with no version;
+- 6 LLM spans without token counts, and 82 values with truncation markers.
+
+**Finding before code.** Summing token counts over every span overcounts 1.81× (37.3M against 20.6M from LLM spans). 202 AGENT spans carry totals, and 177 of them disagree with the LLM calls beneath them, always lower, at a median ratio of 0.64. Neither "roll-up of descendants" nor "own calls, nested agents excluded" explains them (25 of 202 match either).
+
+Decision: `importers/trail/` maps one TRAIL file to a canonical Run.
+- **Every span is an event** (`otel-span`) whose evidence is the exact byte range of its JSON object and its start line (Rule 4), found by a structure-aware byte scanner.
+- **LLM spans become LlmRequests**, with prompt and completion tokens and no cache layers. **TOOL spans become a tool call and its result** in one span (an error result when `status_code` is Error). **AGENT spans become agents**, parented by span ancestry, an observed link.
+- **Capture is L3** (OTel spans) with prompts, responses and tool content captured, and `truncated` when a marker is present.
+- **Rule 7:** the importer is keyed by (`openinference-smolagents`, 0.1.6–0.1.8), and the version comes from the spans' `scope_version`.
+- **Tokens are counted from LLM spans only.** AGENT totals are never summed. **D12** reports each AGENT total that disagrees with the sum of LLM calls beneath it, with offsets, and does not guess what the total means.
+- **TRAIL is gated:** runs stay local; nothing from it is committed or published, and views are redacted as always.
+
+Consequence: assay's Capture Level, detectors and views run on a second, multi-author source. The one-user threat now has a counter-sample for structural findings, though not for Claude Code transcripts.
+
 ## Proposed (not yet accepted)
 - ADR-P1 Interop with context-analyzer (decide after M0 source read).
 - ADR-P2 Upstream OTel proposal for compaction and skill entities (decide after M0 repo check).
