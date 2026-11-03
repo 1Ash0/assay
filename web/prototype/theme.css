@@ -254,3 +254,39 @@ html,body{overflow-x:clip}
 .rp-loc i{position:absolute;top:-2px;width:2px;height:8px;background:var(--ochre)}
 .rp-level{font-size:13.5px;color:var(--ink-2);line-height:1.5;display:grid;gap:4px;padding-top:10px;border-top:1px dashed var(--rule)}
 .spark{width:120px;height:18px;display:block}
+
+/* ---------- Hallmark strip (both pages) ----------
+   One instrument strip: five equal cells divided by hairlines, then the
+   verdict as a full-width bar. Same height, same corners, no wrap gaps;
+   cells differ only by what they show (pips for capture, a fill for trust). */
+.punches{display:grid!important;grid-template-columns:repeat(5,minmax(0,1fr));gap:0!important;border:1px solid var(--ink);margin-top:16px;background:var(--paper-2)}
+.punch{min-width:0!important;width:auto!important;height:68px!important;padding:8px 4px!important;border:0!important;border-radius:0!important;
+  border-right:1px solid var(--rule)!important;background:transparent!important;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;position:relative}
+.punch:nth-child(5){border-right:0!important}
+.punch b{font-family:var(--display)!important;font-size:clamp(17px,1.6vw,22px)!important;font-weight:700!important;line-height:1;white-space:nowrap}
+.punch i{margin-top:0!important;font-size:9.5px!important;letter-spacing:.12em!important;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%}
+.punch.truth.real b{color:var(--cob)}.punch.truth.real-perturbed b,.punch.truth.scripted b{color:var(--ochre)}
+.punch.blank b,.punch.blank i{color:var(--rule)!important}
+.hm-pips{display:flex;gap:2px}.hm-pips s{width:7px;height:3px;background:var(--rule)}.hm-pips s.on{background:var(--cob);box-shadow:0 0 6px color-mix(in srgb,var(--cob) 60%,transparent)}
+.hm-bar{width:60%;height:3px;background:var(--rule);position:relative}.hm-bar s{position:absolute;inset:0 auto 0 0;background:var(--ink)}
+.punch.verdict{grid-column:1/-1;height:auto!important;min-height:46px;flex-direction:row!important;justify-content:flex-start;gap:12px!important;padding:10px 14px!important;
+  border-right:0!important;border-top:1px solid var(--ink)!important;color:var(--mute)}
+.punch.verdict b{font-size:18px!important}
+.punch.verdict i{font:700 12.5px var(--mono)!important;letter-spacing:.1em!important;text-transform:uppercase;overflow:visible;max-width:none!important;text-align:left}
+.punch.verdict em{margin-left:auto;font:400 11.5px var(--mono);font-style:normal;color:var(--mute);text-align:right}
+.punch.verdict.ok{background:var(--mint-soft)!important}.punch.verdict.ok b,.punch.verdict.ok i{color:var(--mint)!important}
+.punch.verdict.caveat{background:var(--ochre-soft)!important}.punch.verdict.caveat b,.punch.verdict.caveat i{color:var(--ochre)!important}
+.punch.verdict.bad{background:var(--verm-soft)!important}.punch.verdict.bad b,.punch.verdict.bad i{color:var(--verm)!important}
+@media (max-width:520px){.punch b{font-size:15px!important}.punch i{font-size:8.5px!important;letter-spacing:.06em!important}.punch.verdict{flex-wrap:wrap}.punch.verdict em{margin-left:0;flex-basis:100%;text-align:left}}
+
+/* Run picker on Scan: one row that scrolls, never a ragged second row. */
+.picker{display:flex!important;flex-wrap:nowrap!important;overflow-x:auto;gap:6px;padding-bottom:4px;scrollbar-width:thin;mask-image:linear-gradient(90deg,#000 92%,transparent)}
+.picker .chip{flex:none}
+/* Runs header: title and note stacked on the left, filters on the right. */
+.shelfhead{display:grid!important;grid-template-columns:minmax(0,1fr) auto;align-items:end;gap:10px 24px}
+.shelfhead h2{grid-column:1}.shelfhead>p{grid-column:1;max-width:62ch!important}
+.shelfhead .spacer{display:none}
+.shelfhead .filters{grid-column:2;grid-row:1 / span 2;display:flex;flex-wrap:wrap;gap:6px;justify-content:flex-end;align-self:end}
+@media (max-width:820px){.shelfhead{grid-template-columns:1fr}.shelfhead .filters{grid-column:1;grid-row:auto;justify-content:flex-start}}
+.runtable td:nth-last-child(-n+2){text-align:right}.runtable th:nth-last-child(-n+2) button{text-align:right}
+.cmd #copy{flex:none;white-space:nowrap}

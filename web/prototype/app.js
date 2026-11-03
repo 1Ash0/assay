@@ -118,7 +118,7 @@ function renderHead(r) {
       <h1 style="margin-top:6px">${esc(r.id)}</h1>
       <div class="sub">
         <span class="truth ${r.truth}">${r.truth}</span>
-        <span>${full(r.source.lines)} lines · ${fmt(r.source.bytes)} bytes · ${full(r.counts.events)} events</span>
+        <span>${full(r.source.lines)} lines · ${(r.source.bytes / 1e6).toFixed(1)} MB · ${full(r.counts.events)} events</span>
       </div>
       <div class="sha" style="margin-top:6px" title="${esc(r.source.sha256)}">${esc(r.source.file)} · sha256 ${esc(r.source.sha256.slice(0, 16))}…</div>
       <div class="picker" aria-label="Pick a specimen">${pick.map(x => `<button class="chip ${x.truth}" data-run="${esc(x.id)}" aria-pressed="${x === r}">${esc(x.id)}</button>`).join('')}<button class="chip" data-goto="shelf">all →</button></div>
@@ -131,14 +131,17 @@ function dateLetter(ts) { if (!ts) return '–'; const d = new Date(ts); return 
 // Read left to right like a real hallmark; fineness is marked to the lowest rate.
 function punchStrip(r, struck) {
   const h = r.hallmark || {}, cls = verdictClass(r.overall);
-  const P = (kind, top, bot, title, on = true) => `<span class="punch ${kind} ${on ? 'on' : 'blank'}" title="${esc(title)}"><b>${top}</b><i>${bot}</i></span>`;
-  return P('sponsor', 'CC', esc(r.harness.version), 'Sponsor: ' + r.harness.tool + ' ' + r.harness.version) +
-    P('capture', 'L' + r.capture.level, 'capture', 'Capture level ' + r.capture.level + ' of 4') +
-    P('fine', struck ? (h.fineness ?? '–') : '???', struck ? 'trust' : 'assaying', h.bound ? `Trust score ${h.fineness}/1000, bounded by ${h.bound}` : 'Fineness', struck) +
-    P('truth ' + r.truth, r.truth === 'real' ? 'R' : r.truth === 'scripted' ? 'S' : 'P', r.truth, 'Truth: ' + r.truth) +
+  const P = (kind, top, bot, title, on = true, extra = '') => `<span class="punch ${kind} ${on ? 'on' : 'blank'}" title="${esc(title)}"><b>${top}</b><i>${bot}</i>${extra}</span>`;
+  return P('sponsor', 'CC', esc(r.harness.version), 'Harness: ' + r.harness.tool + ' ' + r.harness.version) +
+    P('capture', 'L' + r.capture.level, 'capture', 'Capture level ' + r.capture.level + ' of 4', true, hmPips(r.capture.level)) +
+    P('fine', struck ? (h.fineness ?? '–') : '···', 'trust', h.bound ? `Trust score ${h.fineness}/1000, capped by ${h.bound}` : 'Trust score', struck, struck ? hmBar(h.fineness) : '') +
+    P('truth ' + r.truth, r.truth === 'real' ? 'R' : r.truth === 'scripted' ? 'S' : 'P', r.truth.replace('real-perturbed', 'perturbed'), 'Truth: ' + r.truth) +
     P('date', dateLetter(h.firstTs), 'date', 'First event date (UTC)', struck) +
-    `<span class="punch verdict ${struck ? 'on ' + cls : 'blank'}" id="hallmark" title="${esc(verdictText(r.overall))}"><b>${struck ? verdictGlyph(r.overall) : '?'}</b><i>${struck ? esc(verdictText(r.overall)) : 'verdict'}</i></span>`;
+    `<span class="punch verdict ${struck ? 'on ' + cls : 'blank'}" id="hallmark" title="${esc(verdictText(r.overall))}"><b>${struck ? verdictGlyph(r.overall) : '?'}</b><i>${struck ? esc(verdictText(r.overall)) : 'verdict pending'}</i>${struck && h.bound ? `<em>trust capped by ${esc(h.bound)}</em>` : ''}</span>`;
 }
+// Capture as five pips filled to the level; trust as a bar filled to n/1000.
+const hmPips = l => `<span class="hm-pips" aria-hidden="true">${[0, 1, 2, 3, 4].map(i => `<s class="${i <= l ? 'on' : ''}"></s>`).join('')}</span>`;
+const hmBar = f => f == null ? '' : `<span class="hm-bar" aria-hidden="true"><s style="width:${f / 10}%"></s></span>`;
 
 /* ---------- gates ---------- */
 function renderGates(r) {
@@ -498,8 +501,8 @@ const COLS = [
   ['truth', 'Truth', r => r.truth, r => `<span class="truth ${r.truth}" style="font-size:10px;padding:1px 6px">${esc(r.truth)}</span>`],
   ['trust', 'Trust', r => r.hallmark.fineness ?? -1, r => r.hallmark.fineness ?? '–'],
   ['verdict', 'Verdict', r => r.overall, r => `<span class="vtag ${verdictClass(r.overall)}">${verdictGlyph(r.overall)}</span> ${esc(verdictText(r.overall))}`],
-  ['find', 'Findings', r => r.findings.reduce((a, f) => a + f.count, 0), r => fmt(r.findings.reduce((a, f) => a + f.count, 0))],
-  ['ctx', 'Context tokens', r => r.validity.totalContextTokens || 0, r => fmt(r.validity.totalContextTokens)],
+  ['find', 'Findings', r => r.findings.reduce((a, f) => a + f.count, 0), r => full(r.findings.reduce((a, f) => a + f.count, 0))],
+  ['ctx', 'Context tokens', r => r.validity.totalContextTokens || 0, r => full(r.validity.totalContextTokens)],
 ];
 // Lines per column across the transcript (core band), findings in amber.
 function spark(r) {

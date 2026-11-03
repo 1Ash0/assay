@@ -39,13 +39,12 @@ function specimen() {
     <div class="src" style="margin-top:6px">${esc(r.source.file)} · ${full(r.source.lines)} lines · sha256 ${esc(r.source.sha256.slice(0, 12))}…</div>
     <div class="punches" id="punches">
       <span class="punch sponsor"><b>CC</b><i>${esc(r.harness.version)}</i></span>
-      <span class="punch capture"><b>L${r.capture.level}</b><i>capture</i></span>
-      <span class="punch fine" title="bounded by ${esc(h.bound)}"><b>${h.fineness}</b><i>trust</i></span>
-      <span class="punch truth"><b>R</b><i>real</i></span>
+      <span class="punch capture"><b>L${r.capture.level}</b><i>capture</i><span class="hm-pips" aria-hidden="true">${[0, 1, 2, 3, 4].map(i => `<s class="${i <= r.capture.level ? 'on' : ''}"></s>`).join('')}</span></span>
+      <span class="punch fine" title="capped by ${esc(h.bound)}"><b>${h.fineness}</b><i>trust</i><span class="hm-bar" aria-hidden="true"><s style="width:${h.fineness / 10}%"></s></span></span>
+      <span class="punch truth real"><b>R</b><i>real</i></span>
       <span class="punch date"><b>${date}</b><i>date</i></span>
-      <span class="punch verdict"><b>▲</b><i>usable, with caveats</i></span>
+      <span class="punch verdict ${r.overall === 'trustworthy' ? 'ok' : r.overall.startsWith('usable') ? 'caveat' : 'bad'}"><b>${r.overall === 'trustworthy' ? '●' : r.overall.startsWith('usable') ? '▲' : '✕'}</b><i>${r.overall === 'trustworthy' ? 'trustworthy' : r.overall.startsWith('usable') ? 'usable, with caveats' : 'do not trust'}</i><em>trust capped by ${esc(h.bound)}</em></span>
     </div>
-    <div class="src" style="margin-top:8px">Trust score ${h.fineness}/1000, capped by its lowest rate: ${esc(h.bound)}.</div>
     <div class="finding">
       <span class="d">${f.id}</span><span class="m">${esc(DET.find(x => x[0] === f.id)[1])}: the next event is stamped earlier than the one before it.</span>
       <span class="w">line ${full(e.line)} · bytes ${full(e.b0)}–${full(e.b1)}</span>
