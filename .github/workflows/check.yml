@@ -1,10 +1,27 @@
 name: check
-on: [push, pull_request]
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+# A newer push to the same ref makes the older run pointless.
+concurrency:
+  group: check-${{ github.ref }}
+  cancel-in-progress: true
+
 permissions:
   contents: read
+
 jobs:
   check:
-    runs-on: ubuntu-latest
+    name: check (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 15
+    strategy:
+      fail-fast: false
+      # The CLI reads Windows paths and CRLF transcripts in real use, so both run.
+      matrix:
+        os: [ubuntu-latest, windows-latest]
     steps:
       - uses: actions/checkout@v4
       - uses: pnpm/action-setup@v4
@@ -13,12 +30,17 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 22
+          cache: pnpm
       - run: pnpm install --frozen-lockfile
-      # Typecheck, tests (real-corpus tests skip: the corpus is never in the repo) and schema drift.
+      # Typecheck, tests (real-corpus tests skip: the corpus is never in the repo),
+      # schema drift, claims against their artifacts, and the public-safety scan.
       - run: pnpm check
-      # pnpm check includes public-check: nothing personal or private is tracked.
+      # The browser bundle must build, since the explorer runs core in a Web Worker.
+      - run: pnpm build:web
+
   assert-fixture:
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     steps:
       - uses: actions/checkout@v4
       # The action on a scripted fixture, to show it running; real sessions stay local.
@@ -33,5 +55,6 @@ jobs:
         with:
           paths: fixtures/scripted/requests/sc-req.jsonl
           rules: assay.rules.example.json
-      - if: steps.broken.outcome != 'failure'
+      - name: The gate must have failed on the broken seal
+        if: steps.broken.outcome != 'failure'
         run: echo "assay assert passed a run with a broken seal" && exit 1
