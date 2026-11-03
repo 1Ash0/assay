@@ -68,4 +68,12 @@ rmSync(OUT, { recursive: true, force: true }); mkdirSync(`${OUT}/runs`, { recurs
 for (const f of PAGES) if (existsSync(`${SRC}/${f}`)) cpSync(`${SRC}/${f}`, `${OUT}/${f}`)
 writeFileSync(`${OUT}/data.js`, outData)
 for (const [id, s] of Object.entries(spines)) writeFileSync(`${OUT}/runs/${id}.json`, s)
+
+// The landing page is the front door: published as index.html, with the
+// explorer as explorer.html. Links are rewritten here so the sources keep
+// their local names (home.html, index.html) and nothing else changes.
+const swap = (f, pairs) => { let t = readFileSync(`${OUT}/${f}`, 'utf-8'); for (const [a, b] of pairs) t = t.split(a).join(b); writeFileSync(`${OUT}/${f}`, t) }
+cpSync(`${OUT}/index.html`, `${OUT}/explorer.html`); cpSync(`${OUT}/home.html`, `${OUT}/index.html`); rmSync(`${OUT}/home.html`)
+swap('explorer.html', [['home.html', 'index.html']]); swap('report.js', [['home.html', 'index.html']])
+swap('index.html', [['index.html', 'explorer.html'], ['home.html', 'index.html']]); swap('home.js', [['index.html', 'explorer.html']])
 console.error(`publish-site ok: ${runs.length} runs (${dropped} TRAIL run(s) left out) in ${OUT}`)

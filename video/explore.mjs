@@ -1,7 +1,7 @@
 // Dev aid: full-resolution stills of each view for shot planning.
 import { chromium } from 'playwright'
 import { serve, PORT } from './serve.mjs'
-const srv = await fetch(`http://localhost:${PORT}/index.html`).then(() => null, () => serve())
+const srv = await fetch(`http://localhost:${PORT}/explorer.html`).then(() => null, () => serve())
 const b = await chromium.launch()
 const p = await b.newPage({ viewport: { width: 1920, height: 1080 }, colorScheme: 'dark' })
 const shot = n => p.screenshot({ path: `out/explore-${n}.png` })

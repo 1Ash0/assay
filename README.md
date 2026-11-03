@@ -11,7 +11,7 @@
 
 <p align="center"><img src="docs/assets/demo.gif" alt="assay rebuilding the request a model was sent and sealing it against the transcript's own hash" width="640"></p>
 
-**[Open the live explorer →](https://1ash0.github.io/assay/)** (real, redacted sessions; nothing to install)
+**[Open the live site →](https://1ash0.github.io/assay/)** · [explorer](https://1ash0.github.io/assay/explorer.html) (real, redacted sessions; nothing to install)
 
 assay reads Claude Code sessions and answers that question before it answers anything else. Every run gets:
 
@@ -25,7 +25,7 @@ It is deterministic. No embeddings, no judge model in any verdict. Your sessions
 
 ## Use it
 
-**In the browser.** Open the explorer, press **Open folder** and drop a Claude Code session folder (`~/.claude/projects/<project>/`). It is assayed locally in a Web Worker; nothing is uploaded.
+**In the browser.** Open the [explorer](https://1ash0.github.io/assay/explorer.html), press **Open folder** and drop a Claude Code session folder (`~/.claude/projects/<project>/`). It is assayed locally in a Web Worker; nothing is uploaded.
 
 **On the command line.**
 ```bash

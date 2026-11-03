@@ -12,7 +12,7 @@ import { execFileSync } from 'node:child_process'
 import { mkdirSync, rmSync, writeFileSync } from 'node:fs'
 import { serve, PORT } from './serve.mjs'
 
-const BASE = `http://localhost:${PORT}/index.html`
+const BASE = `http://localhost:${PORT}/explorer.html`
 const HERO = 'ef76e3fc'
 const W = 1920, H = 1080, FPS = 30
 
