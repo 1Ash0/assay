@@ -110,7 +110,7 @@ svg.ctx{display:block;width:100%;height:150px;overflow:visible}
 .legend i{display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:5px;vertical-align:-1px}
 
 /* counters */
-.meters{display:grid;grid-template-columns:1.4fr 1fr 1fr;gap:12px}
+.meters{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
 .meter{padding:14px 16px;min-width:0}
 .big{font-size:clamp(24px,2.3vw,36px);font-weight:700;letter-spacing:-.03em;line-height:1;font-variant-numeric:tabular-nums}
 .big small{font-size:14px;font-weight:600;color:var(--mute);letter-spacing:0;margin-left:4px}
@@ -290,7 +290,7 @@ svg.fig{display:block;width:100%;height:auto;aspect-ratio:300/90;flex:none;backg
 #dropzone.busy #dropmsg{opacity:.7}
 @media (prefers-reduced-motion:reduce){*,*::before,*::after{animation-duration:.01ms!important;transition-duration:.01ms!important}}
 </style>
-<link rel="stylesheet" href="theme.css?v=26">
+<link rel="stylesheet" href="theme.css?v=30">
 </head>
 <body>
 <header class="top">
@@ -355,20 +355,17 @@ svg.fig{display:block;width:100%;height:auto;aspect-ratio:300/90;flex:none;backg
         <div class="meters">
           <div class="panel meter">
             <div class="label">Output tokens</div>
-            <div class="vs">
-              <div class="naive"><div class="hint" style="font-size:12px">Sum every line</div><div class="big" id="mNaive">0</div></div>
-              <div><div class="hint" style="font-size:12px">Assayed</div><div class="big" id="mAssay">0</div></div>
-            </div>
-            <div class="ratio" id="mRatio">&nbsp;</div>
+            <div class="big" id="mAssay">0</div>
+            <div class="ratio">Summing every line says <s class="mono" id="mNaive">0</s> <span id="mRatio"></span></div>
           </div>
           <div class="panel meter">
             <div class="label">Requests</div>
-            <div class="big" id="mReq" style="margin-top:10px">0</div>
+            <div class="big" id="mReq">0</div>
             <div class="ratio" id="mReqSub">&nbsp;</div>
           </div>
           <div class="panel meter">
-            <div class="label">Lines not read as events · kept</div>
-            <div class="big" id="mUnk" style="margin-top:10px">0</div>
+            <div class="label">Not read as events</div>
+            <div class="big" id="mUnk">0</div>
             <div class="ratio" id="mUnkSub">&nbsp;</div>
             <div class="reasons" id="mReasons"></div>
           </div>
@@ -455,10 +452,10 @@ svg.fig{display:block;width:100%;height:auto;aspect-ratio:300/90;flex:none;backg
 </div>
 <div class="sr" id="live" aria-live="polite"></div>
 
-<script src="data.js?v=26"></script>
-<script src="app.js?v=26"></script>
-<script src="assay-core.js?v=26"></script>
-<script src="views.js?v=26"></script>
-<script src="report.js?v=26"></script>
+<script src="data.js?v=30"></script>
+<script src="app.js?v=30"></script>
+<script src="assay-core.js?v=30"></script>
+<script src="views.js?v=30"></script>
+<script src="report.js?v=30"></script>
 </body>
 </html>

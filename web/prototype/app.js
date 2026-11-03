@@ -229,7 +229,7 @@ function update(fromUser) {
   // Full digits, as on the Report: one number format across the site.
   $('#mNaive').textContent = full(nv); $('#mAssay').textContent = (lb ? '≥ ' : '') + full(av);
   $('#mNaive').title = full(nv); $('#mAssay').title = full(av);
-  $('#mRatio').innerHTML = av > 0 ? (nv / av > 1.01 ? `Summing every line would overcount by <b>×${(nv / av).toFixed(2)}</b>` : 'No double-counting on this run') : (r.reqs.length ? '&nbsp;' : 'No usage records to count');
+  $('#mRatio').innerHTML = av > 0 ? (nv / av > 1.01 ? `· <b>×${(nv / av).toFixed(2)}</b> too many` : '· the same, no double-counting') : (r.reqs.length ? '' : '· no usage records to count');
   $('#mReq').textContent = full(at(c.req, p));
   const rq = r.validity.requests;
   $('#mReqSub').textContent = `${full(r.counts.events)} events deduplicated to ${full(r.counts.llm)} requests${rq ? ` · ${full(rq.sealed)} of ${full(rq.records)} request records sealed` : ''}`;
@@ -441,7 +441,9 @@ function load(id, opts = {}) {
   if (!opts.keepMission) S.mission = null;
   unstrike(); prep(r);
   renderPlate(r); renderHead(r); renderGates(r); renderTape(r); renderCtx(r);
-  $('#mReasons').innerHTML = r.unknownReasons.map(([k, n]) => `<span title="${n} records">${esc(k.replace('unknown-type:', ''))} · ${n}</span>`).join('');
+  // The four commonest types by name; the rest as one count, so the card keeps its height.
+  { const rs = r.unknownReasons, top = rs.slice(0, 4), rest = rs.slice(4).reduce((a, [, n]) => a + n, 0);
+    $('#mReasons').innerHTML = top.map(([k, n]) => `<span title="${n} lines">${esc(k.replace('unknown-type:', ''))} · ${full(n)}</span>`).join('') + (rest ? `<span title="other types">+${full(rest)} more</span>` : ''); }
   if (S.table) renderTable();
   setPlay(); renderRail(); update(true);
   if (S.view === 'report' && window.ASSAY_REPORT) window.ASSAY_REPORT.render(r);
