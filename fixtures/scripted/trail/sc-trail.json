@@ -1,0 +1,240 @@
+{
+    "trace_id": "sc-trail-1",
+    "spans": [
+        {
+            "timestamp": "2026-11-03T10:00:01.123456",
+            "trace_id": "sc-trail-1",
+            "span_id": "s0000001",
+            "parent_span_id": null,
+            "trace_state": "",
+            "span_name": "main",
+            "span_kind": "Internal",
+            "service_name": "sc",
+            "resource_attributes": {
+                "pat.account.id": "acct-x",
+                "service.name": "sc"
+            },
+            "scope_name": "openinference.instrumentation.smolagents",
+            "scope_version": "0.1.8",
+            "span_attributes": {},
+            "duration": "PT1S",
+            "status_code": "Ok",
+            "status_message": "",
+            "events": [],
+            "links": [],
+            "logs": [],
+            "child_spans": [
+                {
+                    "timestamp": "2026-11-03T10:00:02.123456",
+                    "trace_id": "sc-trail-1",
+                    "span_id": "s0000002",
+                    "parent_span_id": null,
+                    "trace_state": "",
+                    "span_name": "CodeAgent.run",
+                    "span_kind": "Internal",
+                    "service_name": "sc",
+                    "resource_attributes": {
+                        "pat.account.id": "acct-x",
+                        "service.name": "sc"
+                    },
+                    "scope_name": "openinference.instrumentation.smolagents",
+                    "scope_version": "0.1.8",
+                    "span_attributes": {
+                        "openinference.span.kind": "AGENT",
+                        "llm.token_count.total": "100",
+                        "llm.token_count.prompt": "90",
+                        "llm.token_count.completion": "10"
+                    },
+                    "duration": "PT1S",
+                    "status_code": "Ok",
+                    "status_message": "",
+                    "events": [],
+                    "links": [],
+                    "logs": [],
+                    "child_spans": [
+                        {
+                            "timestamp": "2026-11-03T10:00:03.123456",
+                            "trace_id": "sc-trail-1",
+                            "span_id": "s0000003",
+                            "parent_span_id": null,
+                            "trace_state": "",
+                            "span_name": "LiteLLMModel.__call__",
+                            "span_kind": "Internal",
+                            "service_name": "sc",
+                            "resource_attributes": {
+                                "pat.account.id": "acct-x",
+                                "service.name": "sc"
+                            },
+                            "scope_name": "openinference.instrumentation.smolagents",
+                            "scope_version": "0.1.8",
+                            "span_attributes": {
+                                "openinference.span.kind": "LLM",
+                                "llm.model_name": "o3-mini",
+                                "llm.token_count.prompt": "100",
+                                "llm.token_count.completion": "20",
+                                "llm.token_count.total": "120",
+                                "input.value": "q"
+                            },
+                            "duration": "PT1S",
+                            "status_code": "Ok",
+                            "status_message": "",
+                            "events": [],
+                            "links": [],
+                            "logs": [],
+                            "child_spans": []
+                        },
+                        {
+                            "timestamp": "2026-11-03T10:00:04.123456",
+                            "trace_id": "sc-trail-1",
+                            "span_id": "s0000004",
+                            "parent_span_id": null,
+                            "trace_state": "",
+                            "span_name": "LiteLLMModel.__call__",
+                            "span_kind": "Internal",
+                            "service_name": "sc",
+                            "resource_attributes": {
+                                "pat.account.id": "acct-x",
+                                "service.name": "sc"
+                            },
+                            "scope_name": "openinference.instrumentation.smolagents",
+                            "scope_version": "0.1.8",
+                            "span_attributes": {
+                                "openinference.span.kind": "LLM",
+                                "llm.model_name": "o3-mini",
+                                "llm.token_count.prompt": "200",
+                                "llm.token_count.completion": "30",
+                                "llm.token_count.total": "230",
+                                "input.value": "q"
+                            },
+                            "duration": "PT1S",
+                            "status_code": "Ok",
+                            "status_message": "",
+                            "events": [],
+                            "links": [],
+                            "logs": [],
+                            "child_spans": []
+                        },
+                        {
+                            "timestamp": "2026-11-03T10:00:05.123456",
+                            "trace_id": "sc-trail-1",
+                            "span_id": "s0000005",
+                            "parent_span_id": null,
+                            "trace_state": "",
+                            "span_name": "SearchTool",
+                            "span_kind": "Internal",
+                            "service_name": "sc",
+                            "resource_attributes": {
+                                "pat.account.id": "acct-x",
+                                "service.name": "sc"
+                            },
+                            "scope_name": "openinference.instrumentation.smolagents",
+                            "scope_version": "0.1.8",
+                            "span_attributes": {
+                                "openinference.span.kind": "TOOL",
+                                "tool.name": "SearchTool",
+                                "input.value": "x",
+                                "output.value": "long text ... (truncated"
+                            },
+                            "duration": "PT1S",
+                            "status_code": "Error",
+                            "status_message": "",
+                            "events": [],
+                            "links": [],
+                            "logs": [],
+                            "child_spans": []
+                        },
+                        {
+                            "timestamp": "2026-11-03T10:00:06.123456",
+                            "trace_id": "sc-trail-1",
+                            "span_id": "s0000006",
+                            "parent_span_id": null,
+                            "trace_state": "",
+                            "span_name": "LiteLLMModel.__call__",
+                            "span_kind": "Internal",
+                            "service_name": "sc",
+                            "resource_attributes": {
+                                "pat.account.id": "acct-x",
+                                "service.name": "sc"
+                            },
+                            "scope_name": "openinference.instrumentation.smolagents",
+                            "scope_version": "0.1.8",
+                            "span_attributes": {
+                                "openinference.span.kind": "LLM",
+                                "llm.model_name": "o3-mini",
+                                "input.value": "no token counts"
+                            },
+                            "duration": "PT1S",
+                            "status_code": "Ok",
+                            "status_message": "",
+                            "events": [],
+                            "links": [],
+                            "logs": [],
+                            "child_spans": []
+                        }
+                    ]
+                },
+                {
+                    "timestamp": "2026-11-03T10:00:07.123456",
+                    "trace_id": "sc-trail-1",
+                    "span_id": "s0000007",
+                    "parent_span_id": null,
+                    "trace_state": "",
+                    "span_name": "patronus log host",
+                    "span_kind": "Internal",
+                    "service_name": "sc",
+                    "resource_attributes": {
+                        "pat.account.id": "acct-x",
+                        "service.name": "sc"
+                    },
+                    "scope_name": "openinference.instrumentation.smolagents",
+                    "scope_version": "0.1.8",
+                    "span_attributes": {},
+                    "duration": "PT1S",
+                    "status_code": "Ok",
+                    "status_message": "",
+                    "events": [],
+                    "links": [],
+                    "logs": [
+                        {
+                            "span_id": "s0000007",
+                            "trace_id": "sc-trail-1",
+                            "body": "nested log record repeating the span id"
+                        }
+                    ],
+                    "child_spans": []
+                },
+                {
+                    "timestamp": "2026-11-03T10:00:03.123456",
+                    "trace_id": "sc-trail-1",
+                    "span_id": "s0000003",
+                    "parent_span_id": null,
+                    "trace_state": "",
+                    "span_name": "LiteLLMModel.__call__",
+                    "span_kind": "Internal",
+                    "service_name": "sc",
+                    "resource_attributes": {
+                        "pat.account.id": "acct-x",
+                        "service.name": "sc"
+                    },
+                    "scope_name": "openinference.instrumentation.smolagents",
+                    "scope_version": "0.1.8",
+                    "span_attributes": {
+                        "openinference.span.kind": "LLM",
+                        "llm.model_name": "o3-mini",
+                        "llm.token_count.prompt": "5",
+                        "llm.token_count.completion": "5",
+                        "llm.token_count.total": "10",
+                        "input.value": "q"
+                    },
+                    "duration": "PT1S",
+                    "status_code": "Ok",
+                    "status_message": "",
+                    "events": [],
+                    "links": [],
+                    "logs": [],
+                    "child_spans": []
+                }
+            ]
+        }
+    ]
+}

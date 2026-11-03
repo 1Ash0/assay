@@ -25,7 +25,7 @@ web/prototype/assay-core.js
 web/prototype/runs/
 
 # TRAIL dataset (public, third-party; large; used locally by the judge calibration study)
-TRAIL/
+/TRAIL/
 
 # Personal: profile and gate records stay local (scripts/public-check.mjs)
 MASTER_PROMPT.md
